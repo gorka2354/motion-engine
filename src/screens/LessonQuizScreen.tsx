@@ -2,8 +2,10 @@ import React from "react";
 import {
   AbsoluteFill,
   Easing,
+  Img,
   interpolate,
   interpolateColors,
+  staticFile,
   useCurrentFrame,
 } from "remotion";
 import { theme } from "../theme";
@@ -228,24 +230,18 @@ export const LessonQuizScreen: React.FC = () => {
           course turns Claude into a system that works for you.
         </div>
 
-        {/* illustration placeholder (swap for the real 3D asset) */}
-        <div
-          style={{
-            marginTop: 20,
-            height: 210,
-            borderRadius: 20,
-            background:
-              "linear-gradient(135deg, #FDF1DC 0%, #F6E2C4 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 22,
-            fontSize: 96,
-          }}
-        >
-          <span>🧑‍💻</span>
-          <span style={{ fontSize: 40, color: theme.color.muted }}>→</span>
-          <span>🤖</span>
+        {/* real lesson illustration (person -> robot -> system), cropped to the top panel */}
+        <div style={{ marginTop: 20, height: 232, borderRadius: 20, overflow: "hidden" }}>
+          <Img
+            src={staticFile("lesson/helper-system.png")}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center 20%",
+              display: "block",
+            }}
+          />
         </div>
 
         {/* quiz */}

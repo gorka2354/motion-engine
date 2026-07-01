@@ -1,23 +1,25 @@
 import React from "react";
-import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
 import { BottomNav } from "../components/BottomNav";
 
 const EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
+// Real Generate illustrations from the app (course_card_*).
 const GEN = [
-  { label: "Text", emoji: "📝", from: "#FCE1EC", to: "#F7C7DA" },
-  { label: "Video", emoji: "🎬", from: "#DCEBFF", to: "#B9D6FF" },
-  { label: "Image", emoji: "🖼️", from: "#DCF3E4", to: "#BCE8CD" },
-  { label: "Audio", emoji: "🎵", from: "#FFF0CC", to: "#FFE29E" },
+  { label: "Text", file: "gen/card4.webp" },
+  { label: "Video", file: "gen/card1.webp" },
+  { label: "Image", file: "gen/card3.webp" },
+  { label: "Audio", file: "gen/card2.webp" },
 ];
 
+// Real provider logos on light brand-tinted tiles.
 const MODELS = [
-  { name: "ChatGPT", desc: "Versatile text model from OpenAI", tile: "#10A37F", emoji: "💬" },
-  { name: "GPT-5 by OpenAI", desc: "The new best overall AI model", tile: "#0B0B0E", emoji: "⭐" },
-  { name: "Gemini", desc: "Google text model, always up to date", tile: "#4C8DF6", emoji: "✨" },
-  { name: "Runway", desc: "Generate AI videos and effects", tile: "#111318", emoji: "🎬" },
-  { name: "Flux", desc: "Fast, affordable image generation", tile: "#7A5AF8", emoji: "🖼️" },
+  { name: "ChatGPT", desc: "Versatile text model from OpenAI", logo: "providers/openai.svg", tint: "#E7F7F0" },
+  { name: "GPT-5 by OpenAI", desc: "The new best overall AI model", logo: "providers/openai.svg", tint: "#EEF1F5" },
+  { name: "Gemini", desc: "Google text model, always up to date", logo: "providers/google.svg", tint: "#EAF1FE" },
+  { name: "Runway", desc: "Generate AI videos and effects", logo: "providers/runway.svg", tint: "#EEF0F3" },
+  { name: "Flux", desc: "Fast, affordable image generation", logo: "providers/flux.svg", tint: "#F0ECFE" },
 ];
 
 export const AiToolsScreen: React.FC = () => {
@@ -38,18 +40,8 @@ export const AiToolsScreen: React.FC = () => {
           });
           return (
             <div key={g.label} style={{ flex: 1, opacity: a, scale: String(interpolate(a, [0, 1], [0.7, 1])) }}>
-              <div
-                style={{
-                  height: 92,
-                  borderRadius: 18,
-                  background: `linear-gradient(150deg, ${g.from}, ${g.to})`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 44,
-                }}
-              >
-                {g.emoji}
+              <div style={{ height: 92, borderRadius: 18, overflow: "hidden" }}>
+                <Img src={staticFile(g.file)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
               <div style={{ fontSize: 17, fontWeight: 700, color: theme.color.ink, textAlign: "center", marginTop: 8 }}>
                 {g.label}
@@ -126,15 +118,14 @@ export const AiToolsScreen: React.FC = () => {
                   width: 52,
                   height: 52,
                   borderRadius: 14,
-                  background: m.tile,
+                  background: m.tint,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 26,
                   flexShrink: 0,
                 }}
               >
-                {m.emoji}
+                <Img src={staticFile(m.logo)} style={{ width: 30, height: 30, objectFit: "contain" }} />
               </div>
               <div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: theme.color.ink }}>{m.name}</div>

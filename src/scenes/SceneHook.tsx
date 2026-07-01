@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
 import { GradientBackground } from "../components/GradientBackground";
 import { PhoneFrame } from "../device/PhoneFrame";
@@ -48,23 +48,19 @@ export const SceneHook: React.FC = () => {
 
   return (
     <GradientBackground>
-      {/* wordmark */}
+      {/* real tixu wordmark */}
       <div
         style={{
           position: "absolute",
-          top: 74,
+          top: 78,
           left: 0,
           right: 0,
-          textAlign: "center",
-          fontFamily: theme.font.family,
-          fontWeight: 800,
-          fontSize: 40,
-          letterSpacing: 1,
-          color: theme.color.primary,
+          display: "flex",
+          justifyContent: "center",
           opacity: wordmark,
         }}
       >
-        tixu
+        <Img src={staticFile("logo.svg")} style={{ height: 48 }} />
       </div>
 
       {/* headline */}

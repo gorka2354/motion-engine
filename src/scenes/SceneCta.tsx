@@ -1,5 +1,5 @@
 import React from "react";
-import { Easing, interpolate, useCurrentFrame } from "remotion";
+import { Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
 import { GradientBackground } from "../components/GradientBackground";
 import { PhoneFrame } from "../device/PhoneFrame";
@@ -71,9 +71,7 @@ export const SceneCta: React.FC = () => {
           translate: `0 ${textY}px`,
         }}
       >
-        <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: 1, color: theme.color.primary }}>
-          tixu
-        </div>
+        <Img src={staticFile("logo.svg")} style={{ height: 42 }} />
         <div
           style={{
             fontSize: 66,

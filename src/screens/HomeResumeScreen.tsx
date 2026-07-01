@@ -1,31 +1,28 @@
 import React from "react";
-import { AbsoluteFill } from "remotion";
+import { AbsoluteFill, Img, staticFile } from "remotion";
 import { theme } from "../theme";
 
-/** Green ChatGPT-style badge (placeholder — swap for the real logo asset later). */
+/** Real ChatGPT / OpenAI mark on a light tile (matches the app's resume card). */
 const ToolMark: React.FC = () => (
   <div
     style={{
       width: 62,
       height: 62,
       borderRadius: 16,
-      background: "#10A37F",
+      background: "#E7F7F0",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       flexShrink: 0,
     }}
   >
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6">
-      <path d="M12 3.2a3 3 0 0 1 2.6 1.5 3 3 0 0 1 3.9 3.9 3 3 0 0 1 0 5.2 3 3 0 0 1-3.9 3.9 3 3 0 0 1-5.2 0 3 3 0 0 1-3.9-3.9 3 3 0 0 1 0-5.2A3 3 0 0 1 9.4 4.7 3 3 0 0 1 12 3.2Z" />
-      <path d="M9 12.5l2 1.2 4-2.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Img src={staticFile("providers/openai.svg")} style={{ width: 34, height: 34 }} />
   </div>
 );
 
 /**
- * The Tixu "Let's get back to learning" home screen, rebuilt natively.
- * Used inside the phone for the hook scene.
+ * The Tixu "Let's get back to learning" home screen, rebuilt natively with the
+ * real 3D backpack illustration and the OpenAI mark.
  */
 export const HomeResumeScreen: React.FC = () => {
   return (
@@ -51,7 +48,10 @@ export const HomeResumeScreen: React.FC = () => {
           textAlign: "center",
         }}
       >
-        <div style={{ fontSize: 128, lineHeight: 1, marginBottom: 24 }}>🎒</div>
+        <Img
+          src={staticFile("home/backpack.webp")}
+          style={{ width: 240, height: 180, objectFit: "contain", marginBottom: 18 }}
+        />
         <div
           style={{
             fontSize: 44,
