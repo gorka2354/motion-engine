@@ -2,22 +2,12 @@ import React from "react";
 import { AbsoluteFill, Img, staticFile } from "remotion";
 import { theme } from "../theme";
 
-/** Real ChatGPT / OpenAI mark on a light tile (matches the app's resume card). */
+/** Real course icon from the app (Claude Advanced Workflows). */
 const ToolMark: React.FC = () => (
-  <div
-    style={{
-      width: 62,
-      height: 62,
-      borderRadius: 16,
-      background: "#E7F7F0",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-    }}
-  >
-    <Img src={staticFile("providers/openai.svg")} style={{ width: 34, height: 34 }} />
-  </div>
+  <Img
+    src={staticFile("home/course-claude.png")}
+    style={{ width: 62, height: 62, borderRadius: 16, objectFit: "cover", flexShrink: 0 }}
+  />
 );
 
 /**
@@ -92,8 +82,8 @@ export const HomeResumeScreen: React.FC = () => {
         >
           <ToolMark />
           <div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: theme.color.ink }}>
-              ChatGPT
+            <div style={{ fontSize: 25, fontWeight: 700, color: theme.color.ink, lineHeight: 1.2 }}>
+              Claude Advanced Workflows
             </div>
             <div
               style={{

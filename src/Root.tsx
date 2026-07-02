@@ -7,6 +7,7 @@ import { SceneLessonQuiz } from "./scenes/SceneLessonQuiz";
 import { SceneAiTools } from "./scenes/SceneAiTools";
 import { SceneCta } from "./scenes/SceneCta";
 import { TixuPromo, SCENE_DURATIONS, TIXU_PROMO_DURATION } from "./TixuPromo";
+import { TixuPromoV2, V2_DURATION } from "./v2/TixuPromoV2";
 
 const FPS = 30;
 const W = 1080;
@@ -19,6 +20,14 @@ const H = 1920;
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id="TixuPromoV2"
+        component={TixuPromoV2}
+        durationInFrames={V2_DURATION}
+        fps={FPS}
+        width={W}
+        height={H}
+      />
       <Composition
         id="TixuPromo"
         component={TixuPromo}
