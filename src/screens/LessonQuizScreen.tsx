@@ -133,9 +133,11 @@ const Option: React.FC<{
 /**
  * Tixu lesson interior with an inline quiz. Around frame 60 a fingertip taps the
  * correct answer, it fills green with a check, and the Next button lights up.
+ * With `deep`, the lesson then auto-scrolls to a second interaction type
+ * (yes/no) and answers it — showing that lessons are truly interactive.
  * Self-contained animation driven by the composition frame (0..N).
  */
-export const LessonQuizScreen: React.FC = () => {
+export const LessonQuizScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) => {
   const frame = useCurrentFrame();
 
   const tap = interpolate(frame, [44, 60], [0, 1], {
@@ -148,6 +150,42 @@ export const LessonQuizScreen: React.FC = () => {
     extrapolateRight: "clamp",
     easing: EASE,
   });
+
+  // deep mode: scroll to the yes/no block and answer it
+  const scrollY = deep
+    ? interpolate(frame, [100, 132], [0, -380], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+        easing: Easing.bezier(0.65, 0, 0.35, 1),
+      })
+    : 0;
+  const tap2 = deep
+    ? interpolate(frame, [146, 156], [0, 1], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+        easing: EASE,
+      })
+    : 0;
+  const select2 = deep
+    ? interpolate(frame, [156, 180], [0, 1], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+        easing: EASE,
+      })
+    : 0;
+  const finger2O = deep
+    ? interpolate(frame, [134, 144, 166, 176], [0, 1, 1, 0], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      })
+    : 0;
+  const press2 = interpolate(tap2, [0.7, 1], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const yesBg = interpolateColors(select2, [0, 1], ["#FFFFFF", theme.color.greenTint]);
+  const yesBorder = interpolateColors(select2, [0, 1], ["rgba(3,20,35,0.10)", theme.color.green]);
+  const yesBounce = 1 + 0.05 * Math.sin(Math.min(select2, 1) * Math.PI);
 
   // fingertip approaches the correct option (index 1) and presses at tap === 1
   const fingerOpacity = interpolate(frame, [30, 42, 96, 108], [0, 1, 1, 0], {
@@ -168,8 +206,9 @@ export const LessonQuizScreen: React.FC = () => {
     [0, 1],
     ["#C8D2DA", theme.color.primary],
   );
+  const pulseFrom = deep ? 184 : 90;
   const nextPulse =
-    frame > 90 ? 1 + 0.02 * Math.sin((frame - 90) / 7) : 1;
+    frame > pulseFrom ? 1 + 0.02 * Math.sin((frame - pulseFrom) / 7) : 1;
 
   return (
     <AbsoluteFill
@@ -204,8 +243,9 @@ export const LessonQuizScreen: React.FC = () => {
         </svg>
       </div>
 
-      {/* body */}
-      <div style={{ padding: "26px 30px 0", flex: 1 }}>
+      {/* body (scrolls in deep mode) */}
+      <div style={{ flex: 1, overflow: "hidden" }}>
+      <div style={{ padding: "26px 30px 0", translate: `0 ${scrollY}px` }}>
         <div
           style={{
             fontSize: 34,
@@ -306,6 +346,92 @@ export const LessonQuizScreen: React.FC = () => {
             />
           </div>
         </div>
+
+        {/* deep mode: a second interaction type (yes/no) further down the lesson */}
+        {deep ? (
+          <div style={{ marginTop: 36, paddingBottom: 40 }}>
+            <div
+              style={{
+                fontSize: 15,
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: theme.color.muted,
+              }}
+            >
+              Answer with “yes” or “no”
+            </div>
+            <div
+              style={{
+                fontSize: 23,
+                fontWeight: 700,
+                color: theme.color.ink,
+                marginTop: 8,
+                marginBottom: 18,
+                lineHeight: 1.25,
+              }}
+            >
+              Can you finish this course on the free plan?
+            </div>
+            <div style={{ position: "relative", display: "flex", gap: 14 }}>
+              <div
+                style={{
+                  position: "relative",
+                  flex: 1,
+                  height: OPTION_H,
+                  borderRadius: 18,
+                  background: yesBg,
+                  border: `2px solid ${yesBorder}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: theme.color.ink,
+                  scale: String(yesBounce),
+                }}
+              >
+                Yes
+                <CheckBadge progress={select2} />
+              </div>
+              <div
+                style={{
+                  flex: 1,
+                  height: OPTION_H,
+                  borderRadius: 18,
+                  background: "#fff",
+                  border: "2px solid rgba(3,20,35,0.10)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: theme.color.ink,
+                  opacity: 1 - 0.5 * select2,
+                }}
+              >
+                No
+              </div>
+              {/* second fingertip */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "26%",
+                  top: "54%",
+                  width: 62,
+                  height: 62,
+                  borderRadius: 999,
+                  background: "rgba(3,20,35,0.16)",
+                  border: "2px solid rgba(3,20,35,0.28)",
+                  translate: "-50% -50%",
+                  opacity: finger2O,
+                  scale: String(1 - press2 * 0.14),
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
       </div>
 
       {/* sticky Next */}

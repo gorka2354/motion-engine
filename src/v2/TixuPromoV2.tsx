@@ -4,6 +4,7 @@ import { theme } from "../theme";
 import { PhoneFrame } from "../device/PhoneFrame";
 import { HomeResumeScreen } from "../screens/HomeResumeScreen";
 import { ProfileScreen } from "../screens/ProfileScreen";
+import { LibraryScreen } from "../screens/LibraryScreen";
 import { PathScreen } from "../screens/PathScreen";
 import { LessonQuizScreen } from "../screens/LessonQuizScreen";
 import { AiToolsScreen } from "../screens/AiToolsScreen";
@@ -12,25 +13,30 @@ import { ScreenFlow } from "./ScreenFlow";
 import { TypoBeat } from "./TypoBeat";
 import { TapDot } from "./TapDot";
 import { FloatingChips } from "./FloatingChips";
+import { FloatingCertificate } from "./FloatingCertificate";
 import { clamp01, kf, window01 } from "./anim";
 
-export const V2_DURATION = 900; // 30s @ 30fps
+export const V2_DURATION = 1320; // 44s @ 30fps
 
 const PHONE_W = 640;
 
 // ── Beat map (global frames) ────────────────────────────────────────────────
-const NAV = { profile: 150, path: 260, quiz: 430, tools: 640 } as const;
-const ZOOM = { in: [300, 362], out: [585, 645] } as const;
-const END = { start: 790, settle: 848 } as const;
+const NAV = { profile: 150, library: 265, path: 420, quiz: 585, tools: 910 } as const;
+const ZOOM = { in: [500, 556], out: [800, 855] } as const;
+const CERT = { from: 810, to: 905 } as const;
+const CHIPS = { from: 935, to: 1010 } as const;
+const END = { start: 1160, settle: 1215 } as const;
 
 /** Screen coords: Continue button center inside the 604-wide home screen. */
 const HOME_BTN_Y = 604 * (19.5 / 9) - 44 - 34;
 
 /**
- * V2 master — one continuous shot. The phone never leaves the frame: screens
- * navigate inside the device (iOS push / tab switch), the camera drifts, zooms
- * into the display for the lesson beat and pulls back out. Big typography
- * blur-ups carry the story. No full-frame transitions.
+ * V2 master — one continuous shot, deep on features. The phone never leaves
+ * the frame: screens navigate inside the device (iOS push / tab switch), the
+ * camera zooms into the display for the lesson beats and pulls back out.
+ * Feature depth: personal plan → library (challenges, tracks, careers) →
+ * course path → two lesson interactions → certificate payoff → AI hub with a
+ * live chat demo. Big typography blur-ups carry the story.
  */
 export const TixuPromoV2: React.FC = () => {
   const f = useCurrentFrame();
@@ -81,19 +87,19 @@ export const TixuPromoV2: React.FC = () => {
       [30, 0.92],
     ]) *
     (1 - zoomAmt) *
-    (1 - clamp01((f - 770) / 20));
+    (1 - clamp01((f - 1140) / 20));
 
   // ── Glass sweep across the display (twice, very subtle) ──
-  const sweeps = [112, 688].map((start) => {
+  const sweeps = [112, 990].map((start) => {
     const p = clamp01((f - start) / 70);
     return { p, o: p > 0 && p < 1 ? 0.1 * Math.sin(Math.PI * p) : 0 };
   });
 
   // ── Ending block ──
-  const endLogo = window01(f, 800, 990);
-  const endTitle = window01(f, 812, 990);
-  const endCta = window01(f, 826, 990);
-  const ctaPulse = f > 852 ? 1 + 0.012 * Math.sin((f - 852) / 8) : 1;
+  const endLogo = window01(f, 1170, 1400);
+  const endTitle = window01(f, 1182, 1400);
+  const endCta = window01(f, 1196, 1400);
+  const ctaPulse = f > 1222 ? 1 + 0.012 * Math.sin((f - 1222) / 8) : 1;
 
   return (
     <LivingBackground>
@@ -132,18 +138,34 @@ export const TixuPromoV2: React.FC = () => {
         size={72}
       />
       <TypoBeat
+        title="Courses, challenges, careers."
+        sub="A track for whatever you're after."
+        from={273}
+        to={405}
+        y={168}
+        size={64}
+      />
+      <TypoBeat
         title="One clear path."
         sub="Chapters, lessons, a certificate."
-        from={268}
-        to={340}
+        from={428}
+        to={495}
+        y={168}
+        size={72}
+      />
+      <TypoBeat
+        title="Finish certified."
+        sub="A personal certificate for every course."
+        from={815}
+        to={905}
         y={168}
         size={72}
       />
       <TypoBeat
         title="Every AI. One app."
         sub="ChatGPT · Gemini · Runway · Flux — built in."
-        from={658}
-        to={778}
+        from={920}
+        to={1130}
         y={168}
         size={72}
       />
@@ -174,9 +196,10 @@ export const TixuPromoV2: React.FC = () => {
                   ),
                 },
                 { at: NAV.profile, kind: "push", node: <ProfileScreen /> },
+                { at: NAV.library, kind: "push", node: <LibraryScreen /> },
                 { at: NAV.path, kind: "push", node: <PathScreen /> },
-                { at: NAV.quiz, kind: "push", node: <LessonQuizScreen /> },
-                { at: NAV.tools, kind: "tab", node: <AiToolsScreen /> },
+                { at: NAV.quiz, kind: "push", node: <LessonQuizScreen deep /> },
+                { at: NAV.tools, kind: "tab", node: <AiToolsScreen deep /> },
               ]}
             />
           </PhoneFrame>
@@ -223,14 +246,17 @@ export const TixuPromoV2: React.FC = () => {
           height: 360,
           background:
             "linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.96) 42%, rgba(255,255,255,0))",
-          opacity: window01(f, 436, 560).opacity * zoomAmt,
+          opacity: window01(f, 591, 700).opacity * zoomAmt,
           zIndex: 45,
         }}
       />
-      <TypoBeat title="Learn by doing." from={436} to={560} y={96} size={62} />
+      <TypoBeat title="Learn by doing." from={591} to={700} y={96} size={62} />
+
+      {/* certificate payoff during the pull-back */}
+      <FloatingCertificate from={CERT.from} to={CERT.to} />
 
       {/* floating provider chips during the AI-tools beat */}
-      <FloatingChips from={665} to={775} />
+      <FloatingChips from={CHIPS.from} to={CHIPS.to} />
 
       {/* ── ending block ── */}
       <div

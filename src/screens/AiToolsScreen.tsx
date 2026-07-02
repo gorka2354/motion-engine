@@ -22,8 +22,45 @@ const MODELS = [
   { name: "Flux", desc: "Fast, affordable image generation", logo: "providers/flux.svg", tint: "#F0ECFE" },
 ];
 
-export const AiToolsScreen: React.FC = () => {
+const PROMPT = "Write a LinkedIn post about my new app";
+const RESPONSE: { text: string; bold?: boolean }[] = [
+  { text: "🚀 Just shipped something I'm proud of —", bold: true },
+  { text: "an app that turns AI curiosity into a daily skill." },
+  { text: "Built it in public. Launching free this week." },
+  { text: "#buildinpublic #AI" },
+];
+const TYPE_WIN = [80, 124] as const;
+const SHEET_AT = 140;
+const LINE_AT = [166, 188, 210, 232];
+
+/**
+ * The AI-tools hub. With `deep`, it also demos real usage: a prompt types
+ * itself into the chat bar, sends, and a ChatGPT reply streams in on a sheet.
+ */
+export const AiToolsScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) => {
   const frame = useCurrentFrame();
+
+  const typedCount = deep
+    ? Math.round(
+        interpolate(frame, [TYPE_WIN[0], TYPE_WIN[1]], [0, PROMPT.length], {
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
+        }),
+      )
+    : 0;
+  const typed = PROMPT.slice(0, typedCount);
+  const caretOn = deep && frame >= TYPE_WIN[0] && frame < SHEET_AT && frame % 16 < 9;
+  const sendPulse = deep
+    ? 1 + 0.2 * Math.sin(Math.PI * interpolate(frame, [126, 136], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }))
+    : 1;
+  const sheetIn = deep
+    ? interpolate(frame, [SHEET_AT, SHEET_AT + 22], [0, 1], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+        easing: EASE,
+      })
+    : 0;
+  const streaming = deep && frame >= SHEET_AT && frame < LINE_AT[3] + 16;
 
   return (
     <AbsoluteFill style={{ background: theme.color.surface, fontFamily: theme.font.stack, padding: "78px 30px 0" }}>
@@ -65,8 +102,29 @@ export const AiToolsScreen: React.FC = () => {
           paddingRight: 8,
         }}
       >
-        <span style={{ flex: 1, fontSize: 20, fontWeight: 500, color: theme.color.muted }}>
-          Ask anything…
+        <span
+          style={{
+            flex: 1,
+            fontSize: 20,
+            fontWeight: typed ? 600 : 500,
+            color: typed ? theme.color.ink : theme.color.muted,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+          }}
+        >
+          {typed || "Ask anything…"}
+          {caretOn ? (
+            <span
+              style={{
+                display: "inline-block",
+                width: 2.5,
+                height: 24,
+                background: theme.color.primary,
+                marginLeft: 3,
+                verticalAlign: "-4px",
+              }}
+            />
+          ) : null}
         </span>
         <div
           style={{
@@ -77,6 +135,8 @@ export const AiToolsScreen: React.FC = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            flexShrink: 0,
+            scale: String(sendPulse),
           }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
@@ -137,6 +197,74 @@ export const AiToolsScreen: React.FC = () => {
       </div>
 
       <BottomNav active="tools" />
+
+      {/* deep mode: streaming reply sheet */}
+      {deep && sheetIn > 0 ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 620,
+            background: "#fff",
+            borderRadius: "30px 30px 0 0",
+            boxShadow: "0 -24px 60px rgba(9,46,92,0.20)",
+            padding: "30px 34px",
+            zIndex: 40,
+            translate: `0 ${(1 - sheetIn) * 100}%`,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: 13,
+                background: "#E7F7F0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Img src={staticFile("providers/openai.svg")} style={{ width: 27, height: 27 }} />
+            </div>
+            <div style={{ fontSize: 23, fontWeight: 800, color: theme.color.ink }}>ChatGPT</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: theme.color.muted }}>
+              {streaming ? "· generating…" : "· ready"}
+            </div>
+            {!streaming ? (
+              <svg width="20" height="20" viewBox="0 0 18 18" fill="none" stroke={theme.color.green} strokeWidth="2.4">
+                <path d="M3.5 9.5l3.5 3.5 7.5-8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            ) : null}
+          </div>
+          <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 14 }}>
+            {RESPONSE.map((line, i) => {
+              const a = interpolate(frame, [LINE_AT[i], LINE_AT[i] + 14], [0, 1], {
+                extrapolateLeft: "clamp",
+                extrapolateRight: "clamp",
+                easing: EASE,
+              });
+              return (
+                <div
+                  key={i}
+                  style={{
+                    fontSize: 22,
+                    lineHeight: 1.45,
+                    fontWeight: line.bold ? 700 : 500,
+                    color: line.bold ? theme.color.ink : theme.color.body,
+                    opacity: a,
+                    translate: `0 ${(1 - a) * 12}px`,
+                  }}
+                >
+                  {line.text}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
     </AbsoluteFill>
   );
 };
