@@ -1,7 +1,7 @@
 {
-  "name": "tixu-motion",
+  "name": "motion-engine",
   "version": "0.1.0",
-  "description": "Tixu.ai product motion videos (Remotion)",
+  "description": "Motion video engine (Remotion) — reusable scenes, styles & tools; tixu.ai + client projects",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
