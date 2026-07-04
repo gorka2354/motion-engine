@@ -1,0 +1,16 @@
+---
+name: tixu-motion-project
+description: Remotion project for Tixu.ai product motion videos (smartphone-emulation ads)
+metadata: 
+  node_type: memory
+  type: project
+  originSessionId: 7956a63b-3b5d-490a-8c59-5b31b047b184
+---
+
+Building product motion videos for Tixu.ai in Remotion. Project at `/Users/egor_pestov/projects/tixu продуктовые моушен видосы/tixu-motion` (own git repo, no Tailwind — inline styles + theme). Reference setup: `~/Desktop/выяснить когда рожать/pregnancy-video` (proven Remotion 4.0.484 + React 19 + @remotion/google-fonts; renders fine from Cyrillic/space paths, so build in place).
+
+Locked decisions (2026-07-01): master format **9:16 1080×1920 @30fps**, language **English**, visual **floating phone on brand gradient** (Apple-keynote clean). Concept: smartphone emulation showing real product screens/tabs. Architecture = parametrized "video engine" (theme tokens + reusable PhoneFrame + per-screen components + scenes) so RU / per-course / 1:1 / 16:9 variants come cheap later.
+
+30s storyboard: (1) Hook, (2) Personalization / AI-profile, (3) Learning path (Duolingo-style), (4) Lesson quiz — tap→green (the money shot), (5) AI-tools hub, (6) CTA.
+
+Status (2026-07-02): **V2 deepened to 44s (1320f)** — renders to preview/tixu-promo-v2-44s.mp4. Beat map: hook → profile → NEW Library beat (challenge hero + tracks + careers, real icons in public/library/) → path (zoom in) → lesson with TWO interactions (quiz tap + auto-scroll to yes/no, `deep` prop on LessonQuizScreen) → FloatingCertificate payoff on pull-back → AI-tools with live chat demo (`deep` prop: prompt types, sends, reply streams on a sheet) → CTA. User feedback: aesthetic approved, wanted functions shown "больше и глубже" — done via deep props, not new aesthetics. Apple/Claude-style continuous shot: persistent phone + camera rig (rise → zoom into display for path/quiz beats at s=1.5 → pull back → recede for CTA), in-device iOS push/tab navigation (`ScreenFlow` — compose enter+exit transforms, don't overwrite), blur-up typography beats (`TypoBeat`/`window01`), floating provider chips, living background. User explicitly rejected full-frame wipes/flips ("2010 transitions") — V1 `TixuPromo` kept only for comparison. BottomNav is faithful now (label on active tab only); home resume card = Claude Advanced Workflows with real course icon (public/home/course-claude.png). Older V1 status: full 30s master `TixuPromo` done (886 frames). All 6 scenes built (Hook, Profile, Path, Lesson-quiz, AI-tools, CTA). 5 varied transitions (slide-up/slide-right/wipe/flip/clockWipe via @remotion/transitions) + a `TransitionFX` overlay per cut (light sweep, flash, accent ring, sparkles). REAL app assets swapped in, held in `public/`: logo.svg (tixu.ai wordmark), home/backpack.webp, providers/openai|google|runway|flux.svg, gen/card1-4.webp (Generate illustrations — Text=card4, Video=card1, Image=card3, Audio=card2), lesson/helper-system.png. NOTE: `remotion still|render` invoked from OUTSIDE the project dir must pass `--public-dir "<proj>/public"` or Img assets 404. Remaining: music + UI SFX (deferred task), Zod parametrization (RU/EN, per-course, 1:1/16:9), 15s/6s cutdowns. Uses [[tixu-brand-tokens]]; product model in [[tixu-product-overview]].
