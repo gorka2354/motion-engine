@@ -23,6 +23,35 @@ export const kf = (
     { easing, extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
 
+/** Spring presets — pass as `config` to remotion's spring(). */
+export const SPRING = {
+  /** Critically-damped settle, no overshoot — large surfaces, camera moves. */
+  smooth: { damping: 200 },
+  /** Snappy pop with a hint of overshoot — cards, chips, buttons. */
+  pop: { damping: 18, stiffness: 160, mass: 0.9 },
+  /** Playful visible bounce — badges, emoji, small accents. */
+  bounce: { damping: 11, stiffness: 170, mass: 1 },
+} as const;
+
+/** Start frame of the i-th staggered item. */
+export const stagger = (i: number, start: number, step: number) =>
+  start + i * step;
+
+/** Eased 0→1 progress of the i-th staggered item (replaces manual `start + i*step` windows). */
+export const stagger01 = (
+  frame: number,
+  i: number,
+  start: number,
+  step: number,
+  dur = 14,
+  easing = EASE,
+) =>
+  interpolate(frame, [start + i * step, start + i * step + dur], [0, 1], {
+    easing,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+
 /**
  * Visibility window with separate eased enter/exit progress.
  * enter: 0→1 over inDur from `from`; exit: 0→1 over outDur ending at `to`.

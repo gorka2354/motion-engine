@@ -8,6 +8,7 @@ import { SceneAiTools } from "./scenes/SceneAiTools";
 import { SceneCta } from "./scenes/SceneCta";
 import { TixuPromo, SCENE_DURATIONS, TIXU_PROMO_DURATION } from "./TixuPromo";
 import { TixuPromoV2, V2_DURATION } from "./v2/TixuPromoV2";
+import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 
 const FPS = 30;
 const W = 1080;
@@ -42,6 +43,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="SceneLessonQuiz" component={SceneLessonQuiz} durationInFrames={SCENE_DURATIONS.quiz} fps={FPS} width={W} height={H} />
       <Composition id="SceneAiTools" component={SceneAiTools} durationInFrames={SCENE_DURATIONS.tools} fps={FPS} width={W} height={H} />
       <Composition id="SceneCta" component={SceneCta} durationInFrames={SCENE_DURATIONS.cta} fps={FPS} width={W} height={H} />
+      <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
     </>
   );
 };

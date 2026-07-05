@@ -17,11 +17,12 @@
 **Риск:** LOW.
 **Итог (2026-07-05):** `src/theme.ts` → `src/theme/{tokens,index}.ts` (импорты `../theme` не тронуты). Новые группы токенов: `titanium`, `gradient` (living/scene — near-dupes, унифицировать в inc-3), `shadow` (phone/ctaGlow/buttonGlow/cardHighlight/sheet), `providerTint`, `type` (scale+weights), `duration` (beatIn/Out), `ease` (bezier-стопы; `anim.ts` строит EASE из них). Заменены хардкоды: PhoneFrame, LivingBackground, GradientBackground, AiToolsScreen, TypoBeat, TixuPromoV2, HomeResumeScreen, LessonQuizScreen, anim.ts. **Δ=0 подтверждён: MD5 before/after IDENTICAL на всех 5 кадрах** (`out/inc1/`). tsc чистый.
 
-## inc-2 — Премиум-примитивы (`src/lib/`) 🔲
+## inc-2 — Премиум-примитивы (`src/lib/`) ✅
 **Цель:** переиспользуемые примитивы поверх Remotion.
 **Что:** установить `@remotion/motion-blur` + `@remotion/noise`. Создать: spring-пресеты в `anim.ts` (сейчас spring только в V1); `<MotionBlur>` (обёртка `CameraMotionBlur`); `<Grain>` (noise overlay); `<Glow>`; `stagger()` (сейчас `i*N` вручную в 4 файлах); depth-parallax слои.
 **Валидация:** тест-стилл каждого примитива изолированно (отдельная Composition-песочница).
 **Риск:** LOW (additive, ничего не применяем к ролику).
+**Итог (2026-07-05):** `src/lib/` = `MotionBlur` (CameraMotionBlur), `Grain` (SVG feTurbulence, живое зерно по frame-seed), `Glow` (двухслойный drop-shadow), `Parallax` (органический дрейф на noise2D), `hexToRgba`; в `anim.ts` добавлены `SPRING` (smooth/pop/bounce), `stagger()`, `stagger01()`; общий вход `src/lib/index.ts`. Песочница `LibSandbox` в Root (6 рядов, стиллы 17/25/70 в `out/inc2/`), всё проверено глазами + пиксельными замерами. **3 граблей headless-рендера задокументированы в коде Grain:** (1) mix-blend-mode применяется ТОЛЬКО к полностью непрозрачному контенту (и element-opacity, и per-pixel alpha < 1 молча убивают бленд → сила зерна = контраст цвета вокруг identity-точки бленда); (2) overlay математически ≈ невидим на почти-белом фоне (для светлых баз — `blend="multiply"`; тёмная база inc-3 решает это системно); (3) baseFrequency=1.0 (целое) у feTurbulence даёт константу — узлы решётки перлин-шума (дефолт 0.8).
 
 ## inc-3 — Крафт-пасс `TixuPromoV2` 🔲 ⭐
 **Цель:** визуальный скачок, убрать топорность (3 движения = 80%).
