@@ -8,6 +8,8 @@ import { SceneAiTools } from "./scenes/SceneAiTools";
 import { SceneCta } from "./scenes/SceneCta";
 import { TixuPromo, SCENE_DURATIONS, TIXU_PROMO_DURATION } from "./TixuPromo";
 import { TixuPromoV2, V2_DURATION } from "./v2/TixuPromoV2";
+import { promoSchema } from "./v2/promoSchema";
+import { PROMO_DEFAULTS } from "./v2/promo.map";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 
 const FPS = 30;
@@ -28,6 +30,8 @@ export const RemotionRoot: React.FC = () => {
         fps={FPS}
         width={W}
         height={H}
+        schema={promoSchema}
+        defaultProps={PROMO_DEFAULTS}
       />
       <Composition
         id="TixuPromo"

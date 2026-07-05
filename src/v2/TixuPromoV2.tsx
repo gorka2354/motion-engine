@@ -16,16 +16,14 @@ import { FloatingChips } from "./FloatingChips";
 import { FloatingCertificate } from "./FloatingCertificate";
 import { MotionBlur } from "../lib/MotionBlur";
 import { clamp01, kf, window01 } from "./anim";
+import type { PromoProps, ScreenName } from "./promoSchema";
 
 export const V2_DURATION = 1320; // 44s @ 30fps
 
 const PHONE_W = 640;
 
-// ── Beat map (global frames) ────────────────────────────────────────────────
-const NAV = { profile: 150, library: 265, path: 420, quiz: 585, tools: 910 } as const;
+// ── Camera art (stays code — not part of the authoring surface) ────────────
 const ZOOM = { in: [500, 556], out: [800, 855] } as const;
-const CERT = { from: 810, to: 905 } as const;
-const CHIPS = { from: 935, to: 1010 } as const;
 const END = { start: 1160, settle: 1215 } as const;
 
 /** Windows where the camera actually travels — only then is motion blur paid for. */
@@ -38,6 +36,29 @@ const BLUR_WINDOWS: [number, number][] = [
 
 /** Screen coords: Continue button center inside the 604-wide home screen. */
 const HOME_BTN_Y = 604 * (19.5 / 9) - 44 - 34;
+
+/** Typography scale slots exposed to the scene map. */
+const SIZE: Record<PromoProps["beats"][number]["size"], number> = {
+  hero: theme.type.hero,
+  beat: theme.type.beat,
+  beatWide: theme.type.beatWide,
+  beatZoom: theme.type.beatZoom,
+};
+
+/** Named product screens the scene map can navigate between. */
+const SCREENS: Record<ScreenName, React.ReactNode> = {
+  home: (
+    <>
+      <HomeResumeScreen />
+      <TapDot x="50%" y={HOME_BTN_Y} from={112} pressAt={132} to={150} />
+    </>
+  ),
+  profile: <ProfileScreen />,
+  library: <LibraryScreen />,
+  path: <PathScreen />,
+  quiz: <LessonQuizScreen deep />,
+  tools: <AiToolsScreen deep />,
+};
 
 /** Camera zoom progress — shared by the rig and the overlay layers. */
 const zoomAt = (f: number) =>
@@ -52,7 +73,7 @@ const zoomAt = (f: number) =>
  * The device + camera transform. Lives in its own component (reading the
  * frame itself) so CameraMotionBlur can resample it at fractional frames.
  */
-const CameraRig: React.FC = () => {
+const CameraRig: React.FC<{ nav: PromoProps["nav"] }> = ({ nav }) => {
   const f = useCurrentFrame();
   const zoomAmt = zoomAt(f);
 
@@ -118,23 +139,11 @@ const CameraRig: React.FC = () => {
         />
         <PhoneFrame width={PHONE_W}>
           <ScreenFlow
-            steps={[
-              {
-                at: 0,
-                kind: "push",
-                node: (
-                  <>
-                    <HomeResumeScreen />
-                    <TapDot x="50%" y={HOME_BTN_Y} from={112} pressAt={132} to={150} />
-                  </>
-                ),
-              },
-              { at: NAV.profile, kind: "push", node: <ProfileScreen /> },
-              { at: NAV.library, kind: "push", node: <LibraryScreen /> },
-              { at: NAV.path, kind: "push", node: <PathScreen /> },
-              { at: NAV.quiz, kind: "push", node: <LessonQuizScreen deep /> },
-              { at: NAV.tools, kind: "tab", node: <AiToolsScreen deep /> },
-            ]}
+            steps={nav.map((step) => ({
+              at: step.at,
+              kind: step.kind,
+              node: SCREENS[step.screen],
+            }))}
           />
         </PhoneFrame>
         {/* glass light sweep */}
@@ -173,13 +182,17 @@ const CameraRig: React.FC = () => {
 };
 
 /**
- * V2 master — one continuous shot, deep on features, on a dark brand stage
- * (inc-3). The phone never leaves the frame: screens navigate inside the
- * device (iOS push / tab switch), the camera zooms into the display for the
- * lesson beats and pulls back out. Camera travel gets real motion blur; big
- * typography spring-blurs carry the story.
+ * V2 master — one continuous shot, deep on features, on a dark brand stage.
+ * Fully data-driven (inc-5): the storyline (beats, navigation, floats, brand
+ * copy) comes from PromoProps / promo.map.ts; this component is the engine.
  */
-export const TixuPromoV2: React.FC = () => {
+export const TixuPromoV2: React.FC<PromoProps> = ({
+  brand,
+  beats,
+  zoomBeat,
+  nav,
+  floats,
+}) => {
   const f = useCurrentFrame();
   const zoomAmt = zoomAt(f);
 
@@ -201,7 +214,7 @@ export const TixuPromoV2: React.FC = () => {
   const ctaPulse = f > 1222 ? 1 + 0.012 * Math.sin((f - 1222) / 8) : 1;
 
   const inBlurWindow = BLUR_WINDOWS.some(([a, b]) => f >= a && f <= b);
-  const rig = <CameraRig />;
+  const rig = <CameraRig nav={nav} />;
 
   return (
     <LivingBackground>
@@ -219,61 +232,24 @@ export const TixuPromoV2: React.FC = () => {
         }}
       >
         <Img
-          src={staticFile("logo.svg")}
+          src={staticFile(brand.logo)}
           style={{ height: 40, filter: "brightness(0) invert(1)" }}
         />
       </div>
 
-      {/* ── typography beats ── */}
-      <TypoBeat title="Everyone has AI." from={8} to={54} y={290} size={theme.type.hero} />
-      <TypoBeat
-        title="Few use it well."
-        accentWord="well"
-        from={50}
-        to={104}
-        y={290}
-        size={theme.type.hero}
-      />
-      <TypoBeat
-        title="A plan that knows you."
-        sub="Your focus, your goal, your pace."
-        from={158}
-        to={250}
-        y={168}
-        size={theme.type.beat}
-      />
-      <TypoBeat
-        title="Courses, challenges, careers."
-        sub="A track for whatever you're after."
-        from={273}
-        to={405}
-        y={168}
-        size={theme.type.beatWide}
-      />
-      <TypoBeat
-        title="One clear path."
-        sub="Chapters, lessons, a certificate."
-        from={428}
-        to={495}
-        y={168}
-        size={theme.type.beat}
-      />
-      <TypoBeat
-        title="Finish certified."
-        sub="A personal certificate for every course."
-        from={815}
-        to={905}
-        y={168}
-        size={theme.type.beat}
-      />
-      <TypoBeat
-        title="Every AI. One app."
-        sub="ChatGPT · Gemini · Runway · Flux — built in."
-        from={920}
-        to={1130}
-        y={168}
-        size={theme.type.beat}
-      />
+      {/* ── typography beats (from the scene map) ── */}
+      {beats.map((b) => (
+        <TypoBeat
+          key={`${b.from}-${b.title}`}
+          title={b.title}
+          sub={b.sub}
+          accentWord={b.accentWord}
+          from={b.from}
+          to={b.to}
+          y={b.y}
+          size={SIZE[b.size]}
+        />
+      ))}
 
       {/* ── camera + device (motion-blurred only while the camera travels) ── */}
       {inBlurWindow ? (
@@ -293,17 +269,25 @@ export const TixuPromoV2: React.FC = () => {
           right: 0,
           height: 360,
           background: theme.dark.scrim,
-          opacity: window01(f, 591, 700).opacity * zoomAmt,
+          opacity: window01(f, zoomBeat.from, zoomBeat.to).opacity * zoomAmt,
           zIndex: 45,
         }}
       />
-      <TypoBeat title="Learn by doing." from={591} to={700} y={96} size={theme.type.beatZoom} />
+      <TypoBeat
+        title={zoomBeat.title}
+        sub={zoomBeat.sub}
+        accentWord={zoomBeat.accentWord}
+        from={zoomBeat.from}
+        to={zoomBeat.to}
+        y={zoomBeat.y}
+        size={SIZE[zoomBeat.size]}
+      />
 
       {/* certificate payoff during the pull-back */}
-      <FloatingCertificate from={CERT.from} to={CERT.to} />
+      <FloatingCertificate from={floats.certificate.from} to={floats.certificate.to} />
 
       {/* floating provider chips during the AI-tools beat */}
-      <FloatingChips from={CHIPS.from} to={CHIPS.to} />
+      <FloatingChips from={floats.chips.from} to={floats.chips.to} />
 
       {/* ── ending block ── */}
       <div
@@ -320,7 +304,7 @@ export const TixuPromoV2: React.FC = () => {
         }}
       >
         <Img
-          src={staticFile("logo.svg")}
+          src={staticFile(brand.logo)}
           style={{ height: 44, filter: "brightness(0) invert(1)" }}
         />
       </div>
@@ -342,9 +326,12 @@ export const TixuPromoV2: React.FC = () => {
           filter: `blur(${16 * (1 - endTitle.enter)}px)`,
         }}
       >
-        Learn AI.
-        <br />
-        Actually use it.
+        {brand.endTitleLines.map((line, i) => (
+          <React.Fragment key={i}>
+            {line}
+            {i < brand.endTitleLines.length - 1 ? <br /> : null}
+          </React.Fragment>
+        ))}
       </div>
       <div
         style={{
@@ -376,7 +363,7 @@ export const TixuPromoV2: React.FC = () => {
             scale: String(ctaPulse),
           }}
         >
-          Start free · tixu.ai
+          {brand.ctaLabel}
         </div>
       </div>
     </LivingBackground>

@@ -36,11 +36,12 @@
 **Что:** `@remotion/media` + `@remotion/sfx`; музыка (Artlist — лицензия под заказ); слой `sfxTrack(event, frame)` — SFX по битам (tap/push/appear); music ducking под ключевые моменты.
 **Валидация:** рендер mp4 со звуком, послушать; SFX на кадре НАЧАЛА анимации.
 
-## inc-5 — Scene-Map (AI-authoring) 🔲
+## inc-5 — Scene-Map (AI-authoring) ✅
 **Цель:** авторинг ролика из данных, а не из JSX.
 **Что:** atomic Scene-компоненты с Zod-контрактами + декларативный `src/scene-map.ts` (массив `{component, fromFrame, duration, props}`) + движок-обёртка (оборачивает каждую в `<Sequence>`). Still-loop как штатный цикл разработки.
 **Валидация:** пересобрать ролик из scene-map → still совпадает с inc-3 AFTER.
 **Итог:** дальше ролики (в т.ч. под заказ) собираются редактированием массива + токенов.
+**Итог (2026-07-05):** сторилайн V2 = данные: `src/v2/promoSchema.ts` (zod **4.3.6** — версия жёстко под Remotion, v3 даёт version-mismatch warning) + `src/v2/promo.map.ts` (`PROMO_DEFAULTS`: beats/zoomBeat/nav/floats/brand-копия). `TixuPromoV2` стал движком `React.FC<PromoProps>`: реестр `SCREENS` (имя→экран), слоты `SIZE` (hero/beat/beatWide/beatZoom→theme.type), концовка/CTA/логотип из `brand`. Root: `schema`+`defaultProps` → props редактируются в Remotion Studio и переопределяются `--props=file.json`. **Отклонение от плана:** не Sequence-обёртка над массивом сцен — V2 это continuous shot, данные описывают биты/навигацию/флоаты поверх постоянного camera-rig; Sequence-движок понадобится позже для мультисценовых клиентских роликов (V1-стиль). **Валидация:** MD5 IDENTICAL на 90/300/540/950/1210 vs эталон (`out/inc5/`); демо-override `out/inc5/demo-override-1290.png` (новая копия конца + CTA из JSON). ⚠️ Для RU-вариантов добавить `cyrillic` в subsets `fonts.ts` (сейчас latin-only).
 
 ---
 
