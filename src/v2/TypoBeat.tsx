@@ -1,12 +1,13 @@
 import React from "react";
-import { useCurrentFrame } from "remotion";
+import { useCurrentFrame, useVideoConfig } from "remotion";
 import { theme } from "../theme";
-import { window01 } from "./anim";
+import { clamp01, springWindow } from "./anim";
 
 /**
  * Apple-style typography beat: big tight headline (+ optional sub-line) that
- * blur-ups into place and softly blurs away at the end of its window.
- * Positioned in viewport coordinates, independent of the camera.
+ * springs into place (slight overshoot) and softly blurs away at the end of
+ * its window. Positioned in viewport coordinates, independent of the camera.
+ * Colors are tuned for the dark stage.
  */
 export const TypoBeat: React.FC<{
   title: string;
@@ -18,11 +19,13 @@ export const TypoBeat: React.FC<{
   accentWord?: string;
 }> = ({ title, sub, from, to, y = 190, size = 76, accentWord }) => {
   const f = useCurrentFrame();
-  const { enter, exit, opacity } = window01(f, from, to);
+  const { fps } = useVideoConfig();
+  const { enter, exit, opacity } = springWindow(f, fps, from, to);
   if (opacity <= 0.001) return null;
 
-  const blur = 16 * (1 - enter) + 12 * exit;
-  const ty = 30 * (1 - enter) - 22 * exit;
+  const eIn = clamp01(enter);
+  const blur = 14 * (1 - eIn) + 12 * exit;
+  const ty = 34 * (1 - enter) - 22 * exit;
 
   const renderTitle = () => {
     if (!accentWord || !title.includes(accentWord)) return title;
@@ -30,7 +33,7 @@ export const TypoBeat: React.FC<{
     return (
       <>
         {a}
-        <span style={{ color: theme.color.primary }}>{accentWord}</span>
+        <span style={{ color: theme.dark.accent }}>{accentWord}</span>
         {b}
       </>
     );
@@ -58,7 +61,7 @@ export const TypoBeat: React.FC<{
           fontWeight: theme.type.weightHeading,
           letterSpacing: theme.type.letterSpacing,
           lineHeight: theme.type.lineHeight,
-          color: theme.color.ink,
+          color: theme.dark.text,
         }}
       >
         {renderTitle()}
@@ -68,7 +71,7 @@ export const TypoBeat: React.FC<{
           style={{
             fontSize: theme.type.sub,
             fontWeight: theme.type.weightSub,
-            color: theme.color.muted,
+            color: theme.dark.textMuted,
             marginTop: 16,
             letterSpacing: -0.3,
           }}

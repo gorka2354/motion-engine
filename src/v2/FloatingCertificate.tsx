@@ -1,7 +1,7 @@
 import React from "react";
-import { Img, staticFile, useCurrentFrame } from "remotion";
+import { Img, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { theme } from "../theme";
-import { clamp01, EASE, EASE_OUT } from "./anim";
+import { clamp01, EASE_OUT, SPRING } from "./anim";
 
 /**
  * Certificate card that floats out of the device during the pull-back —
@@ -12,11 +12,13 @@ export const FloatingCertificate: React.FC<{ from: number; to: number }> = ({
   to,
 }) => {
   const f = useCurrentFrame();
+  const { fps } = useVideoConfig();
   if (f < from || f > to + 2) return null;
 
-  const enter = EASE(clamp01((f - from) / 30));
+  const t = f - from;
+  const enter = t < 0 ? 0 : spring({ frame: t, fps, config: SPRING.pop });
   const exit = EASE_OUT(clamp01((f - (to - 18)) / 18));
-  const opacity = enter * (1 - exit);
+  const opacity = clamp01(enter) * (1 - exit);
   if (opacity <= 0.001) return null;
 
   const bob = Math.sin((f - from) * 0.04) * 7;
@@ -32,12 +34,12 @@ export const FloatingCertificate: React.FC<{ from: number; to: number }> = ({
         rotate: "-3deg",
         scale: String(0.74 + 0.26 * enter),
         opacity,
-        filter: `blur(${(1 - enter) * 10}px)`,
+        filter: `blur(${(1 - clamp01(enter)) * 10}px)`,
         zIndex: 55,
         background: theme.color.surface,
         border: `1px solid ${theme.color.hair}`,
         borderRadius: 30,
-        boxShadow: "0 50px 90px -30px rgba(9,46,92,0.38)",
+        boxShadow: theme.dark.shadowFloat,
         padding: "34px 40px 32px",
         fontFamily: theme.font.stack,
       }}

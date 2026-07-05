@@ -36,6 +36,20 @@ export const theme = {
     vignette:
       "radial-gradient(120% 90% at 50% 42%, transparent 62%, rgba(3,20,35,0.05) 100%)",
   },
+  /** V2 dark stage (inc-3 craft pass) — the phone floats on this. */
+  dark: {
+    bg: "linear-gradient(180deg, #050E1A 0%, #0A2036 52%, #04101E 100%)",
+    vignette:
+      "radial-gradient(120% 90% at 50% 40%, transparent 52%, rgba(0,0,0,0.42) 100%)",
+    text: "#F2F7FC",
+    textMuted: "#93A7BC",
+    accent: "#3FA4FF", // accent word on dark — primary reads too dim there
+    hair: "rgba(255,255,255,0.16)",
+    scrim:
+      "linear-gradient(180deg, rgba(4,13,24,0.98) 0%, rgba(4,13,24,0.9) 42%, rgba(4,13,24,0))",
+    shadowFloat: "0 40px 80px -24px rgba(0,0,0,0.6)",
+    phoneGlow: "radial-gradient(closest-side, rgba(18,124,224,0.4), transparent 72%)",
+  },
   shadow: {
     phone:
       "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",

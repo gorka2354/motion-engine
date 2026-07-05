@@ -1,7 +1,7 @@
 import React from "react";
-import { Img, staticFile, useCurrentFrame } from "remotion";
+import { Img, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { theme } from "../theme";
-import { clamp01, EASE, EASE_OUT } from "./anim";
+import { clamp01, EASE_OUT, SPRING } from "./anim";
 
 const CHIPS = [
   { logo: "providers/openai.svg", x: 128, y: 640, delay: 0, drift: 0.9 },
@@ -19,14 +19,16 @@ export const FloatingChips: React.FC<{ from: number; to: number }> = ({
   to,
 }) => {
   const f = useCurrentFrame();
+  const { fps } = useVideoConfig();
   if (f < from || f > to + 2) return null;
 
   return (
     <>
       {CHIPS.map((c, i) => {
-        const enter = EASE(clamp01((f - from - c.delay) / 26));
+        const t = f - from - c.delay;
+        const enter = t < 0 ? 0 : spring({ frame: t, fps, config: SPRING.pop });
         const exit = EASE_OUT(clamp01((f - (to - 16)) / 16));
-        const opacity = enter * (1 - exit);
+        const opacity = clamp01(enter) * (1 - exit);
         if (opacity <= 0.001) return null;
 
         const towardCenter = c.x < 540 ? 1 : -1;
@@ -48,7 +50,7 @@ export const FloatingChips: React.FC<{ from: number; to: number }> = ({
               background: "rgba(255,255,255,0.88)",
               backdropFilter: "blur(10px)",
               border: `1px solid ${theme.color.hair}`,
-              boxShadow: "0 24px 48px -18px rgba(9,46,92,0.28)",
+              boxShadow: theme.dark.shadowFloat,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -56,7 +58,7 @@ export const FloatingChips: React.FC<{ from: number; to: number }> = ({
               rotate: `${rot}deg`,
               scale: String(0.7 + 0.3 * enter),
               opacity,
-              filter: `blur(${(1 - enter) * 8}px)`,
+              filter: `blur(${(1 - clamp01(enter)) * 8}px)`,
               zIndex: 40,
             }}
           >

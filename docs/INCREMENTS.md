@@ -24,11 +24,12 @@
 **Риск:** LOW (additive, ничего не применяем к ролику).
 **Итог (2026-07-05):** `src/lib/` = `MotionBlur` (CameraMotionBlur), `Grain` (SVG feTurbulence, живое зерно по frame-seed), `Glow` (двухслойный drop-shadow), `Parallax` (органический дрейф на noise2D), `hexToRgba`; в `anim.ts` добавлены `SPRING` (smooth/pop/bounce), `stagger()`, `stagger01()`; общий вход `src/lib/index.ts`. Песочница `LibSandbox` в Root (6 рядов, стиллы 17/25/70 в `out/inc2/`), всё проверено глазами + пиксельными замерами. **3 граблей headless-рендера задокументированы в коде Grain:** (1) mix-blend-mode применяется ТОЛЬКО к полностью непрозрачному контенту (и element-opacity, и per-pixel alpha < 1 молча убивают бленд → сила зерна = контраст цвета вокруг identity-точки бленда); (2) overlay математически ≈ невидим на почти-белом фоне (для светлых баз — `blend="multiply"`; тёмная база inc-3 решает это системно); (3) baseFrequency=1.0 (целое) у feTurbulence даёт константу — узлы решётки перлин-шума (дефолт 0.8).
 
-## inc-3 — Крафт-пасс `TixuPromoV2` 🔲 ⭐
+## inc-3 — Крафт-пасс `TixuPromoV2` ✅ ⭐
 **Цель:** визуальный скачок, убрать топорность (3 движения = 80%).
 **Что:** (а) spring вместо ease на входах; (б) motion-blur на camera-moves/переходах; (в) grain overlay + глубина; (г) тёмная/богатая база + ОДИН насыщенный accent (сейчас наоборот — бледный светлый); (д) аккуратная хореография floating-элементов (чинит обрезанную карточку).
 **Валидация:** still 90/300/540/950/1210 глазами vs BEFORE; полный mp4 → `out/..-AFTER.mp4`, сравнить до/после.
 **Риск:** MED (меняет look — но обратимо, before-эталон есть).
+**Итог (2026-07-05):** V2 переведён на тёмную сцену: токены `theme.dark` (bg/vignette/text/textMuted/accent/scrim/shadowFloat/phoneGlow), `LivingBackground` → rich navy + 2 гроу-блоба primary/primaryDeep (один accent) + `<Grain 0.07>`; ambient-глоу за телефоном. Spring-входы: `springWindow()` в anim.ts → TypoBeat (overshoot на translate), FloatingChips/Certificate (SPRING.pop). Motion-blur: камера-риг выделен в `CameraRig` (blur сэмплирует движение честно), `BLUR_WINDOWS` = только окна реального движения (rise/zoom-in/zoom-out/pull-back), samples 8 / shutter 240. Хореография: хиро-биты y 520→290 (коллизия текста с рамкой на f90 устранена), wordmark → белый (CSS invert) с гашением к половине зума (фикс «призрака» поверх экрана). V1 (TixuPromo) не тронут — остался на светлой теме. Стиллы: `out/inc3/`. Полный рендер: `out/tixu-promo-v2-AFTER-inc3.mp4`.
 
 ## inc-4 — Звук 🔲
 **Цель:** закрыть главный пробел качества.

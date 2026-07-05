@@ -1,10 +1,12 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
+import { Grain } from "../lib/Grain";
 
 /**
- * Continuously breathing backdrop: the brand gradient with two soft blobs that
- * drift for the whole video (never resetting per scene) + a faint vignette.
+ * Continuously breathing dark stage (inc-3): rich navy base with two drifting
+ * brand-blue glow blobs (single-accent rule), a vignette for depth and a live
+ * film-grain pass on top. Blobs never reset per scene.
  */
 export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
   children,
@@ -16,11 +18,7 @@ export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
   const y2 = Math.sin(f * 0.0055) * 52;
 
   return (
-    <AbsoluteFill
-      style={{
-        background: theme.gradient.living,
-      }}
-    >
+    <AbsoluteFill style={{ background: theme.dark.bg }}>
       <div
         style={{
           position: "absolute",
@@ -29,9 +27,9 @@ export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
           width: 760,
           height: 760,
           borderRadius: "50%",
-          background: theme.color.gradTop,
-          filter: "blur(140px)",
-          opacity: 0.45,
+          background: theme.color.primary,
+          filter: "blur(150px)",
+          opacity: 0.3,
         }}
       />
       <div
@@ -42,18 +40,15 @@ export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
           width: 680,
           height: 680,
           borderRadius: "50%",
-          background: theme.color.gradLavender,
-          filter: "blur(150px)",
-          opacity: 0.55,
+          background: theme.color.primaryDeep,
+          filter: "blur(160px)",
+          opacity: 0.34,
         }}
       />
-      {/* faint vignette for depth */}
-      <AbsoluteFill
-        style={{
-          background: theme.gradient.vignette,
-        }}
-      />
+      {/* vignette for depth */}
+      <AbsoluteFill style={{ background: theme.dark.vignette }} />
       {children}
+      <Grain opacity={0.07} />
     </AbsoluteFill>
   );
 };

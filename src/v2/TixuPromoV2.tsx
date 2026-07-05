@@ -14,6 +14,7 @@ import { TypoBeat } from "./TypoBeat";
 import { TapDot } from "./TapDot";
 import { FloatingChips } from "./FloatingChips";
 import { FloatingCertificate } from "./FloatingCertificate";
+import { MotionBlur } from "../lib/MotionBlur";
 import { clamp01, kf, window01 } from "./anim";
 
 export const V2_DURATION = 1320; // 44s @ 30fps
@@ -27,27 +28,34 @@ const CERT = { from: 810, to: 905 } as const;
 const CHIPS = { from: 935, to: 1010 } as const;
 const END = { start: 1160, settle: 1215 } as const;
 
+/** Windows where the camera actually travels — only then is motion blur paid for. */
+const BLUR_WINDOWS: [number, number][] = [
+  [16, 100], // intro rise
+  [495, 560], // zoom in
+  [795, 860], // zoom out
+  [1150, 1224], // end pull-back
+];
+
 /** Screen coords: Continue button center inside the 604-wide home screen. */
 const HOME_BTN_Y = 604 * (19.5 / 9) - 44 - 34;
 
-/**
- * V2 master — one continuous shot, deep on features. The phone never leaves
- * the frame: screens navigate inside the device (iOS push / tab switch), the
- * camera zooms into the display for the lesson beats and pulls back out.
- * Feature depth: personal plan → library (challenges, tracks, careers) →
- * course path → two lesson interactions → certificate payoff → AI hub with a
- * live chat demo. Big typography blur-ups carry the story.
- */
-export const TixuPromoV2: React.FC = () => {
-  const f = useCurrentFrame();
-
-  // ── Camera ──
-  const zoomAmt = kf(f, [
+/** Camera zoom progress — shared by the rig and the overlay layers. */
+const zoomAt = (f: number) =>
+  kf(f, [
     [ZOOM.in[0], 0],
     [ZOOM.in[1], 1],
     [ZOOM.out[0], 1],
     [ZOOM.out[1], 0],
   ]);
+
+/**
+ * The device + camera transform. Lives in its own component (reading the
+ * frame itself) so CameraMotionBlur can resample it at fractional frames.
+ */
+const CameraRig: React.FC = () => {
+  const f = useCurrentFrame();
+  const zoomAmt = zoomAt(f);
+
   const y = kf(f, [
     [0, 1250],
     [28, 1250],
@@ -80,20 +88,111 @@ export const TixuPromoV2: React.FC = () => {
     [55, 1],
   ]);
 
+  // Glass sweep across the display (twice, very subtle).
+  const sweeps = [112, 990].map((start) => {
+    const p = clamp01((f - start) / 70);
+    return { p, o: p > 0 && p < 1 ? 0.1 * Math.sin(Math.PI * p) : 0 };
+  });
+
+  return (
+    <AbsoluteFill style={{ perspective: 1600 }}>
+      <div
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          translate: "-50% -50%",
+          transform: `translate(0px, ${y + floatY}px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${s})`,
+          opacity: phoneO,
+        }}
+      >
+        {/* ambient brand glow lifts the device off the dark stage */}
+        <div
+          style={{
+            position: "absolute",
+            inset: -150,
+            background: theme.dark.phoneGlow,
+            filter: "blur(46px)",
+            zIndex: -1,
+          }}
+        />
+        <PhoneFrame width={PHONE_W}>
+          <ScreenFlow
+            steps={[
+              {
+                at: 0,
+                kind: "push",
+                node: (
+                  <>
+                    <HomeResumeScreen />
+                    <TapDot x="50%" y={HOME_BTN_Y} from={112} pressAt={132} to={150} />
+                  </>
+                ),
+              },
+              { at: NAV.profile, kind: "push", node: <ProfileScreen /> },
+              { at: NAV.library, kind: "push", node: <LibraryScreen /> },
+              { at: NAV.path, kind: "push", node: <PathScreen /> },
+              { at: NAV.quiz, kind: "push", node: <LessonQuizScreen deep /> },
+              { at: NAV.tools, kind: "tab", node: <AiToolsScreen deep /> },
+            ]}
+          />
+        </PhoneFrame>
+        {/* glass light sweep */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 18,
+            borderRadius: theme.radius.screen,
+            overflow: "hidden",
+            pointerEvents: "none",
+            zIndex: 70,
+          }}
+        >
+          {sweeps.map((sw, i) =>
+            sw.o > 0 ? (
+              <div
+                key={i}
+                style={{
+                  position: "absolute",
+                  top: "-30%",
+                  left: `${-60 + sw.p * 200}%`,
+                  width: "42%",
+                  height: "160%",
+                  rotate: "14deg",
+                  background:
+                    "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
+                  opacity: sw.o,
+                }}
+              />
+            ) : null,
+          )}
+        </div>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+/**
+ * V2 master — one continuous shot, deep on features, on a dark brand stage
+ * (inc-3). The phone never leaves the frame: screens navigate inside the
+ * device (iOS push / tab switch), the camera zooms into the display for the
+ * lesson beats and pulls back out. Camera travel gets real motion blur; big
+ * typography spring-blurs carry the story.
+ */
+export const TixuPromoV2: React.FC = () => {
+  const f = useCurrentFrame();
+  const zoomAmt = zoomAt(f);
+
   // ── Persistent top wordmark (hidden during zoom and the ending block) ──
+  // Fade fully by half-zoom: the white wordmark must be gone before the
+  // rising screen edge passes under it (ghost-over-display bug otherwise).
   const logoO =
     kf(f, [
       [8, 0],
       [30, 0.92],
     ]) *
-    (1 - zoomAmt) *
+    (1 - clamp01(zoomAmt / 0.5)) *
     (1 - clamp01((f - 1140) / 20));
-
-  // ── Glass sweep across the display (twice, very subtle) ──
-  const sweeps = [112, 990].map((start) => {
-    const p = clamp01((f - start) / 70);
-    return { p, o: p > 0 && p < 1 ? 0.1 * Math.sin(Math.PI * p) : 0 };
-  });
 
   // ── Ending block ──
   const endLogo = window01(f, 1170, 1400);
@@ -101,9 +200,12 @@ export const TixuPromoV2: React.FC = () => {
   const endCta = window01(f, 1196, 1400);
   const ctaPulse = f > 1222 ? 1 + 0.012 * Math.sin((f - 1222) / 8) : 1;
 
+  const inBlurWindow = BLUR_WINDOWS.some(([a, b]) => f >= a && f <= b);
+  const rig = <CameraRig />;
+
   return (
     <LivingBackground>
-      {/* persistent wordmark */}
+      {/* persistent wordmark — inverted to white for the dark stage */}
       <div
         style={{
           position: "absolute",
@@ -116,17 +218,20 @@ export const TixuPromoV2: React.FC = () => {
           zIndex: 60,
         }}
       >
-        <Img src={staticFile("logo.svg")} style={{ height: 40 }} />
+        <Img
+          src={staticFile("logo.svg")}
+          style={{ height: 40, filter: "brightness(0) invert(1)" }}
+        />
       </div>
 
       {/* ── typography beats ── */}
-      <TypoBeat title="Everyone has AI." from={8} to={54} y={520} size={theme.type.hero} />
+      <TypoBeat title="Everyone has AI." from={8} to={54} y={290} size={theme.type.hero} />
       <TypoBeat
         title="Few use it well."
         accentWord="well"
         from={50}
         to={104}
-        y={520}
+        y={290}
         size={theme.type.hero}
       />
       <TypoBeat
@@ -170,71 +275,14 @@ export const TixuPromoV2: React.FC = () => {
         size={theme.type.beat}
       />
 
-      {/* ── camera + device ── */}
-      <AbsoluteFill style={{ perspective: 1600 }}>
-        <div
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            translate: "-50% -50%",
-            transform: `translate(0px, ${y + floatY}px) rotateX(${rx}deg) rotateY(${ry}deg) scale(${s})`,
-            opacity: phoneO,
-          }}
-        >
-          <PhoneFrame width={PHONE_W}>
-            <ScreenFlow
-              steps={[
-                {
-                  at: 0,
-                  kind: "push",
-                  node: (
-                    <>
-                      <HomeResumeScreen />
-                      <TapDot x="50%" y={HOME_BTN_Y} from={112} pressAt={132} to={150} />
-                    </>
-                  ),
-                },
-                { at: NAV.profile, kind: "push", node: <ProfileScreen /> },
-                { at: NAV.library, kind: "push", node: <LibraryScreen /> },
-                { at: NAV.path, kind: "push", node: <PathScreen /> },
-                { at: NAV.quiz, kind: "push", node: <LessonQuizScreen deep /> },
-                { at: NAV.tools, kind: "tab", node: <AiToolsScreen deep /> },
-              ]}
-            />
-          </PhoneFrame>
-          {/* glass light sweep */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 18,
-              borderRadius: theme.radius.screen,
-              overflow: "hidden",
-              pointerEvents: "none",
-              zIndex: 70,
-            }}
-          >
-            {sweeps.map((sw, i) =>
-              sw.o > 0 ? (
-                <div
-                  key={i}
-                  style={{
-                    position: "absolute",
-                    top: "-30%",
-                    left: `${-60 + sw.p * 200}%`,
-                    width: "42%",
-                    height: "160%",
-                    rotate: "14deg",
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent)",
-                    opacity: sw.o,
-                  }}
-                />
-              ) : null,
-            )}
-          </div>
-        </div>
-      </AbsoluteFill>
+      {/* ── camera + device (motion-blurred only while the camera travels) ── */}
+      {inBlurWindow ? (
+        <MotionBlur shutterAngle={240} samples={8}>
+          {rig}
+        </MotionBlur>
+      ) : (
+        rig
+      )}
 
       {/* scrim + headline over the zoomed lesson */}
       <div
@@ -244,8 +292,7 @@ export const TixuPromoV2: React.FC = () => {
           left: 0,
           right: 0,
           height: 360,
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0.99) 0%, rgba(255,255,255,0.96) 42%, rgba(255,255,255,0))",
+          background: theme.dark.scrim,
           opacity: window01(f, 591, 700).opacity * zoomAmt,
           zIndex: 45,
         }}
@@ -272,7 +319,10 @@ export const TixuPromoV2: React.FC = () => {
           filter: `blur(${14 * (1 - endLogo.enter)}px)`,
         }}
       >
-        <Img src={staticFile("logo.svg")} style={{ height: 44 }} />
+        <Img
+          src={staticFile("logo.svg")}
+          style={{ height: 44, filter: "brightness(0) invert(1)" }}
+        />
       </div>
       <div
         style={{
@@ -286,7 +336,7 @@ export const TixuPromoV2: React.FC = () => {
           fontWeight: theme.type.weightHeading,
           letterSpacing: theme.type.letterSpacing,
           lineHeight: theme.type.lineHeightEnd,
-          color: theme.color.ink,
+          color: theme.dark.text,
           opacity: endTitle.opacity,
           translate: `0 ${30 * (1 - endTitle.enter)}px`,
           filter: `blur(${16 * (1 - endTitle.enter)}px)`,

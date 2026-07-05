@@ -1,4 +1,5 @@
-import { Easing, interpolate } from "remotion";
+import { Easing, interpolate, spring } from "remotion";
+import type { SpringConfig } from "remotion";
 import { theme } from "../theme";
 
 /** Soft expo-out — the "Apple" ease for entrances. */
@@ -74,4 +75,26 @@ export const window01 = (
     extrapolateRight: "clamp",
   });
   return { enter, exit, opacity: enter * (1 - exit) };
+};
+
+/**
+ * Spring-driven visibility window (inc-3): springy enter (may overshoot 1 —
+ * use raw `enter` for movement, it's clamped internally for opacity),
+ * eased exit like window01.
+ */
+export const springWindow = (
+  f: number,
+  fps: number,
+  from: number,
+  to: number,
+  config: Partial<SpringConfig> = SPRING.pop,
+  outDur: number = theme.duration.beatOut,
+) => {
+  const enter = f < from ? 0 : spring({ frame: f - from, fps, config });
+  const exit = interpolate(f, [to - outDur, to], [0, 1], {
+    easing: EASE_OUT,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  return { enter, exit, opacity: clamp01(enter) * (1 - exit) };
 };

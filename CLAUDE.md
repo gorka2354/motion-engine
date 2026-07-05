@@ -6,7 +6,7 @@
 
 ## Что это
 - Remotion 4.0.484 + React 19 + TypeScript. **Self-contained** (без внешних API/ключей), рендер 100% локально.
-- Мастер-формат: **9:16 · 1080×1920 · 30fps**, English. Эстетика: **floating phone на brand-gradient, Apple/Claude-keynote clean, continuous camera rig** (без full-frame wipes — «2010 transitions» отвергнуты).
+- Мастер-формат: **9:16 · 1080×1920 · 30fps**, English. Эстетика (после inc-3): **floating phone на тёмной brand-сцене** (rich navy `theme.dark` + ОДИН blue-accent, светлые экраны продукта внутри девайса), Apple/Claude-keynote clean, continuous camera rig + **spring-входы / motion-blur на движениях камеры / плёночный grain** (без full-frame wipes — «2010 transitions» отвергнуты).
 
 ## Команды
 - `npm install` — один раз (Node на ПК есть, v20).
