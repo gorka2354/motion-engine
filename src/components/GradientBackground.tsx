@@ -12,8 +12,7 @@ export const GradientBackground: React.FC<{ children?: React.ReactNode }> = ({
   return (
     <AbsoluteFill
       style={{
-        background:
-          "linear-gradient(180deg, #E8F2FE 0%, #F4F9FF 48%, #FFFFFF 100%)",
+        background: theme.gradient.scene,
       }}
     >
       <div

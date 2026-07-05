@@ -55,9 +55,9 @@ export const TypoBeat: React.FC<{
       <div
         style={{
           fontSize: size,
-          fontWeight: 800,
-          letterSpacing: -2,
-          lineHeight: 1.04,
+          fontWeight: theme.type.weightHeading,
+          letterSpacing: theme.type.letterSpacing,
+          lineHeight: theme.type.lineHeight,
           color: theme.color.ink,
         }}
       >
@@ -66,8 +66,8 @@ export const TypoBeat: React.FC<{
       {sub ? (
         <div
           style={{
-            fontSize: 30,
-            fontWeight: 600,
+            fontSize: theme.type.sub,
+            fontWeight: theme.type.weightSub,
             color: theme.color.muted,
             marginTop: 16,
             letterSpacing: -0.3,

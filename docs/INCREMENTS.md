@@ -10,11 +10,12 @@
 
 ---
 
-## inc-1 — Токены по полочкам 🔲
+## inc-1 — Токены по полочкам ✅
 **Цель:** единый `src/theme/tokens.ts` — ВСЕ цвета / шрифты / typography-scale / радиусы / тени / длительности / easing в одном месте.
 **Что:** консолидировать хардкод из ~8 файлов → `PhoneFrame` titanium (`#3A424B/#12161B/#05070A`), `LivingBackground`/`GradientBackground` градиенты-дубли, per-provider tints (`AiToolsScreen`), typography scale (88/82/72/66…), durations (inDur/outDur 22/18). Заменить хардкоды на токены.
 **Валидация:** **Δ=0 визуально** — still 90/300/540/950/1210 до/после совпадают (чистый рефактор).
 **Риск:** LOW.
+**Итог (2026-07-05):** `src/theme.ts` → `src/theme/{tokens,index}.ts` (импорты `../theme` не тронуты). Новые группы токенов: `titanium`, `gradient` (living/scene — near-dupes, унифицировать в inc-3), `shadow` (phone/ctaGlow/buttonGlow/cardHighlight/sheet), `providerTint`, `type` (scale+weights), `duration` (beatIn/Out), `ease` (bezier-стопы; `anim.ts` строит EASE из них). Заменены хардкоды: PhoneFrame, LivingBackground, GradientBackground, AiToolsScreen, TypoBeat, TixuPromoV2, HomeResumeScreen, LessonQuizScreen, anim.ts. **Δ=0 подтверждён: MD5 before/after IDENTICAL на всех 5 кадрах** (`out/inc1/`). tsc чистый.
 
 ## inc-2 — Премиум-примитивы (`src/lib/`) 🔲
 **Цель:** переиспользуемые примитивы поверх Remotion.

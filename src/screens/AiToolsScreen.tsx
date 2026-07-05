@@ -3,7 +3,7 @@ import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } f
 import { theme } from "../theme";
 import { BottomNav } from "../components/BottomNav";
 
-const EASE = Easing.bezier(0.16, 1, 0.3, 1);
+const EASE = Easing.bezier(...theme.ease.enter);
 
 // Real Generate illustrations from the app (course_card_*).
 const GEN = [
@@ -15,11 +15,11 @@ const GEN = [
 
 // Real provider logos on light brand-tinted tiles.
 const MODELS = [
-  { name: "ChatGPT", desc: "Versatile text model from OpenAI", logo: "providers/openai.svg", tint: "#E7F7F0" },
-  { name: "GPT-5 by OpenAI", desc: "The new best overall AI model", logo: "providers/openai.svg", tint: "#EEF1F5" },
-  { name: "Gemini", desc: "Google text model, always up to date", logo: "providers/google.svg", tint: "#EAF1FE" },
-  { name: "Runway", desc: "Generate AI videos and effects", logo: "providers/runway.svg", tint: "#EEF0F3" },
-  { name: "Flux", desc: "Fast, affordable image generation", logo: "providers/flux.svg", tint: "#F0ECFE" },
+  { name: "ChatGPT", desc: "Versatile text model from OpenAI", logo: "providers/openai.svg", tint: theme.providerTint.openai },
+  { name: "GPT-5 by OpenAI", desc: "The new best overall AI model", logo: "providers/openai.svg", tint: theme.providerTint.openaiNeutral },
+  { name: "Gemini", desc: "Google text model, always up to date", logo: "providers/google.svg", tint: theme.providerTint.gemini },
+  { name: "Runway", desc: "Generate AI videos and effects", logo: "providers/runway.svg", tint: theme.providerTint.runway },
+  { name: "Flux", desc: "Fast, affordable image generation", logo: "providers/flux.svg", tint: theme.providerTint.flux },
 ];
 
 const PROMPT = "Write a LinkedIn post about my new app";
@@ -94,7 +94,7 @@ export const AiToolsScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) =>
           marginTop: 22,
           height: 62,
           borderRadius: theme.radius.pill,
-          background: "#F1F5F9",
+          background: theme.color.field,
           border: `1px solid ${theme.color.hair}`,
           display: "flex",
           alignItems: "center",
@@ -170,7 +170,7 @@ export const AiToolsScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) =>
                 padding: 16,
                 opacity: a,
                 translate: `${interpolate(a, [0, 1], [24, 0])}px 0`,
-                boxShadow: highlight > 0 ? "0 12px 24px -12px rgba(18,124,224,0.45)" : "none",
+                boxShadow: highlight > 0 ? theme.shadow.cardHighlight : "none",
               }}
             >
               <div
@@ -209,7 +209,7 @@ export const AiToolsScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) =>
             height: 620,
             background: "#fff",
             borderRadius: "30px 30px 0 0",
-            boxShadow: "0 -24px 60px rgba(9,46,92,0.20)",
+            boxShadow: theme.shadow.sheet,
             padding: "30px 34px",
             zIndex: 40,
             translate: `0 ${(1 - sheetIn) * 100}%`,
@@ -221,7 +221,7 @@ export const AiToolsScreen: React.FC<{ deep?: boolean }> = ({ deep = false }) =>
                 width: 46,
                 height: 46,
                 borderRadius: 13,
-                background: "#E7F7F0",
+                background: theme.providerTint.openai,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

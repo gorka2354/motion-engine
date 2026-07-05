@@ -1,11 +1,12 @@
 import { Easing, interpolate } from "remotion";
+import { theme } from "../theme";
 
 /** Soft expo-out — the "Apple" ease for entrances. */
-export const EASE = Easing.bezier(0.16, 1, 0.3, 1);
+export const EASE = Easing.bezier(...theme.ease.enter);
 /** Symmetric ease for camera moves. */
-export const EASE_INOUT = Easing.bezier(0.65, 0, 0.35, 1);
+export const EASE_INOUT = Easing.bezier(...theme.ease.inOut);
 /** Accelerating ease for exits. */
-export const EASE_OUT = Easing.bezier(0.4, 0, 1, 1);
+export const EASE_OUT = Easing.bezier(...theme.ease.exit);
 
 export const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -30,8 +31,8 @@ export const window01 = (
   f: number,
   from: number,
   to: number,
-  inDur = 22,
-  outDur = 18,
+  inDur: number = theme.duration.beatIn,
+  outDur: number = theme.duration.beatOut,
 ) => {
   const enter = interpolate(f, [from, from + inDur], [0, 1], {
     easing: EASE,

@@ -18,8 +18,7 @@ export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
   return (
     <AbsoluteFill
       style={{
-        background:
-          "linear-gradient(180deg, #E9F3FE 0%, #F5FAFF 52%, #FFFFFF 100%)",
+        background: theme.gradient.living,
       }}
     >
       <div
@@ -51,8 +50,7 @@ export const LivingBackground: React.FC<{ children?: React.ReactNode }> = ({
       {/* faint vignette for depth */}
       <AbsoluteFill
         style={{
-          background:
-            "radial-gradient(120% 90% at 50% 42%, transparent 62%, rgba(3,20,35,0.05) 100%)",
+          background: theme.gradient.vignette,
         }}
       />
       {children}

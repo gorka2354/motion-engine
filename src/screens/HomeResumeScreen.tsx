@@ -109,7 +109,7 @@ export const HomeResumeScreen: React.FC = () => {
             color: "#fff",
             fontSize: 25,
             fontWeight: 700,
-            boxShadow: "0 14px 26px -10px rgba(18,124,224,0.6)",
+            boxShadow: theme.shadow.buttonGlow,
           }}
         >
           Continue learning

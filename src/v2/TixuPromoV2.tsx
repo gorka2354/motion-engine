@@ -120,14 +120,14 @@ export const TixuPromoV2: React.FC = () => {
       </div>
 
       {/* ── typography beats ── */}
-      <TypoBeat title="Everyone has AI." from={8} to={54} y={520} size={88} />
+      <TypoBeat title="Everyone has AI." from={8} to={54} y={520} size={theme.type.hero} />
       <TypoBeat
         title="Few use it well."
         accentWord="well"
         from={50}
         to={104}
         y={520}
-        size={88}
+        size={theme.type.hero}
       />
       <TypoBeat
         title="A plan that knows you."
@@ -135,7 +135,7 @@ export const TixuPromoV2: React.FC = () => {
         from={158}
         to={250}
         y={168}
-        size={72}
+        size={theme.type.beat}
       />
       <TypoBeat
         title="Courses, challenges, careers."
@@ -143,7 +143,7 @@ export const TixuPromoV2: React.FC = () => {
         from={273}
         to={405}
         y={168}
-        size={64}
+        size={theme.type.beatWide}
       />
       <TypoBeat
         title="One clear path."
@@ -151,7 +151,7 @@ export const TixuPromoV2: React.FC = () => {
         from={428}
         to={495}
         y={168}
-        size={72}
+        size={theme.type.beat}
       />
       <TypoBeat
         title="Finish certified."
@@ -159,7 +159,7 @@ export const TixuPromoV2: React.FC = () => {
         from={815}
         to={905}
         y={168}
-        size={72}
+        size={theme.type.beat}
       />
       <TypoBeat
         title="Every AI. One app."
@@ -167,7 +167,7 @@ export const TixuPromoV2: React.FC = () => {
         from={920}
         to={1130}
         y={168}
-        size={72}
+        size={theme.type.beat}
       />
 
       {/* ── camera + device ── */}
@@ -250,7 +250,7 @@ export const TixuPromoV2: React.FC = () => {
           zIndex: 45,
         }}
       />
-      <TypoBeat title="Learn by doing." from={591} to={700} y={96} size={62} />
+      <TypoBeat title="Learn by doing." from={591} to={700} y={96} size={theme.type.beatZoom} />
 
       {/* certificate payoff during the pull-back */}
       <FloatingCertificate from={CERT.from} to={CERT.to} />
@@ -282,10 +282,10 @@ export const TixuPromoV2: React.FC = () => {
           right: 60,
           textAlign: "center",
           fontFamily: theme.font.family,
-          fontSize: 82,
-          fontWeight: 800,
-          letterSpacing: -2,
-          lineHeight: 1.06,
+          fontSize: theme.type.endTitle,
+          fontWeight: theme.type.weightHeading,
+          letterSpacing: theme.type.letterSpacing,
+          lineHeight: theme.type.lineHeightEnd,
           color: theme.color.ink,
           opacity: endTitle.opacity,
           translate: `0 ${30 * (1 - endTitle.enter)}px`,
@@ -320,9 +320,9 @@ export const TixuPromoV2: React.FC = () => {
             justifyContent: "center",
             color: "#fff",
             fontFamily: theme.font.family,
-            fontSize: 31,
-            fontWeight: 800,
-            boxShadow: "0 24px 48px -14px rgba(18,124,224,0.6)",
+            fontSize: theme.type.cta,
+            fontWeight: theme.type.weightHeading,
+            boxShadow: theme.shadow.ctaGlow,
             scale: String(ctaPulse),
           }}
         >

@@ -27,10 +27,8 @@ export const PhoneFrame: React.FC<{
         height,
         borderRadius: theme.radius.phone,
         padding: bezel,
-        background:
-          "linear-gradient(150deg, #3A424B 0%, #12161B 46%, #05070A 100%)",
-        boxShadow:
-          "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",
+        background: theme.titanium.frame,
+        boxShadow: theme.shadow.phone,
         ...style,
       }}
     >
@@ -56,7 +54,7 @@ export const PhoneFrame: React.FC<{
             width: 116,
             height: 33,
             borderRadius: 999,
-            background: "#05080B",
+            background: theme.titanium.island,
             zIndex: 60,
           }}
         />
@@ -70,7 +68,7 @@ export const PhoneFrame: React.FC<{
             width: 132,
             height: 6,
             borderRadius: 999,
-            background: "rgba(3,20,35,0.26)",
+            background: theme.titanium.homeIndicator,
             zIndex: 60,
           }}
         />

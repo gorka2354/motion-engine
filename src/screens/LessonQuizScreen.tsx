@@ -448,10 +448,7 @@ export const LessonQuizScreen: React.FC<{ deep?: boolean }> = ({ deep = false })
             fontSize: 24,
             fontWeight: 700,
             scale: String(nextPulse),
-            boxShadow:
-              select > 0.5
-                ? "0 14px 26px -10px rgba(18,124,224,0.6)"
-                : "none",
+            boxShadow: select > 0.5 ? theme.shadow.buttonGlow : "none",
           }}
         >
           Next
