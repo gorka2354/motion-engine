@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
+import { Easing, Img, interpolate, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
 import { GradientBackground } from "../components/GradientBackground";
 import { PhoneFrame } from "../device/PhoneFrame";
