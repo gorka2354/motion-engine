@@ -2,6 +2,9 @@ export { MotionBlur } from "./MotionBlur";
 export { Grain } from "./Grain";
 export { Glow } from "./Glow";
 export { Parallax } from "./Parallax";
+export { MagicMove } from "./MagicMove";
+export type { MagicRect } from "./MagicMove";
+export { morphPath, drawPath01 } from "./morph";
 export { hexToRgba } from "./color";
 export {
   EASE,

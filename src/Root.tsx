@@ -11,6 +11,7 @@ import { TixuPromoV2, V2_DURATION } from "./v2/TixuPromoV2";
 import { promoSchema } from "./v2/promoSchema";
 import { PROMO_DEFAULTS } from "./v2/promo.map";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
+import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
 
 const FPS = 30;
 const W = 1080;
@@ -48,6 +49,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="SceneAiTools" component={SceneAiTools} durationInFrames={SCENE_DURATIONS.tools} fps={FPS} width={W} height={H} />
       <Composition id="SceneCta" component={SceneCta} durationInFrames={SCENE_DURATIONS.cta} fps={FPS} width={W} height={H} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
+      <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
     </>
   );
 };

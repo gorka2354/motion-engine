@@ -43,6 +43,12 @@
 **Итог:** дальше ролики (в т.ч. под заказ) собираются редактированием массива + токенов.
 **Итог (2026-07-05):** сторилайн V2 = данные: `src/v2/promoSchema.ts` (zod **4.3.6** — версия жёстко под Remotion, v3 даёт version-mismatch warning) + `src/v2/promo.map.ts` (`PROMO_DEFAULTS`: beats/zoomBeat/nav/floats/brand-копия). `TixuPromoV2` стал движком `React.FC<PromoProps>`: реестр `SCREENS` (имя→экран), слоты `SIZE` (hero/beat/beatWide/beatZoom→theme.type), концовка/CTA/логотип из `brand`. Root: `schema`+`defaultProps` → props редактируются в Remotion Studio и переопределяются `--props=file.json`. **Отклонение от плана:** не Sequence-обёртка над массивом сцен — V2 это continuous shot, данные описывают биты/навигацию/флоаты поверх постоянного camera-rig; Sequence-движок понадобится позже для мультисценовых клиентских роликов (V1-стиль). **Валидация:** MD5 IDENTICAL на 90/300/540/950/1210 vs эталон (`out/inc5/`); демо-override `out/inc5/demo-override-1290.png` (новая копия конца + CTA из JSON). ⚠️ Для RU-вариантов добавить `cyrillic` в subsets `fonts.ts` (сейчас latin-only).
 
+## inc-6 — Transition pack ✅
+**Цель:** закрыть «слабое место — переходы»: превращение объекта в объект (с кручением), морфинг форм, новые внутриэкранные переходы.
+**Что:** `<MagicMove>` (FLIP/shared-element: A летит/крутится/кроссфейдится в B, spring-прогресс, non-uniform scale контента); `morphPath`/`drawPath01` поверх `@remotion/paths` (interpolatePath — пути с одинаковой структурой команд; evolvePath — draw-on); additive kind `"flip"` в `ScreenFlow` (3D rotateY, perspective 1200).
+**Валидация:** песочница `FxSandbox` (тёмная сцена, 3 ряда), стиллы f20/40/70 (`out/inc6/`); мастер Δ=0 (MD5 IDENTICAL frame 90); flip проверен через scene-map override `--props` (nav.library → flip, кадр 274) — сам мастер не менялся.
+**Итог (2026-07-05):** экспорт из `src/lib`: `MagicMove`, `MagicRect`, `morphPath`, `drawPath01`. Deps: +`@remotion/paths` 4.0.484. «Превращение с кручением» = `<MagicMove spin={1}>`; для произвольных несовместимых форм (разная структура path) при необходимости добавить flubber — пока осознанно не тянем.
+
 ---
 
 ## Дальше (backlog, после 1-5)
