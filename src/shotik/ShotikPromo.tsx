@@ -5,6 +5,7 @@ import { LaptopFrame } from "../device/LaptopFrame";
 import { DesktopScreen } from "./DesktopScreen";
 import { ShotikAppWindow, GitHubCard } from "./cards";
 import { StageBackground } from "../lib/StageBackground";
+import { Laptop3DIntro } from "./Laptop3DIntro";
 import { MagicMove } from "../lib/MagicMove";
 import { MotionBlur } from "../lib/MotionBlur";
 import { TypoBeat } from "../v2/TypoBeat";
@@ -40,8 +41,8 @@ const MM_GIT = { from: 652, to: 712 } as const;
 const APP_WIN = { x: 470, y: 560 } as const;
 
 // Blur never overlaps the selection drag or the annotation strokes.
+// (No window for the intro — the 3D dolly lives inside ThreeCanvas.)
 const BLUR_WINDOWS: [number, number][] = [
-  [36, 108],
   [344, 400],
   [526, 566],
   [640, 716],
@@ -185,18 +186,14 @@ const LaptopRig: React.FC = () => {
     [562, 0],
   ]);
   const y = kf(f, [
-    [0, 640],
-    [40, 640],
-    [100, 30],
+    [0, 30],
     [655, 30],
     [725, 330],
   ]);
   // Capture beat holds EXACTLY scale 1.0 — the 1408-design screen maps
   // pixel-perfect, so the thin selection/annotation strokes stay crisp.
   const s = kf(f, [
-    [0, 0.92],
-    [100, 0.96],
-    [112, 1.0],
+    [0, 1.0],
     [348, 1.0],
     [392, 1.5],
     [530, 1.5],
@@ -204,23 +201,19 @@ const LaptopRig: React.FC = () => {
     [655, 1.0],
     [725, 0.85],
   ]);
-  const rx = kf(f, [
-    [0, 10],
-    [100, 0],
-  ]);
-  // The idle bob freezes for the whole capture + terminal read.
+  const rx = 0;
+  // No bob during capture/terminal; a light one returns for the outro.
   const bobAmp = kf(f, [
-    [0, 4],
-    [96, 4],
-    [106, 0],
+    [0, 0],
     [566, 0],
     [578, 4],
   ]);
   const floatY = Math.sin(f * 0.045) * bobAmp;
+  // The 2D desktop fades in UNDER the 3D dolly (cross-fade ~f94-108).
   const o =
     kf(f, [
-      [40, 0],
-      [64, 1],
+      [92, 0],
+      [107, 1],
     ]) *
     (1 - 0.75 * clamp01((f - 655) / 50));
 
@@ -305,6 +298,9 @@ export const ShotikPromo: React.FC = () => {
           Shotik
         </div>
       </div>
+
+      {/* 3D opening shot: hinged laptop opens, camera dives into the screen */}
+      <Laptop3DIntro />
 
       {/* beats */}
       <TypoBeat title="Your screen. One hotkey." from={12} to={100} y={300} size={84} {...beatColors} />
