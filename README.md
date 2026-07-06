@@ -34,6 +34,7 @@ npx remotion render TixuPromoV2 out/client.mp4 --props=client.json   # re-author
 | `Scene*` ×6   | individual V1 scenes | per-scene |
 | `LibSandbox`  | test bench: Grain / Glow / MotionBlur / springs / stagger / Parallax | 150f |
 | `FxSandbox`   | test bench: MagicMove / morphPath / drawPath01 | 150f |
+| `ThreeSandbox` | **3D test bench** (@remotion/three): primitive laptop, spring-opened glowing lid, orbit | 240f · 1920×1080 |
 
 ## Authoring the V2 promo (no JSX needed)
 The storyline is **data**: `src/v2/promo.map.ts` (`PROMO_DEFAULTS`) validated by `src/v2/promoSchema.ts` (zod). It defines:

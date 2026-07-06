@@ -53,6 +53,11 @@
 **Цель:** доказать «конструктор стилей» на не-tixu бренде + формат ноутбука/монитора.
 **Что/итог (2026-07-06):** `device/LaptopFrame` (16:10 экран, дека) · `lib/StageBackground` (обобщённая тёмная сцена: bg/glow пропсами — LivingBackground остаётся tixu-специфичным) · токен-группа `theme.shotik` (графит + MCP-фиолет `#7C5CFF`) · `TypoBeat` принимает color/subColor/accentColor · проектная папка `src/shotik/` (паттерн «проект внутри движка»): DesktopScreen (оверлей захвата: рамка+хэндлы+тулбар, draw-on стрелка, pixelate, toast), карточки, `ShotikPromo` 1920×1080/720f — **MagicMove-цепочка из 3 морфов как язык переходов** (регион→скриншот-карта→чат-тамб→GitHub-карта). ⚠️ Грабля в `MagicMove` задокументирована: **дробный `spin` паркует объект повёрнутым** (0.5 → вверх ногами) — для остающихся в кадре целей только целые обороты. Стиллы: `out/shotik/`.
 
+## inc-8 — 3D-слой + Blender-мост ✅
+**Цель:** настоящее 3D в композициях + пайплайн ассетов.
+**Что/итог (2026-07-06):** `@remotion/three` + three 0.171 + @react-three/fiber 9 (+peer use-sync-external-store). `lib/ThreeSandbox` (комп 1920×1080): 3D-ноутбук из примитивов — крышка открывается spring-ом (f18–98), emissive-экран с brand-glow, медленный орбит, всё от `useCurrentFrame` (детерминизм ✓), поверх нашей сцены StageBackground+Grain. **Blender-мост:** blender-mcp зарегистрирован (`claude mcp add blender -- uvx blender-mcp`, user-scope), Blender установлен через winget, аддон скачан в `~/.claude/tools/blender-mcp-addon.py` — после включения аддона в Blender можно моделить сцены командами → экспорт GLB → `useGLTF` в ThreeCanvas. Роль Blender: фабрика ассетов (модели/запечённые анимации), рендер кадров — всегда в Remotion (детерминизм).
+**Стиллы:** `out/three/`. Дальше по 3D: GLB-лоадер хелпер, 3D-девайсы в промо, частицы.
+
 ---
 
 ## Дальше (backlog, после 1-5)

@@ -14,6 +14,7 @@ import { PROMO_DEFAULTS } from "./v2/promo.map";
 import { ShotikPromo, SHOTIK_PROMO_DURATION } from "./shotik/ShotikPromo";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
+import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
 
 const FPS = 30;
 const W = 1080;
@@ -61,6 +62,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="ShotikPromo" component={ShotikPromo} durationInFrames={SHOTIK_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
+      <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
     </>
   );
 };
