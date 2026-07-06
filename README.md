@@ -35,6 +35,8 @@ npx remotion render TixuPromoV2 out/client.mp4 --props=client.json   # re-author
 | `LibSandbox`  | test bench: Grain / Glow / MotionBlur / springs / stagger / Parallax | 150f |
 | `FxSandbox`   | test bench: MagicMove / morphPath / drawPath01 | 150f |
 | `ThreeSandbox` | **3D test bench** (@remotion/three): primitive laptop, spring-opened glowing lid, orbit | 240f · 1920×1080 |
+| `GltfSandbox` | Blender → GLB pipeline test (`scripts/blender/laptop.py` → `public/models/laptop.glb`) | 240f · 1920×1080 |
+| `Showcase3D` | the whole toolkit over real 3D: TypoBeat + SPRING rise + kf dolly + sweep + grain | 300f · 1920×1080 |
 
 ## Authoring the V2 promo (no JSX needed)
 The storyline is **data**: `src/v2/promo.map.ts` (`PROMO_DEFAULTS`) validated by `src/v2/promoSchema.ts` (zod). It defines:
