@@ -3,7 +3,7 @@ import { AbsoluteFill, Img, staticFile, spring, useCurrentFrame, useVideoConfig 
 import { theme } from "../theme";
 import { LaptopFrame } from "../device/LaptopFrame";
 import { DesktopScreen } from "./DesktopScreen";
-import { ScreenshotCard, ClaudeCard, GitHubCard } from "./cards";
+import { ShotikAppWindow, GitHubCard } from "./cards";
 import { StageBackground } from "../lib/StageBackground";
 import { MagicMove } from "../lib/MagicMove";
 import { MotionBlur } from "../lib/MotionBlur";
@@ -14,90 +14,171 @@ export const SHOTIK_PROMO_DURATION = 720; // 24s @ 30fps
 
 const LAPTOP_W = 1440;
 
-// ── capture flow (frames inside DesktopScreen) ──
+// ── capture + terminal flow (frames inside DesktopScreen) ──
 const T = {
-  select: 118,
-  toolbar: 152,
-  arrow: 172,
-  pixelate: 204,
-  lift: 248,
-  mcp: 428,
+  select: 112,
+  toolbar: 148,
+  box: 168,
+  arrow: 188,
+  marker: 208,
+  lift: 238,
+  paste: 332, // [Image #1] appears in the input
+  sent: 352, // Enter — the message moves into history
+  reply: 364,
+  mcp: 480,
 } as const;
 
-// ── MagicMove chain ──
-const MM1 = { from: 248, to: 310 } as const; // region → screenshot card
-const MM2 = { from: 340, to: 395 } as const; // card → chat thumb
-const MM3 = { from: 560, to: 622 } as const; // thumb → GitHub card
+// ── MagicMove: the captured region flies INTO the Claude input ──
+const MM_PASTE = { from: 292, to: 332 } as const;
+// ── MagicMove: the Shotik app window folds into its GitHub repo card ──
+const MM_GIT = { from: 575, to: 635 } as const;
 
-const CLAUDE_CARD = { x: 620, y: 750 } as const;
-/** Empty 250×170 slot inside ClaudeCard (see cards.tsx layout). */
-const SLOT = { x: 431, y: 769 } as const;
+const APP_WIN = { x: 470, y: 560 } as const;
 
 const BLUR_WINDOWS: [number, number][] = [
   [36, 146],
-  [550, 630],
+  [242, 296],
+  [426, 470],
+  [560, 640],
 ];
 
 const MCP_CHIPS = [
-  { label: "take_screenshot", x: 320, y: 280, d: 0 },
-  { label: "ask_user_to_select_region", x: 1600, y: 310, d: 7 },
-  { label: "repeat last area", x: 260, y: 975, d: 14 },
-  { label: "take_screenshot_region", x: 1620, y: 866, d: 21 },
+  { label: "take_screenshot", x: 1560, y: 260, d: 0 },
+  { label: "ask_user_to_select_region", x: 1520, y: 900, d: 9 },
 ];
 
-/** The lifted copy of the selection (MagicMove A). */
+/** The lifted copy of the selection — real code + red annotations. */
 const RegionGhost: React.FC = () => (
   <div
     style={{
-      width: 833,
-      height: 687,
+      width: 1200,
+      height: 990,
       borderRadius: 8,
-      border: `3px solid ${theme.shotik.accent}`,
-      background: "rgba(20,23,33,0.94)",
-      boxShadow: "0 0 70px rgba(124,92,255,0.45)",
+      border: "3px solid #2F9BFF",
+      background: "#1E1E1E",
+      boxShadow: "0 0 80px rgba(47,155,255,0.35), 0 60px 120px -30px rgba(0,0,0,0.7)",
       position: "relative",
       overflow: "hidden",
+      padding: "60px 70px",
+      fontFamily: "Consolas, 'Courier New', monospace",
+      fontSize: 27,
+      lineHeight: 1.85,
     }}
   >
-    {[
-      { t: 70, w: 300, c: "#8B7CF7" },
-      { t: 140, w: 520, c: "#5E6B85" },
-      { t: 210, w: 420, c: "#4EC9B0" },
-      { t: 280, w: 600, c: "#FF5C7A" },
-      { t: 350, w: 360, c: "#5E6B85" },
-      { t: 420, w: 480, c: "#CE9178" },
-      { t: 490, w: 400, c: "#5E6B85" },
-    ].map((l, i) => (
+    <div style={{ color: "#C586C0" }}>
+      export function <span style={{ color: "#DCDCAA" }}>Card</span>
+      <span style={{ color: "#D4D4D4" }}>({"{ title }"}: </span>
+      <span style={{ color: "#4EC9B0" }}>Props</span>
+      <span style={{ color: "#D4D4D4" }}>) {"{"}</span>
+    </div>
+    <div style={{ color: "#D4D4D4", position: "relative" }}>
+      {"  "}&lt;div className=<span style={{ color: "#CE9178" }}>"card"</span> style={"{{"} padding:{" "}
+      <span style={{ color: "#B5CEA8" }}>8</span> {"}}"}&gt;
       <div
-        key={i}
         style={{
           position: "absolute",
-          left: 54,
-          top: l.t,
-          width: l.w,
-          height: 20,
-          borderRadius: 7,
-          background: l.c,
-          opacity: 0.6,
+          left: 10,
+          top: -6,
+          width: "96%",
+          height: 56,
+          border: "3.5px solid #F5474F",
+          borderRadius: 4,
         }}
       />
-    ))}
+    </div>
+    <div style={{ color: "#D4D4D4" }}>
+      {"    "}&lt;h3&gt;<span style={{ color: "#9CDCFE" }}>{"{title}"}</span>&lt;/h3&gt;
+    </div>
+    <div style={{ color: "#D4D4D4" }}>{"  "}&lt;/div&gt;</div>
     <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
       <path
-        d="M 620 560 C 550 500 480 400 410 350"
-        stroke="#FF4D5E"
-        strokeWidth={7}
+        d="M 900 760 C 780 640 560 340 400 190"
+        stroke="#F5474F"
+        strokeWidth={8}
         fill="none"
         strokeLinecap="round"
       />
-      <path d="M 396 366 L 410 350 L 426 368 Z" fill="#FF4D5E" />
+      <path d="M 382 214 L 400 190 L 424 208 Z" fill="#F5474F" />
     </svg>
+    <div
+      style={{
+        position: "absolute",
+        right: 60,
+        bottom: 46,
+        width: 44,
+        height: 44,
+        borderRadius: 999,
+        background: "#F5474F",
+        color: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 24,
+        fontWeight: 800,
+        fontFamily: theme.font.family,
+      }}
+    >
+      1
+    </div>
   </div>
 );
 
-/** Laptop + camera. Reads the frame itself so MotionBlur samples real motion. */
+/** Small pasted-attachment chip that lands next to the Claude input. */
+const PasteChip: React.FC = () => (
+  <div
+    style={{
+      width: 280,
+      height: 231,
+      borderRadius: 12,
+      border: "2px solid #2F9BFF",
+      background: "#1E1E1E",
+      boxShadow: "0 24px 50px -16px rgba(0,0,0,0.7)",
+      position: "relative",
+      overflow: "hidden",
+      padding: "18px 20px",
+      fontFamily: "Consolas, monospace",
+      fontSize: 12,
+      lineHeight: 1.9,
+    }}
+  >
+    <div style={{ color: "#C586C0" }}>
+      export function <span style={{ color: "#DCDCAA" }}>Card</span>…
+    </div>
+    <div style={{ color: "#D4D4D4" }}>
+      {"  "}&lt;div style={"{{"} padding: <span style={{ color: "#B5CEA8" }}>8</span> {"}}"}&gt;
+    </div>
+    <svg width="100%" height="100%" style={{ position: "absolute", inset: 0 }}>
+      <path d="M 210 180 C 170 140 130 100 96 72" stroke="#F5474F" strokeWidth={4} fill="none" strokeLinecap="round" />
+      <path d="M 90 82 L 96 72 L 106 80 Z" fill="#F5474F" />
+    </svg>
+    <div
+      style={{
+        position: "absolute",
+        left: 14,
+        bottom: 12,
+        padding: "3px 9px",
+        borderRadius: 6,
+        background: "rgba(47,155,255,0.18)",
+        border: "1px solid #2F9BFF",
+        color: "#9CCFFF",
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      [Image #1]
+    </div>
+  </div>
+);
+
+/** Laptop + camera (now travels on X too — the paste beat zooms into the terminal). */
 const LaptopRig: React.FC = () => {
   const f = useCurrentFrame();
+  const x = kf(f, [
+    [246, 0],
+    [288, -450],
+    [430, -450],
+    [464, 0],
+  ]);
   const y = kf(f, [
     [0, 640],
     [40, 640],
@@ -110,8 +191,11 @@ const LaptopRig: React.FC = () => {
     [100, 0.96],
     [110, 0.96],
     [140, 1.06],
-    [310, 1.06],
-    [340, 1.0],
+    [240, 1.06],
+    [246, 1.06],
+    [288, 1.5],
+    [430, 1.5],
+    [464, 1.0],
     [555, 1.0],
     [625, 0.85],
   ]);
@@ -119,13 +203,13 @@ const LaptopRig: React.FC = () => {
     [0, 10],
     [100, 0],
   ]);
-  const floatY = Math.sin(f * 0.045) * 4;
+  const floatY = Math.sin(f * 0.045) * 4 * (s < 1.2 ? 1 : 0.3);
   const o =
     kf(f, [
       [40, 0],
       [64, 1],
     ]) *
-    (1 - 0.75 * clamp01((f - 560) / 50));
+    (1 - 0.75 * clamp01((f - 565) / 50));
 
   return (
     <AbsoluteFill style={{ perspective: 1800 }}>
@@ -135,7 +219,7 @@ const LaptopRig: React.FC = () => {
           left: "50%",
           top: "50%",
           translate: "-50% -50%",
-          transform: `translate(0px, ${y + floatY}px) rotateX(${rx}deg) scale(${s})`,
+          transform: `translate(${x}px, ${y + floatY}px) rotateX(${rx}deg) scale(${s})`,
           opacity: o,
         }}
       >
@@ -152,9 +236,13 @@ const LaptopRig: React.FC = () => {
           <DesktopScreen
             selectAt={T.select}
             toolbarAt={T.toolbar}
+            boxAt={T.box}
             arrowAt={T.arrow}
-            pixelateAt={T.pixelate}
+            markerAt={T.marker}
             liftAt={T.lift}
+            pasteAt={T.paste}
+            sentAt={T.sent}
+            replyAt={T.reply}
             mcpAt={T.mcp}
           />
         </LaptopFrame>
@@ -164,10 +252,11 @@ const LaptopRig: React.FC = () => {
 };
 
 /**
- * Shotik promo — 24s · 16:9 · MagicMove is the transition language:
- * the captured region lifts off the laptop and morphs into a screenshot
- * card, the card morphs into a Claude-chat thumbnail, the thumbnail morphs
- * into the GitHub repo card. Fresh brand stage: graphite + MCP violet.
+ * Shotik promo v2 — realism pass: the ACTUAL product flow 1:1. Real TSX in
+ * the editor, the real overlay (blue selection, white toolbar + palette,
+ * red annotations), the literal paste-into-Claude moment inside a Claude
+ * Code TUI, the real app window, and grounded MagicMoves only where the
+ * story needs them.
  */
 export const ShotikPromo: React.FC = () => {
   const f = useCurrentFrame();
@@ -178,17 +267,21 @@ export const ShotikPromo: React.FC = () => {
       [6, 0],
       [24, 0.95],
     ]) *
-    (1 - clamp01((f - 552) / 18));
+    (1 - clamp01((f - 560) / 18));
 
-  const claudeIn = f < 325 ? 0 : spring({ frame: f - 325, fps, config: SPRING.pop });
-  const claudeO = clamp01(claudeIn) * (1 - clamp01((f - 532) / 18));
+  const appIn = f < 468 ? 0 : spring({ frame: f - 468, fps, config: SPRING.pop });
+  const appO = clamp01(appIn); // unmounts at MM_GIT.from — the morph takes over
 
-  const ctaW = window01(f, 640, SHOTIK_PROMO_DURATION + 100);
+  // the pasted chip dissolves into the [Image #1] token
+  const chipFade = 1 - clamp01((f - (T.paste + 8)) / 12);
+
+  const ctaW = window01(f, 652, SHOTIK_PROMO_DURATION + 100);
 
   const inBlurWindow = BLUR_WINDOWS.some(([a, b]) => f >= a && f <= b);
   const rig = <LaptopRig />;
 
   const sh = theme.shotik;
+  const beatColors = { color: sh.text, subColor: sh.textMuted, accentColor: sh.accent };
 
   return (
     <StageBackground bg={sh.bg} glowA={sh.accent} glowB={sh.accentDeep} glowOpacity={0.22}>
@@ -212,61 +305,44 @@ export const ShotikPromo: React.FC = () => {
       </div>
 
       {/* beats */}
-      <TypoBeat
-        title="Your screen. One hotkey."
-        from={12}
-        to={100}
-        y={300}
-        size={84}
-        color={sh.text}
-        subColor={sh.textMuted}
-        accentColor={sh.accent}
-      />
+      <TypoBeat title="Your screen. One hotkey." from={12} to={100} y={300} size={84} {...beatColors} />
       <TypoBeat
         title="Snap. Annotate. Done."
-        sub="PrtSc → box · arrow · pixelate → Enter"
+        sub="PrtSc → box · arrow · marker → Enter"
         from={116}
-        to={236}
+        to={234}
         y={44}
         size={56}
-        color={sh.text}
-        subColor={sh.textMuted}
-        accentColor={sh.accent}
+        {...beatColors}
       />
       <TypoBeat
         title="Paste straight into Claude."
         sub="Smart Clipboard — the image and the file path, at once"
-        from={252}
-        to={410}
+        from={250}
+        to={420}
         y={44}
         size={56}
         accentWord="Claude"
-        color={sh.text}
-        subColor={sh.textMuted}
-        accentColor={sh.accent}
+        {...beatColors}
       />
       <TypoBeat
         title="Or let Claude look itself."
         sub="built-in MCP server · connect once"
-        from={424}
-        to={548}
+        from={436}
+        to={560}
         y={44}
         size={56}
         accentWord="itself"
-        color={sh.text}
-        subColor={sh.textMuted}
-        accentColor={sh.accent}
+        {...beatColors}
       />
       <TypoBeat
         title="Free. Open source."
         accentWord="Open source"
-        from={585}
+        from={600}
         to={SHOTIK_PROMO_DURATION + 40}
         y={150}
         size={64}
-        color={sh.text}
-        subColor={sh.textMuted}
-        accentColor={sh.accent}
+        {...beatColors}
       />
 
       {/* laptop */}
@@ -278,71 +354,57 @@ export const ShotikPromo: React.FC = () => {
         rig
       )}
 
-      {/* Claude chat card */}
-      {claudeO > 0.001 ? (
-        <div
-          style={{
-            position: "absolute",
-            left: CLAUDE_CARD.x,
-            top: CLAUDE_CARD.y,
-            translate: "-50% -50%",
-            opacity: claudeO,
-            scale: String(0.8 + 0.2 * claudeIn),
-            zIndex: 50,
-          }}
-        >
-          <ClaudeCard showReply={f >= 402} />
+      {/* the region flies into the Claude input and dissolves into [Image #1] */}
+      {f >= MM_PASTE.from && f < T.paste + 24 ? (
+        <div style={{ position: "absolute", inset: 0, zIndex: 55, opacity: chipFade }}>
+          <MagicMove
+            from={MM_PASTE.from}
+            to={MM_PASTE.to}
+            a={{ x: 150, y: 500, w: 1200, h: 990 }}
+            b={{ x: 1060, y: 878, w: 280, h: 231, rotate: 0 }}
+            showBefore={false}
+            renderA={() => <RegionGhost />}
+            renderB={() => <PasteChip />}
+          />
         </div>
       ) : null}
 
-      {/* MagicMove chain */}
-      {f >= MM1.from && f < MM2.from ? (
-        <div style={{ position: "absolute", inset: 0, zIndex: 55 }}>
-          <MagicMove
-            from={MM1.from}
-            to={MM1.to}
-            a={{ x: 711, y: 527, w: 833, h: 687 }}
-            b={{ x: 1500, y: 430, w: 560, h: 390, rotate: 2 }}
-            spin={1}
-            showBefore={false}
-            renderA={() => <RegionGhost />}
-            renderB={() => <ScreenshotCard />}
-          />
+      {/* the real Shotik window (MCP beat), then it folds into the GitHub card */}
+      {appO > 0.001 && f < MM_GIT.from ? (
+        <div
+          style={{
+            position: "absolute",
+            left: APP_WIN.x,
+            top: APP_WIN.y,
+            translate: "-50% -50%",
+            opacity: appO,
+            scale: String(0.82 + 0.18 * appIn),
+            zIndex: 50,
+          }}
+        >
+          <ShotikAppWindow />
         </div>
       ) : null}
-      {f >= MM2.from && f < MM3.from ? (
-        <div style={{ position: "absolute", inset: 0, zIndex: 55 }}>
-          <MagicMove
-            from={MM2.from}
-            to={MM2.to}
-            a={{ x: 1500, y: 430, w: 560, h: 390, rotate: 2 }}
-            b={{ x: SLOT.x, y: SLOT.y, w: 250, h: 174 }}
-            showBefore={false}
-            renderA={() => <ScreenshotCard />}
-            renderB={() => <ScreenshotCard />}
-          />
-        </div>
-      ) : null}
-      {f >= MM3.from ? (
+      {f >= MM_GIT.from ? (
         <div style={{ position: "absolute", inset: 0, zIndex: 56 }}>
           <MagicMove
-            from={MM3.from}
-            to={MM3.to}
-            a={{ x: SLOT.x, y: SLOT.y, w: 250, h: 174 }}
-            b={{ x: 960, y: 480, w: 760, h: 320 }}
+            from={MM_GIT.from}
+            to={MM_GIT.to}
+            a={{ x: APP_WIN.x, y: APP_WIN.y, w: 860, h: 560 }}
+            b={{ x: 960, y: 470, w: 760, h: 320 }}
             spin={1}
             showBefore={false}
-            renderA={() => <ScreenshotCard />}
+            renderA={() => <ShotikAppWindow />}
             renderB={() => <GitHubCard />}
           />
         </div>
       ) : null}
 
-      {/* MCP tool chips */}
+      {/* MCP tool chips (just two, as garnish) */}
       {MCP_CHIPS.map((c, i) => {
-        const t = f - stagger(i, 434, 7);
+        const t = f - stagger(i, 486, 9);
         const enter = t < 0 ? 0 : spring({ frame: t, fps, config: SPRING.pop });
-        const exit = clamp01((f - 540) / 16);
+        const exit = clamp01((f - 558) / 14);
         const o = clamp01(enter) * (1 - exit);
         if (o <= 0.001) return null;
         return (
@@ -355,7 +417,7 @@ export const ShotikPromo: React.FC = () => {
               translate: "-50% -50%",
               padding: "14px 22px",
               borderRadius: 999,
-              background: "rgba(23,26,36,0.88)",
+              background: "rgba(23,26,36,0.9)",
               border: `1px solid ${sh.hair}`,
               boxShadow: theme.dark.shadowFloat,
               display: "flex",
@@ -364,11 +426,11 @@ export const ShotikPromo: React.FC = () => {
               opacity: o,
               scale: String(0.7 + 0.3 * enter),
               zIndex: 40,
-              fontFamily: theme.font.family,
+              fontFamily: "Consolas, monospace",
             }}
           >
             <div style={{ width: 9, height: 9, borderRadius: 999, background: sh.accent }} />
-            <div style={{ fontSize: 19, fontWeight: 700, color: sh.text }}>{c.label}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: sh.text }}>{c.label}</div>
           </div>
         );
       })}

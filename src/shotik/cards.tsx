@@ -144,6 +144,204 @@ export const ClaudeCard: React.FC<{ width?: number; showReply?: boolean }> = ({
   </div>
 );
 
+/** Replica of the real Shotik main window (docs/app-dark.png), EN locale. */
+export const ShotikAppWindow: React.FC<{ width?: number }> = ({ width = 860 }) => (
+  <div
+    style={{
+      width,
+      height: 560,
+      borderRadius: 16,
+      background: "#141519",
+      border: "1px solid rgba(255,255,255,0.10)",
+      boxShadow: theme.dark.shadowFloat,
+      display: "flex",
+      overflow: "hidden",
+      fontFamily: theme.font.stack,
+    }}
+  >
+    {/* sidebar */}
+    <div
+      style={{
+        width: 252,
+        borderRight: "1px solid rgba(255,255,255,0.07)",
+        padding: "22px 14px",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "0 8px" }}>
+        <Img src={staticFile("shotik/icon.png")} style={{ width: 40, height: 40, borderRadius: 11 }} />
+        <div>
+          <div style={{ fontSize: 19, fontWeight: 800, color: "#F2F3F7" }}>Shotik</div>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: "#8B93A3" }}>
+            screenshots for humans & AI
+          </div>
+        </div>
+      </div>
+      <div style={{ marginTop: 22, display: "flex", flexDirection: "column", gap: 4 }}>
+        {[
+          { icon: "◱", label: "Shots", active: true },
+          { icon: "✦", label: "Claude", dot: true },
+          { icon: "⚙", label: "Settings" },
+        ].map((n) => (
+          <div
+            key={n.label}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "11px 14px",
+              borderRadius: 10,
+              background: n.active ? "#22242C" : "transparent",
+              color: n.active ? "#F2F3F7" : "#A7AEBC",
+              fontSize: 16.5,
+              fontWeight: 700,
+            }}
+          >
+            <span style={{ fontSize: 15 }}>{n.icon}</span>
+            {n.label}
+            {n.dot ? (
+              <span
+                style={{
+                  marginLeft: "auto",
+                  width: 9,
+                  height: 9,
+                  borderRadius: 999,
+                  background: "#37C871",
+                }}
+              />
+            ) : null}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginTop: "auto", fontSize: 13, fontWeight: 600, color: "#6E7681", padding: "0 8px" }}>
+        v0.1.0 · MIT
+      </div>
+    </div>
+    {/* main */}
+    <div style={{ flex: 1, padding: "24px 26px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ fontSize: 25, fontWeight: 800, color: "#F2F3F7", marginRight: "auto" }}>Shots</div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 14px",
+            borderRadius: 9,
+            background: "#1F6FEB",
+            color: "#fff",
+            fontSize: 14.5,
+            fontWeight: 700,
+          }}
+        >
+          ◱ Area
+          <span
+            style={{
+              padding: "2px 7px",
+              borderRadius: 5,
+              background: "rgba(255,255,255,0.2)",
+              fontSize: 12,
+              fontFamily: "Consolas, monospace",
+            }}
+          >
+            PrtSc
+          </span>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 14px",
+            borderRadius: 9,
+            border: "1px solid rgba(255,255,255,0.14)",
+            color: "#D5D9E2",
+            fontSize: 14.5,
+            fontWeight: 700,
+          }}
+        >
+          ⟳ Repeat
+          <span
+            style={{
+              padding: "2px 7px",
+              borderRadius: 5,
+              background: "rgba(255,255,255,0.10)",
+              fontSize: 12,
+              fontFamily: "Consolas, monospace",
+            }}
+          >
+            Shift+PrtSc
+          </span>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 16, marginTop: 22 }}>
+        {[0, 1].map((i) => (
+          <div
+            key={i}
+            style={{
+              width: 262,
+              borderRadius: 12,
+              overflow: "hidden",
+              border: "1px solid rgba(255,255,255,0.09)",
+              background: "#1A1C22",
+            }}
+          >
+            <div
+              style={{
+                height: 150,
+                background: "linear-gradient(150deg, #3A3168 0%, #52318C 55%, #3A2E60 100%)",
+                position: "relative",
+              }}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  left: 20,
+                  top: 18,
+                  width: 150,
+                  height: 92,
+                  borderRadius: 6,
+                  background: "rgba(16,16,24,0.85)",
+                  border: "1px solid rgba(255,255,255,0.14)",
+                }}
+              />
+              {i === 0 ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    right: 16,
+                    top: 16,
+                    display: "flex",
+                    gap: 4,
+                  }}
+                >
+                  {["#F5474F", "#37C871", "#2F5CFF"].map((c) => (
+                    <div key={c} style={{ width: 12, height: 12, background: c }} />
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 14px",
+              }}
+            >
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: "#8B93A3" }}>just now</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: "#6E7681", fontFamily: "Consolas, monospace" }}>
+                2560×1440
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 /** GitHub repo card — the final morph target. */
 export const GitHubCard: React.FC<{ width?: number }> = ({ width = 760 }) => (
   <div
