@@ -56,7 +56,8 @@
 ## inc-8 — 3D-слой + Blender-мост ✅
 **Цель:** настоящее 3D в композициях + пайплайн ассетов.
 **Что/итог (2026-07-06):** `@remotion/three` + three 0.171 + @react-three/fiber 9 (+peer use-sync-external-store). `lib/ThreeSandbox` (комп 1920×1080): 3D-ноутбук из примитивов — крышка открывается spring-ом (f18–98), emissive-экран с brand-glow, медленный орбит, всё от `useCurrentFrame` (детерминизм ✓), поверх нашей сцены StageBackground+Grain. **Blender-мост:** blender-mcp зарегистрирован (`claude mcp add blender -- uvx blender-mcp`, user-scope), Blender установлен через winget, аддон скачан в `~/.claude/tools/blender-mcp-addon.py` — после включения аддона в Blender можно моделить сцены командами → экспорт GLB → `useGLTF` в ThreeCanvas. Роль Blender: фабрика ассетов (модели/запечённые анимации), рендер кадров — всегда в Remotion (детерминизм).
-**Стиллы:** `out/three/`. Дальше по 3D: GLB-лоадер хелпер, 3D-девайсы в промо, частицы.
+**Стиллы:** `out/three/`. Дальше по 3D: 3D-девайсы в промо, частицы.
+**GLB-пайплайн доказан (2026-07-06):** `scripts/blender/laptop.py` (headless: `blender -b -P …`) моделирует ноутбук (бевелы, петля, emissive-экран) + рендерит превью-эталоны (фронт/сбоку) → `public/models/laptop.glb` → `lib/useGltf` → `GltfSandbox`. ⚠️ Грабли: (1) **delayRender внутри ThreeCanvas (r3f-root) не держит кадр** — грузить ассеты в DOM-root и передавать пропом; (2) **куб Blender size=1 имеет ПОЛНЫЕ стороны 1** — scale задаёт полные габариты (у three boxGeometry — тоже полные, но полуразмерная арифметика петель ломается тихо); (3) **transform_apply на родителе смещает детей** — для жёстких сборок позиционировать siblings векторной математикой без парентинга; (4) метал без env-карты в three рендерится чёрным — клампить metalness ≤0.55 и DoubleSide после загрузки; (5) практика: **превью-рендер прямо из Blender (фронт + сбоку) как ground-truth до экспорта** — экономит часы слепой отладки осей.
 
 ---
 

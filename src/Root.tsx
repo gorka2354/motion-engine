@@ -15,6 +15,7 @@ import { ShotikPromo, SHOTIK_PROMO_DURATION } from "./shotik/ShotikPromo";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
+import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 
 const FPS = 30;
 const W = 1080;
@@ -63,6 +64,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
+      <Composition id="GltfSandbox" component={GltfSandbox} durationInFrames={GLTF_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
     </>
   );
 };
