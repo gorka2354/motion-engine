@@ -10,38 +10,41 @@ import { MotionBlur } from "../lib/MotionBlur";
 import { TypoBeat } from "../v2/TypoBeat";
 import { clamp01, kf, SPRING, stagger, window01 } from "../v2/anim";
 
-export const SHOTIK_PROMO_DURATION = 720; // 24s @ 30fps
+export const SHOTIK_PROMO_DURATION = 840; // 28s @ 30fps
 
 const LAPTOP_W = 1440;
 
 // ── capture + terminal flow (frames inside DesktopScreen) ──
+// Annotation/feature beats got real screen time (user feedback: the drawing
+// was too fast to read; OCR and Copy-for-Claude must be shown explicitly).
 const T = {
   select: 112,
-  toolbar: 148,
-  box: 168,
-  arrow: 188,
-  marker: 208,
-  lift: 238,
-  paste: 332, // [Image #1] appears in the input
-  sent: 352, // Enter — the message moves into history
-  reply: 364,
-  mcp: 480,
+  toolbar: 146,
+  arrow: 170,
+  box: 206,
+  marker: 234,
+  ocr: 258, // click the OCR (T) button → result popup
+  claude: 316, // hover + click «Copy for Claude», A keycap shown
+  lift: 340,
+  paste: 436, // [Image #1] appears in the input
+  sent: 458,
+  reply: 470,
+  mcp: 584,
 } as const;
 
 // ── MagicMove: the captured region flies INTO the Claude input ──
-const MM_PASTE = { from: 292, to: 332 } as const;
+const MM_PASTE = { from: 396, to: 436 } as const;
 // ── MagicMove: the Shotik app window folds into its GitHub repo card ──
-const MM_GIT = { from: 575, to: 635 } as const;
+const MM_GIT = { from: 652, to: 712 } as const;
 
 const APP_WIN = { x: 470, y: 560 } as const;
 
-// Blur never overlaps the selection drag or the annotation strokes —
-// resampling animated thin lines is what caused the v2 artifacts.
+// Blur never overlaps the selection drag or the annotation strokes.
 const BLUR_WINDOWS: [number, number][] = [
   [36, 108],
-  [244, 296],
-  [426, 470],
-  [560, 640],
+  [344, 400],
+  [526, 566],
+  [640, 716],
 ];
 
 const MCP_CHIPS = [
@@ -176,44 +179,42 @@ const PasteChip: React.FC = () => (
 const LaptopRig: React.FC = () => {
   const f = useCurrentFrame();
   const x = kf(f, [
-    [244, 0],
-    [288, -450],
-    [430, -450],
-    [464, 0],
+    [348, 0],
+    [392, -450],
+    [530, -450],
+    [562, 0],
   ]);
   const y = kf(f, [
     [0, 640],
     [40, 640],
     [100, 30],
-    [555, 30],
-    [625, 330],
+    [655, 30],
+    [725, 330],
   ]);
   // Capture beat holds EXACTLY scale 1.0 — the 1408-design screen maps
-  // pixel-perfect, so the thin selection/annotation strokes stay crisp
-  // (fractional scale + bobbing made them shimmer).
+  // pixel-perfect, so the thin selection/annotation strokes stay crisp.
   const s = kf(f, [
     [0, 0.92],
     [100, 0.96],
     [112, 1.0],
-    [244, 1.0],
-    [288, 1.5],
-    [430, 1.5],
-    [464, 1.0],
-    [555, 1.0],
-    [625, 0.85],
+    [348, 1.0],
+    [392, 1.5],
+    [530, 1.5],
+    [562, 1.0],
+    [655, 1.0],
+    [725, 0.85],
   ]);
   const rx = kf(f, [
     [0, 10],
     [100, 0],
   ]);
-  // The idle bob freezes for the whole capture + terminal read (static
-  // camera = static pixels = no crawling on 1-2px lines and mono text).
+  // The idle bob freezes for the whole capture + terminal read.
   const bobAmp = kf(f, [
     [0, 4],
     [96, 4],
     [106, 0],
-    [458, 0],
-    [470, 4],
+    [566, 0],
+    [578, 4],
   ]);
   const floatY = Math.sin(f * 0.045) * bobAmp;
   const o =
@@ -221,7 +222,7 @@ const LaptopRig: React.FC = () => {
       [40, 0],
       [64, 1],
     ]) *
-    (1 - 0.75 * clamp01((f - 565) / 50));
+    (1 - 0.75 * clamp01((f - 655) / 50));
 
   return (
     <AbsoluteFill style={{ perspective: 1800 }}>
@@ -245,18 +246,7 @@ const LaptopRig: React.FC = () => {
           }}
         />
         <LaptopFrame width={LAPTOP_W}>
-          <DesktopScreen
-            selectAt={T.select}
-            toolbarAt={T.toolbar}
-            boxAt={T.box}
-            arrowAt={T.arrow}
-            markerAt={T.marker}
-            liftAt={T.lift}
-            pasteAt={T.paste}
-            sentAt={T.sent}
-            replyAt={T.reply}
-            mcpAt={T.mcp}
-          />
+          <DesktopScreen t={T} />
         </LaptopFrame>
       </div>
     </AbsoluteFill>
@@ -279,15 +269,15 @@ export const ShotikPromo: React.FC = () => {
       [6, 0],
       [24, 0.95],
     ]) *
-    (1 - clamp01((f - 560) / 18));
+    (1 - clamp01((f - 648) / 18));
 
-  const appIn = f < 468 ? 0 : spring({ frame: f - 468, fps, config: SPRING.pop });
+  const appIn = f < 572 ? 0 : spring({ frame: f - 572, fps, config: SPRING.pop });
   const appO = clamp01(appIn); // unmounts at MM_GIT.from — the morph takes over
 
   // the pasted chip dissolves into the [Image #1] token
   const chipFade = 1 - clamp01((f - (T.paste + 8)) / 12);
 
-  const ctaW = window01(f, 652, SHOTIK_PROMO_DURATION + 100);
+  const ctaW = window01(f, 756, SHOTIK_PROMO_DURATION + 100);
 
   const inBlurWindow = BLUR_WINDOWS.some(([a, b]) => f >= a && f <= b);
   const rig = <LaptopRig />;
@@ -319,29 +309,49 @@ export const ShotikPromo: React.FC = () => {
       {/* beats */}
       <TypoBeat title="Your screen. One hotkey." from={12} to={100} y={300} size={84} {...beatColors} />
       <TypoBeat
-        title="Snap. Annotate. Done."
-        sub="PrtSc → box · arrow · marker → Enter"
+        title="Snap. Annotate."
+        sub="arrow · box · marker — right in the overlay"
         from={116}
-        to={234}
+        to={250}
         y={44}
         size={56}
         {...beatColors}
       />
       <TypoBeat
-        title="Paste straight into Claude."
-        sub="Smart Clipboard — the image and the file path, at once"
-        from={250}
-        to={420}
+        title="It reads your text."
+        sub="built-in OCR, offline — press T"
+        from={256}
+        to={310}
+        y={44}
+        size={56}
+        accentWord="reads"
+        {...beatColors}
+      />
+      <TypoBeat
+        title="One click — copied for Claude."
+        sub="the ✦ button, or just press A"
+        from={316}
+        to={392}
         y={44}
         size={56}
         accentWord="Claude"
         {...beatColors}
       />
       <TypoBeat
+        title="Paste. Claude sees it."
+        sub="Smart Clipboard — the image and the file path, at once"
+        from={402}
+        to={556}
+        y={44}
+        size={56}
+        accentWord="sees"
+        {...beatColors}
+      />
+      <TypoBeat
         title="Or let Claude look itself."
         sub="built-in MCP server · connect once"
-        from={436}
-        to={560}
+        from={570}
+        to={646}
         y={44}
         size={56}
         accentWord="itself"
@@ -350,7 +360,7 @@ export const ShotikPromo: React.FC = () => {
       <TypoBeat
         title="Free. Open source."
         accentWord="Open source"
-        from={600}
+        from={690}
         to={SHOTIK_PROMO_DURATION + 40}
         y={150}
         size={64}
@@ -414,9 +424,9 @@ export const ShotikPromo: React.FC = () => {
 
       {/* MCP tool chips (just two, as garnish) */}
       {MCP_CHIPS.map((c, i) => {
-        const t = f - stagger(i, 486, 9);
+        const t = f - stagger(i, 592, 9);
         const enter = t < 0 ? 0 : spring({ frame: t, fps, config: SPRING.pop });
-        const exit = clamp01((f - 558) / 14);
+        const exit = clamp01((f - 644) / 14);
         const o = clamp01(enter) * (1 - exit);
         if (o <= 0.001) return null;
         return (

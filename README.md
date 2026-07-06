@@ -19,7 +19,8 @@ npm run lint         # eslint + tsc
 Render (run from the project dir so `public/` assets resolve):
 ```bash
 npx remotion render TixuPromoV2 out/promo.mp4              # main 44s promo
-npx remotion still  TixuPromoV2 out/frame.png --frame=90   # single frame (~2s) — the main feedback loop
+npx remotion still  TixuPromoV2 out/frame.png --frame=90   # single frame — re-bundles every call (~20s)
+npm run stills TixuPromoV2 90,300,540 out/check           # BATCH stills: bundles ONCE (~1s/frame after) — use this for the still loop
 npx remotion render TixuPromoV2 out/client.mp4 --props=client.json   # re-author WITHOUT code (see below)
 ```
 

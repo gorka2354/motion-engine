@@ -11,7 +11,7 @@
 ## Команды
 - `npm install` — один раз (Node на ПК есть, v20).
 - `npm run dev` — Remotion Studio (живой предпросмотр в браузере, prop-редактор).
-- `npx remotion still <Comp> out/f.png --frame=N` — рендер 1 кадра (~2 сек). **Главный feedback-loop: рендерь кадр → смотри глазами → правь.**
+- **`npm run stills <Comp> <f1,f2,...> [outDir]`** — batch-стиллы: бандл ОДИН раз, дальше ~1с/кадр (`scripts/stills.mjs`). **Главный feedback-loop: рендерь кадры → смотри глазами → правь.** (`npx remotion still` ре-бандлит на каждый кадр ~20с — используй только для одиночных.)
 - `npx remotion render TixuPromoV2 out/promo.mp4` — полный mp4.
 - ⚠️ Запускать `still`/`render` **из корня проекта** (иначе `public/` assets → 404).
 
