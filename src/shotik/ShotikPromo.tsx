@@ -35,9 +35,11 @@ const MM_GIT = { from: 575, to: 635 } as const;
 
 const APP_WIN = { x: 470, y: 560 } as const;
 
+// Blur never overlaps the selection drag or the annotation strokes —
+// resampling animated thin lines is what caused the v2 artifacts.
 const BLUR_WINDOWS: [number, number][] = [
-  [36, 146],
-  [242, 296],
+  [36, 108],
+  [244, 296],
   [426, 470],
   [560, 640],
 ];
@@ -174,7 +176,7 @@ const PasteChip: React.FC = () => (
 const LaptopRig: React.FC = () => {
   const f = useCurrentFrame();
   const x = kf(f, [
-    [246, 0],
+    [244, 0],
     [288, -450],
     [430, -450],
     [464, 0],
@@ -186,13 +188,14 @@ const LaptopRig: React.FC = () => {
     [555, 30],
     [625, 330],
   ]);
+  // Capture beat holds EXACTLY scale 1.0 — the 1408-design screen maps
+  // pixel-perfect, so the thin selection/annotation strokes stay crisp
+  // (fractional scale + bobbing made them shimmer).
   const s = kf(f, [
     [0, 0.92],
     [100, 0.96],
-    [110, 0.96],
-    [140, 1.06],
-    [240, 1.06],
-    [246, 1.06],
+    [112, 1.0],
+    [244, 1.0],
     [288, 1.5],
     [430, 1.5],
     [464, 1.0],
@@ -203,7 +206,16 @@ const LaptopRig: React.FC = () => {
     [0, 10],
     [100, 0],
   ]);
-  const floatY = Math.sin(f * 0.045) * 4 * (s < 1.2 ? 1 : 0.3);
+  // The idle bob freezes for the whole capture + terminal read (static
+  // camera = static pixels = no crawling on 1-2px lines and mono text).
+  const bobAmp = kf(f, [
+    [0, 4],
+    [96, 4],
+    [106, 0],
+    [458, 0],
+    [470, 4],
+  ]);
+  const floatY = Math.sin(f * 0.045) * bobAmp;
   const o =
     kf(f, [
       [40, 0],

@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Img, staticFile, useCurrentFrame } from "remotion";
 import { theme } from "../theme";
-import { clamp01, EASE, kf, stagger01 } from "../v2/anim";
+import { clamp01, EASE, EASE_INOUT, kf, stagger01 } from "../v2/anim";
 
 /**
  * Realistic dev desktop (1408×880) reproducing the ACTUAL Shotik capture
@@ -73,7 +73,9 @@ export const DesktopScreen: React.FC<{
 }> = ({ selectAt, toolbarAt, boxAt, arrowAt, markerAt, liftAt, pasteAt, sentAt, replyAt, mcpAt }) => {
   const f = useCurrentFrame();
 
-  const drag = EASE(clamp01((f - selectAt) / 22));
+  // Natural hand-drag curve; the cursor is derived from THIS value below,
+  // so the pointer always sits exactly on the moving corner (no lag).
+  const drag = EASE_INOUT(clamp01((f - selectAt) / 22));
   const hasOverlay = f >= selectAt && f < liftAt + 4;
   const curW = SEL.w * drag;
   const curH = SEL.h * drag;
@@ -114,6 +116,10 @@ export const DesktopScreen: React.FC<{
     [markerAt + 10, CODE_TOP + 2 * LINE_H],
   ]);
   const cursorO = f < liftAt ? 1 : 1 - clamp01((f - liftAt) / 10);
+  // While dragging, the pointer IS the selection corner.
+  const inDrag = f >= selectAt && f < selectAt + 22;
+  const cxDraw = inDrag ? SEL.x + SEL.w * drag : cx;
+  const cyDraw = inDrag ? SEL.y + SEL.h * drag : cy;
 
   const selRight = SEL.x + curW;
   const selBottom = SEL.y + curH;
@@ -599,7 +605,7 @@ export const DesktopScreen: React.FC<{
           width="26"
           height="26"
           viewBox="0 0 24 24"
-          style={{ position: "absolute", left: cx, top: cy, opacity: cursorO, zIndex: 80 }}
+          style={{ position: "absolute", left: cxDraw, top: cyDraw, opacity: cursorO, zIndex: 80 }}
         >
           <path d="M4 2 L20 12 L12 13.5 L9.5 21 Z" fill="#fff" stroke="rgba(0,0,0,0.55)" strokeWidth="1.4" />
         </svg>
