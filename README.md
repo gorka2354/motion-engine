@@ -28,6 +28,7 @@ npx remotion render TixuPromoV2 out/client.mp4 --props=client.json   # re-author
 |----|------|----------|
 | `TixuPromoV2` | **main** promo (V2, dark stage, data-driven) | 44s / 1320f |
 | `TixuCourseTeaser` | course teaser «zero → certified» (path scroll + trail draw-on + MagicMove cert) | 15s / 450f |
+| `ShotikPromo` | **16:9 · 1920×1080** — Shotik brand preset, LaptopFrame, MagicMove chain as the transition language | 24s / 720f |
 | `TixuPromo`   | V1 30s master (light theme, kept for comparison) | 886f |
 | `Scene*` ×6   | individual V1 scenes | per-scene |
 | `LibSandbox`  | test bench: Grain / Glow / MotionBlur / springs / stagger / Parallax | 150f |

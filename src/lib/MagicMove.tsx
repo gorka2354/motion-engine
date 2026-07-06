@@ -28,7 +28,11 @@ export const MagicMove: React.FC<{
   b: MagicRect;
   renderA: () => React.ReactNode;
   renderB: () => React.ReactNode;
-  /** Extra full turns during the flight (the "с кручением" part). */
+  /**
+   * Extra turns during the flight (the "с кручением" part). Use INTEGERS
+   * whenever B stays parked after `to` — fractional spins end rotated
+   * (0.5 leaves B upside-down).
+   */
   spin?: number;
   config?: Partial<SpringConfig>;
   showBefore?: boolean;

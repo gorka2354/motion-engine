@@ -17,7 +17,22 @@ export const TypoBeat: React.FC<{
   y?: number;
   size?: number;
   accentWord?: string;
-}> = ({ title, sub, from, to, y = 190, size = 76, accentWord }) => {
+  /** Brand overrides (default: dark-stage tixu palette). */
+  color?: string;
+  subColor?: string;
+  accentColor?: string;
+}> = ({
+  title,
+  sub,
+  from,
+  to,
+  y = 190,
+  size = 76,
+  accentWord,
+  color = theme.dark.text,
+  subColor = theme.dark.textMuted,
+  accentColor = theme.dark.accent,
+}) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { enter, exit, opacity } = springWindow(f, fps, from, to);
@@ -33,7 +48,7 @@ export const TypoBeat: React.FC<{
     return (
       <>
         {a}
-        <span style={{ color: theme.dark.accent }}>{accentWord}</span>
+        <span style={{ color: accentColor }}>{accentWord}</span>
         {b}
       </>
     );
@@ -61,7 +76,7 @@ export const TypoBeat: React.FC<{
           fontWeight: theme.type.weightHeading,
           letterSpacing: theme.type.letterSpacing,
           lineHeight: theme.type.lineHeight,
-          color: theme.dark.text,
+          color,
         }}
       >
         {renderTitle()}
@@ -71,7 +86,7 @@ export const TypoBeat: React.FC<{
           style={{
             fontSize: theme.type.sub,
             fontWeight: theme.type.weightSub,
-            color: theme.dark.textMuted,
+            color: subColor,
             marginTop: 16,
             letterSpacing: -0.3,
           }}

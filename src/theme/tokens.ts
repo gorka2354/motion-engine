@@ -50,6 +50,20 @@ export const theme = {
     shadowFloat: "0 40px 80px -24px rgba(0,0,0,0.6)",
     phoneGlow: "radial-gradient(closest-side, rgba(18,124,224,0.4), transparent 72%)",
   },
+  /** Shotik brand stage (project preset) — graphite dev-tool dark, violet accent. */
+  shotik: {
+    bg: "linear-gradient(180deg, #0A0C11 0%, #131622 54%, #0A0C10 100%)",
+    accent: "#7C5CFF", // MCP violet
+    accentDeep: "#5335C8",
+    text: "#F4F5F9",
+    textMuted: "#9AA3B5",
+    hair: "rgba(255,255,255,0.14)",
+    panel: "#171A24", // fake desktop windows
+    panelLight: "#1E2230",
+    screenBg: "linear-gradient(160deg, #1B1F35 0%, #232043 60%, #191C2E 100%)", // desktop wallpaper
+    glow: "radial-gradient(closest-side, rgba(124,92,255,0.38), transparent 72%)",
+    ctaGlow: "0 24px 48px -14px rgba(124,92,255,0.55)",
+  },
   shadow: {
     phone:
       "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",
