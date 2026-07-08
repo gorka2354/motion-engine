@@ -73,11 +73,18 @@ for i in range(5):
     face.data.materials.append(face_m)
     export_names.append(face.name)
 
-    # dark back face (tiles tumble — the back must not be a hole)
+    # dark back face (tiles tumble — the back must not be a hole);
+    # corners MUST be beveled like the body: a plain square back pokes its
+    # sharp corners past the rounded silhouette when the tile sways
     bpy.ops.mesh.primitive_plane_add(size=1)
     backf = bpy.context.object
     backf.name = f"TileBack{i}"
     backf.scale = (1.42, 1.42, 1)
+    bpy.ops.object.transform_apply(scale=True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+    bpy.ops.mesh.bevel(offset=0.32, segments=8, affect="VERTICES")
+    bpy.ops.object.mode_set(mode="OBJECT")
     backf.location = (0, 0, -0.068)
     backf.rotation_euler = (math.radians(180), 0, 0)
     backf.data.materials.append(body_m)
