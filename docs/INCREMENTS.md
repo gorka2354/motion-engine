@@ -67,5 +67,8 @@
 
 ---
 
+## inc-10 — Аудио-реактивность (после inc-4) 🔲
+Идея из banger.show (сам сервис не берём): элементы пульсируют от бита трека — родные `@remotion/media-utils` (`getAudioData`/`visualizeAudio`) → пульс glow/scale/grain по частотам. + кандидаты в lib: bloom, VHS-пост-эффекты.
+
 ## Дальше (backlog, после 1-5)
 Zod-параметризация (RU/EN, форматы) · brand-kit injection (per-client тема) · Remotion Lambda (масштаб) · Lottie/3D-телефон · субтитры (@remotion/captions). Детали — Obsidian «04 — Свои инструменты поверх».

@@ -50,6 +50,17 @@ export const theme = {
     shadowFloat: "0 40px 80px -24px rgba(0,0,0,0.6)",
     phoneGlow: "radial-gradient(closest-side, rgba(18,124,224,0.4), transparent 72%)",
   },
+  /** Bybit brand stage (project preset) — near-black + brand yellow. */
+  bybit: {
+    bg: "linear-gradient(180deg, #0B0B0D 0%, #17181C 55%, #0A0A0C 100%)",
+    accent: "#F7A600",
+    accentDeep: "#8F6100",
+    text: "#F5F6F8",
+    textMuted: "#9AA0AB",
+    hair: "rgba(255,255,255,0.14)",
+    cardFace: "#121318",
+    glow: "radial-gradient(closest-side, rgba(247,166,0,0.35), transparent 72%)",
+  },
   /** Shotik brand stage (project preset) — graphite dev-tool dark, violet accent. */
   shotik: {
     bg: "linear-gradient(180deg, #0A0C11 0%, #131622 54%, #0A0C10 100%)",
