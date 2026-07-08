@@ -71,7 +71,12 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="BybitCardFace" component={CardFace} durationInFrames={1} fps={FPS} width={860} height={540} />
       <Composition id="BybitCardBack" component={CardBack} durationInFrames={1} fps={FPS} width={860} height={540} />
       <Composition id="BybitServiceTile" component={ServiceTile} durationInFrames={5} fps={FPS} width={520} height={520} />
-      <Composition id="BybitCardGif" component={BybitGif} durationInFrames={BYBIT_GIF_DURATION} fps={FPS} width={1080} height={1080} />
+      {/* +2 warm-up frames: the FIRST frame painted by the render browser has
+          off reflections (per-browser GL warm-up — it follows the first
+          painted frame, so --frames offsets DON'T dodge it). Render all 302
+          frames, then drop the first 2 in ffmpeg; motion is 300-periodic, so
+          frames 2..301 loop just as seamlessly. */}
+      <Composition id="BybitCardGif" component={BybitGif} durationInFrames={BYBIT_GIF_DURATION + 2} fps={FPS} width={1080} height={1080} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
