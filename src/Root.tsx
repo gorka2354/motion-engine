@@ -12,6 +12,7 @@ import { TixuCourseTeaser, TEASER_DURATION } from "./v2/TixuCourseTeaser";
 import { promoSchema } from "./v2/promoSchema";
 import { PROMO_DEFAULTS } from "./v2/promo.map";
 import { ShotikPromo, SHOTIK_PROMO_DURATION } from "./shotik/ShotikPromo";
+import { DesktopStill } from "./shotik/DesktopStill";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
@@ -62,6 +63,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="SceneAiTools" component={SceneAiTools} durationInFrames={SCENE_DURATIONS.tools} fps={FPS} width={W} height={H} />
       <Composition id="SceneCta" component={SceneCta} durationInFrames={SCENE_DURATIONS.cta} fps={FPS} width={W} height={H} />
       <Composition id="ShotikPromo" component={ShotikPromo} durationInFrames={SHOTIK_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
+      <Composition id="ShotikDesktopStill" component={DesktopStill} durationInFrames={1} fps={FPS} width={1408} height={880} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />

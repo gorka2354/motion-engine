@@ -5,6 +5,7 @@ import { DoubleSide, Mesh, MeshStandardMaterial } from "three";
 import type { Group } from "three";
 import { theme } from "../theme";
 import { useGltf } from "../lib/useGltf";
+import { Environment3D } from "../lib/Environment3D";
 import { clamp01, kf, SPRING } from "../v2/anim";
 
 /**
@@ -23,29 +24,37 @@ const Rig3D: React.FC<{ scene: Group; screenMat: MeshStandardMaterial | null }> 
   const { fps } = useVideoConfig();
 
   const open = f < 8 ? 0 : spring({ frame: f - 8, fps, config: SPRING.smooth, durationInFrames: 76 });
+  // during the dolly the lid straightens a touch toward the camera plane,
+  // so the baked desktop lands square-on for the match-cut
+  const straighten = kf(f, [
+    [58, 0],
+    [102, 0.14],
+  ]);
   const lid = scene.getObjectByName("Lid");
-  if (lid) lid.rotation.x = -(0.1 + 1.68 * open);
-  // The display stays dark while the hook headline crosses it, then powers
-  // on right before the dolly — «the laptop wakes up and we dive in».
+  if (lid) lid.rotation.x = -(0.1 + 1.68 * open) + straighten;
+  // Screen stays dark while the hook headline crosses it, then powers on
+  // to EXACTLY the 2D desktop brightness (the texture IS the 2D still).
   if (screenMat) {
     screenMat.emissiveIntensity = kf(f, [
-      [0, 0.1],
-      [64, 0.16],
-      [96, 1.45],
+      [0, 0.04],
+      [64, 0.08],
+      [96, 1.0],
     ]);
   }
 
+  // dolly LOCKS at f102 — the image is frozen through most of the fade,
+  // so the cross-dissolve happens between two static, aligned pictures
   const dolly = kf(f, [
     [58, 1.0],
-    [106, 3.3],
+    [102, 3.26],
   ]);
   const py = kf(f, [
     [58, -0.78],
-    [106, -1.55],
+    [102, -1.52],
   ]);
   const tilt = kf(f, [
     [0, 0.24],
-    [100, 0.04],
+    [98, 0],
   ]);
   const orbit = kf(f, [
     [0, -0.6],
@@ -70,7 +79,6 @@ export const Laptop3DIntro: React.FC = () => {
     gltf.scene.traverse((o) => {
       if (o instanceof Mesh && o.material instanceof MeshStandardMaterial) {
         o.material.side = DoubleSide;
-        o.material.metalness = Math.min(o.material.metalness, 0.55);
         if (o.name === "ScreenFace") screenMat = o.material;
       }
     });
@@ -78,15 +86,16 @@ export const Laptop3DIntro: React.FC = () => {
   }, [gltf]);
 
   if (f > INTRO_END || !prepared) return null;
-  const o = 1 - clamp01((f - 94) / 16);
+  // short fade — the baked-texture match-cut does most of the work
+  const o = 1 - clamp01((f - 100) / 10);
 
   return (
     <AbsoluteFill style={{ opacity: o }}>
       <ThreeCanvas width={width} height={height} camera={{ fov: 34, position: [0, 1.7, 7.6] }}>
-        <ambientLight intensity={0.6} />
-        <pointLight position={[4, 5, 4]} intensity={260} color="#9FBEFF" />
-        <pointLight position={[-5, 3.5, -2]} intensity={180} color={theme.shotik.accent} />
-        <pointLight position={[0, -2, 3]} intensity={60} color="#3C4C7A" />
+        <Environment3D intensity={0.5} />
+        <ambientLight intensity={0.25} />
+        <pointLight position={[4, 5, 4]} intensity={180} color="#9FBEFF" />
+        <pointLight position={[-5, 3.5, -2]} intensity={150} color={theme.shotik.accent} />
         <Rig3D scene={prepared.scene} screenMat={prepared.screenMat} />
       </ThreeCanvas>
     </AbsoluteFill>

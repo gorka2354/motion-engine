@@ -32,9 +32,14 @@ keys_m = metal("Keys", (0.02, 0.025, 0.036), rough=0.65, met=0.25)
 screen_m = bpy.data.materials.new("Screen")
 screen_m.use_nodes = True
 sb = screen_m.node_tree.nodes["Principled BSDF"]
-sb.inputs["Base Color"].default_value = (0.02, 0.02, 0.06, 1)
-sb.inputs["Emission Color"].default_value = (0.486, 0.361, 1.0, 1)
-sb.inputs["Emission Strength"].default_value = 1.6
+sb.inputs["Base Color"].default_value = (0.01, 0.01, 0.02, 1)
+# the actual desktop still is baked in as the emissive map — the intro
+# dolly lands on the exact image the 2D flow starts with (match-cut)
+img = bpy.data.images.load(r"C:\Users\pesto\Desktop\motion-engine\public\shotik\desktop-still.png")
+texn = screen_m.node_tree.nodes.new("ShaderNodeTexImage")
+texn.image = img
+screen_m.node_tree.links.new(texn.outputs["Color"], sb.inputs["Emission Color"])
+sb.inputs["Emission Strength"].default_value = 1.4
 
 # ── deck (cube size=1 → scale = FULL dims) ──
 bpy.ops.mesh.primitive_cube_add(size=1)
@@ -77,12 +82,13 @@ lid.select_set(True)
 bpy.context.view_layer.objects.active = lid
 bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
 
-# ── screen slab on the lid's inner (bottom) face, parented keep-transform ──
-bpy.ops.mesh.primitive_cube_add(size=1)
+# ── screen: textured PLANE (clean 0-1 UVs) on the lid's inner face ──
+bpy.ops.mesh.primitive_plane_add(size=1)
 scr = bpy.context.object
 scr.name = "ScreenFace"
-scr.scale = (2.94, 1.88, 0.008)
-scr.location = (0, -0.09, 0.041)  # just under the lid bottom, inset from edges
+scr.scale = (2.94, 1.88, 1)
+scr.rotation_euler = (math.radians(180), 0, 0)  # face DOWN when closed
+scr.location = (0, -0.09, 0.043)
 scr.data.materials.append(screen_m)
 scr.parent = lid
 scr.matrix_parent_inverse = lid.matrix_world.inverted()
@@ -106,11 +112,10 @@ scene = bpy.context.scene
 scene.render.resolution_x = 960
 scene.render.resolution_y = 540
 
-scene.render.filepath = os.path.join(PREVIEW_DIR, "hinged-closed.png")
-bpy.ops.render.render(write_still=True)
-
-# open test: rotate the lid node exactly like the runtime will
+# open-front preview WITH texture — verifies screen image orientation
 lid.rotation_euler[0] = math.radians(-102)
+scene.render.filepath = os.path.join(PREVIEW_DIR, "hinged-open-front.png")
+bpy.ops.render.render(write_still=True)
 bpy.ops.object.camera_add(location=(9, 0, 1.0), rotation=(math.radians(90), 0, math.radians(90)))
 side = bpy.context.object
 bpy.context.scene.camera = side
