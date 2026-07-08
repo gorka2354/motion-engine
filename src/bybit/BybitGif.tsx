@@ -37,13 +37,15 @@ const Tiles3D: React.FC<{ nodes: Group[] }> = ({ nodes }) => {
         // gentle sway (±35°, sine period = clip → loops): shows the 3D depth
         // without ever turning the featureless back to the camera
         const sway = Math.sin((f / BYBIT_GIF_DURATION) * Math.PI * 2 + i * 1.9) * 0.6;
-        // orbit must FIT the 1:1 frame: visible half-width at z=0 is
-        // tan(fov/2)·camZ ≈ 2.29 — keep |x|+tile half inside it or the tiles
-        // silently leave the frame for most of the turn (the v2 bug)
+        // orbit must FIT the 1:1 frame (|x|+tile half < tan(fov/2)·depth) AND
+        // CLEAR the card: the spinning card sweeps a cylinder of radius
+        // ~1.4 (half-width 1.28 + tilt), so min orbit radius must exceed
+        // sweep + tile half-extent (~0.37) — an elliptic orbit with rz=1.05
+        // sent tiles straight through the edge-on card
         return (
           <group
             key={i}
-            position={[Math.cos(a) * 1.85, -0.15, Math.sin(a) * 1.05]}
+            position={[Math.cos(a) * 1.85, -0.15, Math.sin(a) * 1.85]}
             rotation={[0, sway, 0]}
             scale={0.48}
           >
@@ -108,7 +110,7 @@ export const BybitGif: React.FC = () => {
         }}
       />
       <AbsoluteFill>
-        <ThreeCanvas width={width} height={height} camera={{ fov: 34, position: [0, 0.45, 7.5] }}>
+        <ThreeCanvas width={width} height={height} camera={{ fov: 34, position: [0, 0.45, 7.8] }}>
           <Environment3D intensity={0.55} />
           <ambientLight intensity={0.3} />
           <pointLight position={[4, 4, 4]} intensity={200} color="#FFE3A6" />
