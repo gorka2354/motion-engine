@@ -22,29 +22,30 @@ const Card3D: React.FC<{ scene: Group }> = ({ scene }) => {
   const f = useCurrentFrame();
   const spin = (f / BYBIT_GIF_DURATION) * Math.PI * 2 - 0.35;
   return (
-    <group rotation={[0.08, spin, 0]} position={[0, 0.12, 0]} scale={0.62}>
+    <group rotation={[0.08, spin, 0]} position={[0, 0.12, 0]} scale={0.75}>
       <primitive object={scene} rotation={[Math.PI / 2 + 0.06, 0, 0]} />
     </group>
   );
 };
 
-const Tiles3D: React.FC<{ tiles: Group }> = ({ tiles }) => {
+const Tiles3D: React.FC<{ nodes: Group[] }> = ({ nodes }) => {
   const f = useCurrentFrame();
   return (
     <>
-      {[0, 1, 2, 3, 4].map((i) => {
-        const node = tiles.getObjectByName(`Tile${i}`);
-        if (!node) return null;
+      {nodes.map((node, i) => {
         const a = (i / 5) * Math.PI * 2 + (f / BYBIT_GIF_DURATION) * Math.PI * 2;
         // gentle sway (±35°, sine period = clip → loops): shows the 3D depth
         // without ever turning the featureless back to the camera
         const sway = Math.sin((f / BYBIT_GIF_DURATION) * Math.PI * 2 + i * 1.9) * 0.6;
+        // orbit must FIT the 1:1 frame: visible half-width at z=0 is
+        // tan(fov/2)·camZ ≈ 2.29 — keep |x|+tile half inside it or the tiles
+        // silently leave the frame for most of the turn (the v2 bug)
         return (
           <group
             key={i}
-            position={[Math.cos(a) * 3.1, -0.18, Math.sin(a) * 1.5]}
+            position={[Math.cos(a) * 1.85, -0.15, Math.sin(a) * 1.05]}
             rotation={[0, sway, 0]}
-            scale={0.46}
+            scale={0.48}
           >
             <primitive object={node} />
           </group>
@@ -69,18 +70,25 @@ export const BybitGif: React.FC = () => {
     return cardGltf.scene;
   }, [cardGltf]);
 
-  const tiles = useMemo(() => {
+  // Resolve tile nodes ONCE, before <primitive> reparents them out of the
+  // GLB scene — getObjectByName during render returns undefined from frame 2
+  // on in sequential video renders (stills never catch this: fresh mount).
+  const tileNodes = useMemo(() => {
     if (!tilesGltf) return null;
     tilesGltf.scene.traverse((o) => {
       if (o instanceof Mesh && o.material instanceof MeshStandardMaterial) {
         o.material.side = DoubleSide;
       }
     });
-    // zero the authoring-time row offsets — the orbit drives positions
+    const nodes: Group[] = [];
     for (let i = 0; i < 5; i++) {
-      tilesGltf.scene.getObjectByName(`Tile${i}`)?.position.set(0, 0, 0);
+      const n = tilesGltf.scene.getObjectByName(`Tile${i}`);
+      if (n) {
+        n.position.set(0, 0, 0);
+        nodes.push(n as Group);
+      }
     }
-    return tilesGltf.scene;
+    return nodes;
   }, [tilesGltf]);
 
   const by = theme.bybit;
@@ -100,13 +108,13 @@ export const BybitGif: React.FC = () => {
         }}
       />
       <AbsoluteFill>
-        <ThreeCanvas width={width} height={height} camera={{ fov: 35, position: [0, 0.5, 5.2] }}>
+        <ThreeCanvas width={width} height={height} camera={{ fov: 34, position: [0, 0.45, 7.5] }}>
           <Environment3D intensity={0.55} />
           <ambientLight intensity={0.3} />
           <pointLight position={[4, 4, 4]} intensity={200} color="#FFE3A6" />
           <pointLight position={[-4, 2, -2]} intensity={120} color={by.accent} />
           {card ? <Card3D scene={card} /> : null}
-          {tiles ? <Tiles3D tiles={tiles} /> : null}
+          {tileNodes ? <Tiles3D nodes={tileNodes} /> : null}
         </ThreeCanvas>
       </AbsoluteFill>
     </StageBackground>
