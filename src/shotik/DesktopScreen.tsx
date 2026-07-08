@@ -176,21 +176,23 @@ export const DesktopScreen: React.FC<{ t: CaptureTimings }> = ({ t }) => {
     [t.claude - 6, 1],
     [t.claude + 4, 0],
   ]);
+  // hover + tooltip + keycap hold for reading; the CLICK lands right
+  // before the overlay closes (pacing: breathe, then act)
   const claudeHover = f >= t.claude;
-  const claudeClick = f >= t.claude + 14;
+  const claudeClick = f >= t.lift - 16;
   const keycapO = kf(f, [
     [t.claude + 2, 0],
     [t.claude + 12, 1],
     [t.lift, 1],
     [t.lift + 10, 0],
   ]);
-  const keycapPress = f >= t.claude + 14 && f < t.claude + 22;
+  const keycapPress = f >= t.lift - 16 && f < t.lift - 8;
 
   const toastO = kf(f, [
     [t.lift + 4, 0],
     [t.lift + 16, 1],
-    [t.lift + 90, 1],
-    [t.lift + 106, 0],
+    [t.lift + 120, 1],
+    [t.lift + 136, 0],
   ]);
 
   // cursor route: drag corner → arrow icon → draw → rect icon → draw → counter icon
@@ -588,7 +590,7 @@ export const DesktopScreen: React.FC<{ t: CaptureTimings }> = ({ t }) => {
                         alignItems: "center",
                         justifyContent: "center",
                         opacity: p,
-                        scale: String((0.6 + 0.4 * p) * (pressed && f < t.claude + 20 ? 0.88 : 1)),
+                        scale: String((0.6 + 0.4 * p) * (pressed && f < t.lift - 8 ? 0.88 : 1)),
                       }}
                     >
                       <Ic d={tb.d} />
