@@ -62,19 +62,29 @@ face.scale = (3.42, 2.16, 1)
 face.location = (0, 0, 0.0285)
 face.data.materials.append(face_m)
 
-# back side: plain dark plane with a magstripe hint
+# back side: fully designed texture (magstripe, signature strip, wordmark)
+BACK_PNG = r"C:\Users\pesto\Desktop\motion-engine\public\bybit\card-back.png"
 back_m = bpy.data.materials.new("Back")
 back_m.use_nodes = True
 kb = back_m.node_tree.nodes["Principled BSDF"]
-kb.inputs["Base Color"].default_value = (0.045, 0.046, 0.055, 1)
-kb.inputs["Metallic"].default_value = 0.5
-kb.inputs["Roughness"].default_value = 0.5
+kb.inputs["Base Color"].default_value = (0.01, 0.01, 0.012, 1)
+kb.inputs["Metallic"].default_value = 0.2
+kb.inputs["Roughness"].default_value = 0.45
+bimg = bpy.data.images.load(BACK_PNG)
+btex = back_m.node_tree.nodes.new("ShaderNodeTexImage")
+btex.image = bimg
+back_m.node_tree.links.new(btex.outputs["Color"], kb.inputs["Emission Color"])
+back_m.node_tree.links.new(btex.outputs["Alpha"], kb.inputs["Alpha"])
+kb.inputs["Emission Strength"].default_value = 1.0
+back_m.blend_method = "BLEND"
 bpy.ops.mesh.primitive_plane_add(size=1)
 back = bpy.context.object
 back.name = "CardBack"
-back.scale = (3.3, 2.06, 1)
+back.scale = (3.42, 2.16, 1)
 back.location = (0, 0, -0.0285)
-back.rotation_euler = (math.radians(180), 0, 0)
+# flip around Y (vertical) — the back must read correctly when the card
+# turns around its vertical axis, like flipping a real card in your hand
+back.rotation_euler = (0, math.radians(180), 0)
 back.data.materials.append(back_m)
 
 # ── preview renders ──
@@ -96,6 +106,13 @@ scene = bpy.context.scene
 scene.render.resolution_x = 960
 scene.render.resolution_y = 540
 scene.render.filepath = os.path.join(PREVIEW_DIR, "card-front.png")
+bpy.ops.render.render(write_still=True)
+
+# back preview — verify the back texture orientation
+bpy.ops.object.camera_add(location=(0, 5.6, 1.6), rotation=(math.radians(74), 0, math.radians(180)))
+cam_b = bpy.context.object
+bpy.context.scene.camera = cam_b
+scene.render.filepath = os.path.join(PREVIEW_DIR, "card-back.png")
 bpy.ops.render.render(write_still=True)
 
 # ── export ──

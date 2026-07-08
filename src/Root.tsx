@@ -14,6 +14,8 @@ import { PROMO_DEFAULTS } from "./v2/promo.map";
 import { ShotikPromo, SHOTIK_PROMO_DURATION } from "./shotik/ShotikPromo";
 import { DesktopStill } from "./shotik/DesktopStill";
 import { CardFace } from "./bybit/CardFace";
+import { CardBack } from "./bybit/CardBack";
+import { ServiceTile } from "./bybit/ServiceTile";
 import { BybitGif, BYBIT_GIF_DURATION } from "./bybit/BybitGif";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
@@ -67,6 +69,8 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="ShotikPromo" component={ShotikPromo} durationInFrames={SHOTIK_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="ShotikDesktopStill" component={DesktopStill} durationInFrames={1} fps={FPS} width={1408} height={880} />
       <Composition id="BybitCardFace" component={CardFace} durationInFrames={1} fps={FPS} width={860} height={540} />
+      <Composition id="BybitCardBack" component={CardBack} durationInFrames={1} fps={FPS} width={860} height={540} />
+      <Composition id="BybitServiceTile" component={ServiceTile} durationInFrames={5} fps={FPS} width={520} height={520} />
       <Composition id="BybitCardGif" component={BybitGif} durationInFrames={BYBIT_GIF_DURATION} fps={FPS} width={1080} height={1080} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
