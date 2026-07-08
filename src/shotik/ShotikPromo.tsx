@@ -8,6 +8,7 @@ import { StageBackground } from "../lib/StageBackground";
 import { Laptop3DIntro } from "./Laptop3DIntro";
 import { MagicMove } from "../lib/MagicMove";
 import { MotionBlur } from "../lib/MotionBlur";
+import { CutFlash } from "../lib/CutFlash";
 import { TypoBeat } from "../v2/TypoBeat";
 import { clamp01, kf, SPRING, stagger, window01 } from "../v2/anim";
 
@@ -301,6 +302,8 @@ export const ShotikPromo: React.FC = () => {
 
       {/* 3D opening shot: hinged laptop opens, camera dives into the screen */}
       <Laptop3DIntro />
+      {/* light bloom over the 3D→2D splice masks the residual seam */}
+      <CutFlash at={104} dur={24} peak={0.3} />
 
       {/* beats */}
       <TypoBeat title="Your screen. One hotkey." from={12} to={100} y={300} size={84} {...beatColors} />
