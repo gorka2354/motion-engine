@@ -1,6 +1,7 @@
 import React from "react";
 import { AbsoluteFill, Sequence, useCurrentFrame } from "remotion";
 import { clamp01, EASE, EASE_INOUT } from "./anim";
+import { theme } from "../theme";
 
 export type FlowStep = {
   /** Global frame at which this screen starts entering. First step uses 0. */
@@ -74,6 +75,11 @@ export const ScreenFlow: React.FC<{ steps: FlowStep[] }> = ({ steps }) => {
               inset: 0,
               zIndex: i,
               overflow: "hidden",
+              // own border-radius: a parent's overflow-clip does NOT contain a
+              // transformed (esp. 3D perspective/rotateY) child, so the screen's
+              // square corners poke past the phone's rounded screen. Clipping on
+              // the transformed element itself fixes it.
+              borderRadius: theme.radius.screen,
               translate: `${tx}% 0`,
               opacity,
               scale: String(scale),

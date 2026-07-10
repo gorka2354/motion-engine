@@ -14,7 +14,9 @@
     "lint": "eslint src && tsc"
   },
   "dependencies": {
+    "@react-three/drei": "10.7.7",
     "@react-three/fiber": "9.0.0",
+    "@react-three/postprocessing": "3.0.4",
     "@remotion/cli": "4.0.484",
     "@remotion/google-fonts": "4.0.484",
     "@remotion/media": "4.0.484",
@@ -23,6 +25,7 @@
     "@remotion/paths": "4.0.484",
     "@remotion/three": "4.0.484",
     "@remotion/transitions": "4.0.484",
+    "postprocessing": "6.39.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.484",

@@ -22,6 +22,7 @@ import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
 import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
+import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 
 const FPS = 30;
 const W = 1080;
@@ -82,6 +83,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="GltfSandbox" component={GltfSandbox} durationInFrames={GLTF_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="Showcase3D" component={Showcase3D} durationInFrames={SHOWCASE_3D_DURATION} fps={FPS} width={1920} height={1080} />
+      <Composition id="HeroManifest" component={HeroManifest} durationInFrames={HERO_MANIFEST_DURATION} fps={FPS} width={1080} height={1080} />
     </>
   );
 };

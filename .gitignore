@@ -4,3 +4,8 @@ out
 *.log
 
 .playwright-mcp/
+.netlify/
+
+# scratch screenshots dropped in the project root during still/verify loops
+# (public/**/*.png assets are unaffected — this only matches the repo root)
+/*.png
