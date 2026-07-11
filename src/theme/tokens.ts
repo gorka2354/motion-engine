@@ -75,6 +75,22 @@ export const theme = {
     glow: "radial-gradient(closest-side, rgba(124,92,255,0.38), transparent 72%)",
     ctaGlow: "0 24px 48px -14px rgba(124,92,255,0.55)",
   },
+  /** Jumper brand stage (project preset) — deep purple-black, magenta-violet accent
+   *  (pulled from jumper.xyz: bg #120B1E, accent #D35CFF from the "route" gradient). */
+  jumper: {
+    bg: "linear-gradient(180deg, #0C0715 0%, #17102A 54%, #0A0611 100%)",
+    accent: "#D35CFF", // magenta-violet, the hero gradient's brightest stop
+    accentDeep: "#653CA2", // button base
+    accentMid: "#A855F7",
+    text: "#FFFFFF",
+    textMuted: "#9B8FB5",
+    hair: "rgba(255,255,255,0.10)",
+    card: "#180F2C", // swap widget surface
+    cardInner: "#241640", // From/To sub-cards
+    heroGrad: "linear-gradient(90deg, #FFFFFF 25%, #DBCFED 50%, #D35CFF 75%)",
+    glow: "radial-gradient(closest-side, rgba(211,92,255,0.34), transparent 72%)",
+    ctaGlow: "0 24px 48px -14px rgba(211,92,255,0.5)",
+  },
   shadow: {
     phone:
       "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",
