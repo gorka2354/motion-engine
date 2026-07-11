@@ -13,6 +13,9 @@
 - `npm run dev` — Remotion Studio (живой предпросмотр в браузере, prop-редактор).
 - **`npm run stills <Comp> <f1,f2,...> [outDir]`** — batch-стиллы: бандл ОДИН раз, дальше ~1с/кадр (`scripts/stills.mjs`). **Главный feedback-loop: рендерь кадры → смотри глазами → правь.** (`npx remotion still` ре-бандлит на каждый кадр ~20с — используй только для одиночных.)
 - `npx remotion render TixuPromoV2 out/promo.mp4` — полный mp4.
+- **`npm test`** — юнит-тесты (vitest): геометрия камеры/орбит (инварианты граблей #6/#8 на числах Bybit), краевые anim-хелперы, **детерминизм-guard** (grep footgun #1 по `src`). Чистая логика, ~250мс, без рендера.
+- **`npm run check-render <Comp> [--frames N] [--loop] [--trim N] [--seq]`** — render self-check (inc-11): рендерит сэмпл-кадры → пиксель-эвристики (content/motion/loop/seq) ловят «stills проходят — видео сломано». Пример: `npm run check-render BybitCardGif -- --loop --trim 2`.
+- **📐 База подхода к тестам — `docs/TESTING.md`**: пирамида L0–L6 (статик-гейты → юнит → scene-graph → render self-check → golden-master → 3D-asset QA), что чем ловится, маппинг граблей, CI-tiering, приоритет внедрения, инструментарий. Вести и расширять при работе.
 - ⚠️ Запускать `still`/`render` **из корня проекта** (иначе `public/` assets → 404).
 
 ## Архитектура (`src/`)

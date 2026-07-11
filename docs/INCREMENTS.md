@@ -70,7 +70,7 @@
 ## inc-10 — Аудио-реактивность (после inc-4) 🔲
 Идея из banger.show (сам сервис не берём): элементы пульсируют от бита трека — родные `@remotion/media-utils` (`getAudioData`/`visualizeAudio`) → пульс glow/scale/grain по частотам. + кандидаты в lib: bloom, VHS-пост-эффекты.
 
-## inc-11 — Render self-check (авто-детекция битых рендеров) 🔲
+## inc-11 — Render self-check + тест-пирамида (авто-детекция багов) ✅
 **Цель:** ловить класс багов «stills проходят — видео сломано» и «объект вне кадра» автоматически, до глаз.
 **Мотивация:** Bybit-луп 2026-07-08 — тайлы весь ролик за границей кадра (грабля №6); tixu 2026-07-10 — углы экрана выпирали за телефон на СЕКУНДУ перехода (грабля №10). Оба — класс «одиночный settled-still проходит, а в движении / на транзишене ломается».
 **Что:** `scripts/check-render.mjs <Comp> [--frames N]` поверх готового mp4 (чек почти бесплатный — рендер и так есть):
@@ -81,6 +81,12 @@
 5. **clip-check** (для in-device / скруглённых клип-контейнеров) — на кадрах СЕРЕДИНЫ переходов (transform активен) проверять, что за скруглённой формой клип-контейнера нет светлого контента: маска-полумесяцы в углах девайса/карты → пиксели там должны быть фоном, не экраном (torчащие углы transform'ированного слоя, грабля №10). Дешевле всего — семплить по 1 кадру внутри окна каждого перехода (`ScreenFlow` nav.at + dur/2).
 **Валидация:** прогнать на текущем BybitCardGif (должен пройти) и на намеренно сломанных версиях (орбита 3.1 → content/motion-check; ScreenFlow без border-radius → clip-check).
 **Риск:** LOW (additive-скрипт).
+**Итог (2026-07-11):** двухуровневая авто-детекция — ① юнит (математика, ДО рендера) + ② render self-check (пиксели готового рендера):
+- **① Юнит-тесты** (`npm test` → vitest, 22 теста ~250мс). `src/lib/geometry.ts` — чистая camera/orbit-математика (`visibleHalfWidth`/`orbitFitsFrame`/`minSafeOrbit`/`orbitClearsObject`); `geometry.test.ts` кодирует РЕАЛЬНЫЕ грабли на числах Bybit (fov 34 · camZ 7.8 · орбита 1.82..2.15 · полуширина кадра tan(17°)·7.8≈2.38): **орбита 3.1 отвергается (#6), rz 1.05 отвергается (#8)**. `anim.test.ts` — краевые `clamp01/kf/window01/springWindow/stagger`. `determinism.test.ts` — grep-guard **footgun #1** (нет `Math.random`/`Date.now`/`performance.now` в src; блок-комменты вычищаются, чтобы docstring ClockFix не давал ложный хит). `pixelMetrics.test.ts` — метрики детекторов на синтетике (пустой кадр→std 0, застой→diff 0), т.е. детекторы доказано СРАБАТЫВАЮТ, а не просто пропускают.
+- **② Render self-check** (`npm run check-render <Comp> [--frames N] [--loop] [--trim N] [--seq] [--props f]`): **content-check** (дисперсия яркости центра → объект вне кадра #6), **motion-check** (diff соседних сэмплов → застыло/пропало #7/#9), **loop-check** (f_first↔f_last → шов), **seq-check** (`--seq`: `renderMedia` mp4 + ffmpeg-extract vs stills → секвенциальный r3f-race #6/#7). Метрики в `scripts/pixel-metrics.mjs` (+`.d.mts`) — общие со скриптом и юнит-тестом. **BybitCardGif проходит все** (content std 30-38, motion 8-14, loop 5.0 при `--trim 2` под footgun #9). Пороги-константы вверху скрипта, задокументированы.
+- **Разделение труда:** «спутник за кадром / сквозь объект» (#6/#8) ловит ①-геометрия ДО рендера (доли мс); «главный объект пропал / застыл / шов лупа» (#7/#9) — ②-пиксели готового рендера.
+- **clip-check (грабля #10) — backlog:** специфичен (нужны координаты углов девайса/карты на кадре) → отдельная специализация поверх этого каркаса, когда понадобится. Deps: +`vitest` +`pngjs` (dev). zod остался exact 4.3.6.
+- **Полная пирамида тестов (L0–L6) + backlog расширения — `docs/TESTING.md`** (синтез ресёрча 2026-07-11: Remotion/R3F/визуальная регрессия/golden-master/3D-QA + наш опыт). Приоритет внедрения: (1) `--gl` pin для детерминизма 3D-пикселей, (2) golden-frame baseline (pixelmatch + SSIM для grain), (3) `_qa.py`+gltf-validate (закрывает `export_apply`≠`transform_apply` gap), (4) `@react-three/test-renderer` smoke (#7 без GPU), (5) jank/title-safe/freezedetect/property-based.
 
 ## Дальше (backlog, после 1-5)
 Zod-параметризация (RU/EN, форматы) · brand-kit injection (per-client тема) · Remotion Lambda (масштаб) · Lottie/3D-телефон · субтитры (@remotion/captions). Детали — Obsidian «04 — Свои инструменты поверх».

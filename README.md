@@ -14,7 +14,14 @@ Parametrized engine: **design tokens** (light + dark stage) + **premium primitiv
 npm install
 npm run dev          # Remotion Studio — live preview, edit V2 props in the UI
 npm run lint         # eslint + tsc
+npm test             # vitest — pure-logic units: geometry/orbit invariants, anim math, determinism guard
 ```
+
+**Auto-detecting visual bugs.** Two layers catch the classes that cost the most time:
+- `npm test` — unit tests on pure logic. `geometry.ts` invariants reject an off-frame orbit (#6) or an orbit that clips the card (#8) with arithmetic, *before* rendering; a determinism guard greps `src` for `Math.random`/`Date.now` (#1).
+- `npm run check-render <Comp> [--frames N] [--loop] [--trim N] [--seq]` — the render self-check: renders sample frames and runs pixel heuristics — content-check (subject left the frame), motion-check (frozen/vanished), loop-check (seam), seq-check (still-vs-mp4 state races). Catches "stills pass, video is broken". E.g. `npm run check-render BybitCardGif -- --loop --trim 2`.
+
+The full strategy — the **L0–L6 test pyramid**, what each layer catches, the footgun→layer map, CI tiering and the rollout backlog — lives in [`docs/TESTING.md`](docs/TESTING.md).
 
 Render (run from the project dir so `public/` assets resolve):
 ```bash

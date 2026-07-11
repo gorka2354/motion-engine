@@ -11,7 +11,9 @@
     "still": "remotion still",
     "stills": "node scripts/stills.mjs",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "test": "vitest run",
+    "check-render": "node scripts/check-render.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",
@@ -39,8 +41,10 @@
     "@types/three": "0.171.0",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
+    "pngjs": "^7.0.0",
     "prettier": "3.8.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.1.10"
   },
   "sideEffects": false
 }
