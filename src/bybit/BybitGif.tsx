@@ -21,7 +21,10 @@ export const BYBIT_GIF_DURATION = 300; // 10s @ 30fps, seamless loop
  * All rotation counts are integers → seamless loop.
  */
 
-const Card3D: React.FC<{ scene: Group }> = ({ scene }) => {
+// exported for the L2 scene-graph test (BybitGif.test.tsx) — mounted headless
+// through @react-three/test-renderer to assert footgun #7 (the <primitive>
+// reparent) without a GPU. Export only; render output is unchanged (Δ=0).
+export const Card3D: React.FC<{ scene: Group }> = ({ scene }) => {
   const f = useCurrentFrame();
   const spin = (f / BYBIT_GIF_DURATION) * Math.PI * 2 - 0.35;
   return (
@@ -38,7 +41,7 @@ const Card3D: React.FC<{ scene: Group }> = ({ scene }) => {
  * stay inside the safe window: > card sweep (~1.65) so tiles clear the edge-on
  * card, < visible half-width tan(fov/2)·camZ (~2.38) so they never leave frame.
  */
-const tileOrbit = (i: number, t: number) => {
+export const tileOrbit = (i: number, t: number) => {
   const TAU = Math.PI * 2;
   const seed = i * 1.7;
   const baseR = 1.82 + (i / 4) * 0.33;
@@ -53,7 +56,7 @@ const tileOrbit = (i: number, t: number) => {
   };
 };
 
-const Tiles3D: React.FC<{ nodes: Group[] }> = ({ nodes }) => {
+export const Tiles3D: React.FC<{ nodes: Group[] }> = ({ nodes }) => {
   const t = useCurrentFrame() / BYBIT_GIF_DURATION;
   return (
     <>

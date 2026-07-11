@@ -1,14 +1,40 @@
 import { defineConfig } from "vitest/config";
+import { playwright } from "@vitest/browser-playwright";
 
-// .mjs (not .ts): package.json has no "type":"module", so a .ts config loads as
-// CommonJS and chokes on vitest's ESM-only deps (ERR_REQUIRE_ESM). .mjs is ESM.
-//
-// Unit tests only — pure logic (geometry, anim math, determinism guard). No DOM,
-// no canvas: Remotion components render pixels, which unit tests can't see — those
-// are covered by scripts/check-render.mjs (the render self-check) instead.
+// Two test projects:
+//  • node    — pure logic (geometry, anim, determinism, pixel metrics, scene-graph).
+//  • browser — LAYOUT invariants in a real Chromium: jsdom doesn't compute layout, so
+//    "element overflows its container" (e.g. the To sub-card spilling past the widget
+//    card) is invisible to a node test. Browser mode measures getBoundingClientRect.
+// .mjs (not .ts): package.json has no "type":"module", a .ts config loads as CJS and
+// chokes on vitest's ESM-only deps.
 export default defineConfig({
   test: {
-    environment: "node",
-    include: ["src/**/*.test.{ts,tsx}"],
+    projects: [
+      {
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: ["src/**/*.layout.test.tsx"],
+        },
+      },
+      {
+        optimizeDeps: {
+          include: ["react", "react-dom", "react-dom/client", "react/jsx-dev-runtime"],
+        },
+        test: {
+          name: "browser",
+          include: ["src/**/*.layout.test.tsx"],
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            headless: true,
+            api: { host: "127.0.0.1" },
+            instances: [{ browser: "chromium" }],
+          },
+        },
+      },
+    ],
   },
 });
