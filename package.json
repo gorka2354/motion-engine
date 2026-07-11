@@ -13,7 +13,8 @@
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
     "test": "vitest run",
-    "check-render": "node scripts/check-render.mjs"
+    "check-render": "node scripts/check-render.mjs",
+    "check-assets": "node scripts/check-assets.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",
@@ -36,11 +37,14 @@
     "zod": "4.3.6"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.4.1",
+    "@gltf-transform/functions": "^4.4.1",
     "@remotion/eslint-config-flat": "4.0.484",
     "@types/react": "19.2.7",
     "@types/three": "0.171.0",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
+    "gltf-validator": "^2.0.0-dev.3.10",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
     "prettier": "3.8.1",

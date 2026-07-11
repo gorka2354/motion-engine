@@ -115,6 +115,16 @@ bpy.context.scene.camera = cam_b
 scene.render.filepath = os.path.join(PREVIEW_DIR, "card-back.png")
 bpy.ops.render.render(write_still=True)
 
+# ── QA gate before export (scripts/blender/_qa.py) — turns silent asset bugs loud.
+# Template for the other generators too. Note: CardFace/CardBack keep an unapplied
+# scale here and ship as node TRS, so qa_check reports a WARN — exactly the gap the
+# research flagged (export_apply bakes MODIFIERS, not object transforms). Flip
+# strict_transforms=True if a future scene needs them fully applied.
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _qa import qa_check
+qa_check(("CardBody", "CardFace", "CardBack"))
+
 # ── export ──
 bpy.ops.object.select_all(action="DESELECT")
 for name in ("CardBody", "CardFace", "CardBack"):

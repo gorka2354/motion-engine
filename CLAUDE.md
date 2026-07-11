@@ -15,6 +15,7 @@
 - `npx remotion render TixuPromoV2 out/promo.mp4` — полный mp4.
 - **`npm test`** — юнит-тесты (vitest): геометрия камеры/орбит (инварианты граблей #6/#8 на числах Bybit), краевые anim-хелперы, **детерминизм-guard** (grep footgun #1 по `src`). Чистая логика, ~250мс, без рендера.
 - **`npm run check-render <Comp> [--frames N] [--loop] [--trim N] [--seq]`** — render self-check (inc-11): рендерит сэмпл-кадры → пиксель-эвристики (content/motion/loop/seq) ловят «stills проходят — видео сломано». Пример: `npm run check-render BybitCardGif -- --loop --trim 2`.
+- **`npm run check-assets`** (`--accept` — записать фикстуры) — 3D-asset self-check (L5): `gltf-validator` (Khronos) + metadata-регрессия (`test/asset-fixtures/`, bounds/tris/UV/normals) по `public/models/*.glb`. Blender pre-export гейт — `scripts/blender/_qa.py` (`mesh.validate`+transform+UV), встроен в `bybit-card.py`.
 - **📐 База подхода к тестам — `docs/TESTING.md`**: пирамида L0–L6 (статик-гейты → юнит → scene-graph → render self-check → golden-master → 3D-asset QA), что чем ловится, маппинг граблей, CI-tiering, приоритет внедрения, инструментарий. Вести и расширять при работе.
 - ⚠️ Запускать `still`/`render` **из корня проекта** (иначе `public/` assets → 404).
 
