@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 // the same metrics scripts/check-render.mjs uses — proven here on synthetic frames
 // so the render-self-check detectors are known to FIRE, not just pass.
-import { centerStats, frameDiff } from "../../scripts/pixel-metrics.mjs";
+import {
+  centerStats,
+  frameDiff,
+  pixelmatchRatio,
+  ssimScore,
+} from "../../scripts/pixel-metrics.mjs";
 
 /** solid grey frame (RGBA) */
 function solid(w: number, h: number, v: number) {
@@ -41,5 +46,21 @@ describe("frameDiff (motion / loop math)", () => {
   });
   it("black vs white → ~255 (a hard cut / seam is detectable)", () => {
     expect(frameDiff(solid(120, 120, 0), solid(120, 120, 255))).toBeGreaterThan(200);
+  });
+});
+
+describe("golden-frame metrics (L4 — vs approved baseline)", () => {
+  it("pixelmatchRatio: identical → 0", () => {
+    expect(pixelmatchRatio(solid(64, 64, 120), solid(64, 64, 120))).toBe(0);
+  });
+  it("pixelmatchRatio: black vs white → ~1 (every pixel differs)", () => {
+    expect(pixelmatchRatio(solid(64, 64, 0), solid(64, 64, 255))).toBeGreaterThan(0.99);
+  });
+  it("ssimScore: identical → 1", () => {
+    expect(ssimScore(solid(64, 64, 120), solid(64, 64, 120))).toBeCloseTo(1, 5);
+  });
+  it("ssimScore: a materially changed frame drops well below the 0.98 gate", () => {
+    // the bug class golden-check exists for — the frame no longer matches the baseline
+    expect(ssimScore(halfSplit(64, 64), solid(64, 64, 128))).toBeLessThan(0.9);
   });
 });

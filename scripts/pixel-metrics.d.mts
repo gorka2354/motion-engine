@@ -7,3 +7,5 @@ export function centerStats(
   frac?: number,
 ): { mean: number; std: number };
 export function frameDiff(a: Frame, b: Frame): number;
+export function pixelmatchRatio(a: Frame, b: Frame, threshold?: number): number;
+export function ssimScore(a: Frame, b: Frame): number;

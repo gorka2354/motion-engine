@@ -29,24 +29,32 @@ import {
   mkdirSync,
   rmSync,
   existsSync,
+  copyFileSync,
   readFileSync as read,
 } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
-import { centerStats, frameDiff } from "./pixel-metrics.mjs";
+import {
+  centerStats,
+  frameDiff,
+  pixelmatchRatio,
+  ssimScore,
+} from "./pixel-metrics.mjs";
 
 // ── thresholds (empirical; tune per project, documented so a failure is legible) ──
 const CONTENT_MIN_STD = 8; // center luma std below this ⇒ "empty center"
 const MOTION_MIN_DIFF = 0.5; // consecutive-sample mean abs diff below this ⇒ "frozen"
 const LOOP_MAX_DIFF = 6; // first↔last mean abs diff above this ⇒ "seam"
 const SEQ_MAX_DIFF = 4; // still-vs-sequence mean abs diff above this ⇒ "state bug"
+const GOLDEN_MIN_SSIM = 0.98; // candidate-vs-baseline SSIM below this ⇒ "look changed"
 
 // ── args ──
 const argv = process.argv.slice(2);
 const compId = argv[0];
 if (!compId || compId.startsWith("--")) {
   console.error(
-    "Usage: node scripts/check-render.mjs <CompId> [--frames N] [--loop] [--trim N] [--seq] [--props file]",
+    "Usage: node scripts/check-render.mjs <CompId> [--frames N] [--loop] [--trim N]\n" +
+      "         [--seq] [--gl swangle] [--accept-baseline] [--props file]",
   );
   process.exit(2);
 }
@@ -59,6 +67,13 @@ const nSamples = parseInt(flag("frames", "8"), 10);
 const trim = parseInt(flag("trim", "0"), 10);
 const doLoop = has("loop");
 const doSeq = has("seq");
+// Pin the GL renderer: a baseline captured here must match other machines / CI.
+// swiftshader (CPU) vs angle (GPU/llvmpipe) render the same 3D scene to DIFFERENT
+// pixels, so an unpinned diff shows renderer noise, not a real regression. swangle
+// (SwiftShader-on-ANGLE) is deterministic and needs no GPU (safe on CI runners).
+const GL = flag("gl", "swangle");
+const chromiumOptions = { gl: GL };
+const acceptBaseline = has("accept-baseline");
 const propsFile = flag("props", null);
 const inputProps = propsFile ? JSON.parse(readFileSync(propsFile, "utf8")) : undefined;
 
@@ -80,7 +95,7 @@ console.time("bundle");
 const serveUrl = await bundle({ entryPoint: path.resolve("src/index.ts") });
 console.timeEnd("bundle");
 
-const composition = await selectComposition({ serveUrl, id: compId, inputProps });
+const composition = await selectComposition({ serveUrl, id: compId, inputProps, chromiumOptions });
 const dur = composition.durationInFrames;
 const lo = trim,
   hi = dur - 1;
@@ -88,14 +103,14 @@ const samples = Array.from({ length: nSamples }, (_, i) =>
   Math.round(lo + ((hi - lo) * i) / (nSamples - 1)),
 );
 console.log(
-  `\ncheck-render ${compId}  (${composition.width}×${composition.height}, ${dur} frames, samples ${fmt(samples).replace(/\.0/g, "")})\n`,
+  `\ncheck-render ${compId}  (${composition.width}×${composition.height}, ${dur} frames, gl=${GL}, samples ${fmt(samples).replace(/\.0/g, "")})\n`,
 );
 
 // render the sample frames as stills
 const stillPngs = [];
 for (const f of samples) {
   const out = path.join(tmp, `still-${f}.png`);
-  await renderStill({ composition, serveUrl, output: out, frame: f, inputProps });
+  await renderStill({ composition, serveUrl, output: out, frame: f, inputProps, chromiumOptions });
   stillPngs.push(readPng(out));
 }
 
@@ -127,6 +142,39 @@ if (doLoop) {
   );
 }
 
+// golden-check — candidate vs an approved baseline. This is the ONLY check that
+// catches a uniform shift across ALL frames (a changed color token, a moved layout):
+// content/motion/loop only compare frames *within* this render, so they're blind to it.
+// SSIM (perceptual) is the gate — tolerant of sub-pixel grain/bloom noise on the dark
+// stage; the raw pixel-diff % is reported alongside for context.
+const GOLDEN_DIR = path.resolve("test/golden", compId);
+if (acceptBaseline) {
+  mkdirSync(GOLDEN_DIR, { recursive: true });
+  for (const f of samples)
+    copyFileSync(path.join(tmp, `still-${f}.png`), path.join(GOLDEN_DIR, `${f}.png`));
+  console.log(`  BASE  golden accepted → test/golden/${compId}/ (${samples.length} frames)`);
+} else {
+  const cmp = [];
+  for (let i = 0; i < samples.length; i++) {
+    const gp = path.join(GOLDEN_DIR, `${samples[i]}.png`);
+    if (existsSync(gp)) {
+      const g = readPng(gp);
+      cmp.push({ ssim: ssimScore(g, stillPngs[i]), ratio: pixelmatchRatio(g, stillPngs[i]) });
+    }
+  }
+  if (!cmp.length) {
+    console.log("  SKIP  golden-check    (no baseline — run with --accept-baseline)");
+  } else {
+    const minSsim = Math.min(...cmp.map((c) => c.ssim));
+    const maxRatio = Math.max(...cmp.map((c) => c.ratio));
+    record(
+      "golden-check",
+      minSsim >= GOLDEN_MIN_SSIM,
+      `min SSIM ${minSsim.toFixed(4)} (min ${GOLDEN_MIN_SSIM}) · max pixel-diff ${(maxRatio * 100).toFixed(2)}% · ${cmp.length}/${samples.length} have baseline`,
+    );
+  }
+}
+
 // seq-check (still vs frames pulled from a real mp4)
 if (doSeq) {
   const mp4 = path.join(tmp, "seq.mp4");
@@ -136,6 +184,7 @@ if (doSeq) {
     codec: "h264",
     output: mp4,
     inputProps,
+    chromiumOptions,
   });
   let worst = 0;
   for (let i = 0; i < samples.length; i++) {

@@ -4,6 +4,8 @@
 // proven to actually FIRE (empty center → std 0, frozen → diff 0), not just pass.
 //
 // A "frame" is { width, height, data } where data is RGBA bytes (pngjs shape).
+import pixelmatch from "pixelmatch";
+import { ssim } from "ssim.js";
 
 export const lumaAt = (px, i) =>
   0.299 * px.data[i] + 0.587 * px.data[i + 1] + 0.114 * px.data[i + 2];
@@ -45,4 +47,26 @@ export function frameDiff(a, b) {
       n++;
     }
   return sum / n;
+}
+
+// ── golden-frame comparison (L4) — candidate vs approved baseline ──
+
+/** Fraction of pixels that differ (0..1), AA-aware (OKLab in pixelmatch v6+).
+ *  Tight — catches typography/layout/token shifts. Same size required (same comp). */
+export function pixelmatchRatio(a, b, threshold = 0.1) {
+  if (a.width !== b.width || a.height !== b.height) return 1;
+  const diff = pixelmatch(a.data, b.data, null, a.width, a.height, {
+    threshold,
+    includeAA: false,
+  });
+  return diff / (a.width * a.height);
+}
+
+/** Structural similarity 0..1 (1 = identical). Perceptual — tolerant of the
+ *  sub-pixel grain/bloom noise that makes a raw pixel diff flap on dark stages. */
+export function ssimScore(a, b) {
+  return ssim(
+    { data: a.data, width: a.width, height: a.height },
+    { data: b.data, width: b.width, height: b.height },
+  ).mssim;
 }

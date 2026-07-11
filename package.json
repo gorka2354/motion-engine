@@ -41,8 +41,10 @@
     "@types/three": "0.171.0",
     "@types/web": "0.0.166",
     "eslint": "9.19.0",
+    "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
     "prettier": "3.8.1",
+    "ssim.js": "^3.5.0",
     "typescript": "5.9.3",
     "vitest": "^4.1.10"
   },
