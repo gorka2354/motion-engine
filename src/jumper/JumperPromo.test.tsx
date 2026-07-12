@@ -10,9 +10,10 @@ describe("JumperPromo sequencing (TransitionSeries)", () => {
     const total =
       SCENES.hook + SCENES.transfer + SCENES.benefits + SCENES.cta - 3 * XFADE;
     expect(total).toBe(JUMPER_PROMO_DURATION);
-    // sensible length for a 9:16 promo (~22–30s @ 30fps)
+    // sensible length for a full-arc 9:16 promo (~30–40s @ 30fps): connect → transfer →
+    // execute → complete → benefits → CTA is a longer story than a bare feature-demo
     expect(JUMPER_PROMO_DURATION).toBeGreaterThan(660);
-    expect(JUMPER_PROMO_DURATION).toBeLessThan(900);
+    expect(JUMPER_PROMO_DURATION).toBeLessThan(1260);
   });
 
   it("every scene is longer than a full transition on each side", () => {

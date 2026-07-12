@@ -76,7 +76,8 @@ export const SwapWidget: React.FC<{
   usd?: string;
   ctaLabel?: string;
   ctaActive?: boolean; // route found -> CTA lights up
-}> = ({ from, to, amount = "0", usd = "$0.00", ctaLabel = "Connect wallet", ctaActive = false }) => (
+  connected?: string; // wallet address chip in the header once connected (e.g. "0x1f…9A2")
+}> = ({ from, to, amount = "0", usd = "$0.00", ctaLabel = "Connect wallet", ctaActive = false, connected }) => (
   <div
     style={{
       width: 360,
@@ -89,8 +90,14 @@ export const SwapWidget: React.FC<{
       boxSizing: "border-box",
     }}
   >
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
-      <div style={{ fontSize: 25, fontWeight: 800, color: j.text, letterSpacing: "-0.02em" }}>Swap &amp; Bridge</div>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, gap: 10 }}>
+      <div style={{ fontSize: 25, fontWeight: 800, color: j.text, letterSpacing: "-0.02em", flex: 1 }}>Swap &amp; Bridge</div>
+      {connected ? (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px 6px 8px", borderRadius: 100, background: j.cardInner, border: `1px solid ${j.hair}` }}>
+          <Img src={staticFile("jumper/wallets/metamask.svg")} width={20} height={20} style={{ display: "block" }} />
+          <span style={{ fontSize: 15, fontWeight: 700, color: j.text, fontVariantNumeric: "tabular-nums" }}>{connected}</span>
+        </div>
+      ) : null}
       <GearIcon />
     </div>
 
