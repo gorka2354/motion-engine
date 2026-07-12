@@ -17,6 +17,7 @@ export const CLIPS = {
   confirm: "audio/confirm.wav",
   pop: "audio/pop.wav",
   whoosh: "audio/whoosh.wav",
+  sheet: "audio/sheet.wav", // soft tonal panel-rise (use for sheet/drawer opens, not whoosh)
   success: "audio/success.wav",
   count: "audio/count.wav", // ~2.3s accelerating ticks + resolve ding — for count-up beats
 } as const;
@@ -30,6 +31,7 @@ const DEFAULT_VOL: Record<SfxClip, number> = {
   confirm: 0.7,
   pop: 0.6,
   whoosh: 0.8,
+  sheet: 0.55,
   success: 0.95,
   count: 0.6,
 };

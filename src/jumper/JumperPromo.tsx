@@ -262,12 +262,12 @@ const JumperSound: React.FC = () => (
     <Sfx clip="whoosh" at={CUE.cut1} volume={0.6} />
     {/* From selector */}
     <Sfx clip="tap" at={CUE.fromTap} />
-    <Sfx clip="whoosh" at={CUE.fromSheet} volume={0.32} playbackRate={1.5} />
+    <Sfx clip="sheet" at={CUE.fromSheet} />
     <Sfx clip="select" at={CUE.fromNet} />
     <Sfx clip="select" at={CUE.fromTok} />
     {/* To selector */}
     <Sfx clip="tap" at={CUE.toTap} />
-    <Sfx clip="whoosh" at={CUE.toSheet} volume={0.32} playbackRate={1.5} />
+    <Sfx clip="sheet" at={CUE.toSheet} />
     <Sfx clip="select" at={CUE.toNet} />
     <Sfx clip="select" at={CUE.toTok} />
     {/* confirm + result */}

@@ -55,6 +55,18 @@ const normalize = (a, peak = 0.75) => {
   if (m > 0) for (let i = 0; i < a.length; i++) a[i] = (a[i] / m) * peak;
   return a;
 };
+// Softening pass — the design PRINCIPLE for this set: sounds should be soft/tactile, not
+// sharp or hissy. Every clip with high-frequency content gets rolled off through this
+// N-pole low-pass (in place). Prefer filtered tones over raw noise/saw; UI transitions get
+// a gentle tonal swell, not a bright noise whoosh.
+const lowpass = (a, fc, poles = 2) => {
+  const k = onepole(fc);
+  for (let p = 0; p < poles; p++) {
+    let y = 0;
+    for (let i = 0; i < a.length; i++) { y += k * (a[i] - y); a[i] = y; }
+  }
+  return a;
+};
 // exponential-decay envelope with a short linear attack
 const env = (t, attack, tau) => (t < attack ? t / attack : Math.exp(-(t - attack) / tau));
 // one-pole coefficient for cutoff fc (Hz)
@@ -62,30 +74,27 @@ const onepole = (fc) => 1 - Math.exp(-TAU * fc / SR);
 
 // ── clips ──
 
-// short high click — reflexive, lands exactly on the tap frame
+// soft tick — a rounded tonal blip (no noise transient — that read as a sharp click),
+// lands exactly on the tap frame
 const tap = () => {
-  const N = secs(0.055), y = new Float32Array(N);
-  const rng = mulberry32(11);
-  let hp = 0, lpPrev = 0;
+  const N = secs(0.06), y = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     const t = i / SR;
-    const tone = Math.sin(TAU * 1650 * t) * env(t, 0.0008, 0.014);
-    const nz = rng() * 2 - 1;
-    lpPrev += onepole(6000) * (nz - lpPrev);
-    hp = nz - lpPrev; // crude highpass → crisp transient
-    y[i] = tone * 0.7 + hp * env(t, 0.0005, 0.008) * 0.5;
+    y[i] = (Math.sin(TAU * 1150 * t) + 0.3 * Math.sin(TAU * 2300 * t)) * env(t, 0.002, 0.016) * 0.7;
   }
-  return normalize(y, 0.72);
+  lowpass(y, 3200, 2);
+  return normalize(y, 0.6);
 };
 
-// select tick — brighter/thinner than tap, a different timbre so picks don't sound like taps
+// select tick — a soft blip, lower/gentler than the old bright one, different timbre from tap
 const select = () => {
-  const N = secs(0.05), y = new Float32Array(N);
+  const N = secs(0.055), y = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     const t = i / SR;
-    y[i] = (Math.sin(TAU * 2300 * t) + 0.4 * Math.sin(TAU * 3450 * t)) * env(t, 0.001, 0.012);
+    y[i] = (Math.sin(TAU * 1400 * t) + 0.3 * Math.sin(TAU * 2100 * t)) * env(t, 0.002, 0.014);
   }
-  return normalize(y, 0.6);
+  lowpass(y, 2800, 2);
+  return normalize(y, 0.5);
 };
 
 // confirm "thock" — lower, a touch of body; commitment
@@ -112,7 +121,8 @@ const pop = () => {
   return normalize(y, 0.66);
 };
 
-// whoosh — band-passed noise with a sweeping lowpass + amplitude swell; for scene cuts
+// whoosh — soft "air" swell for scene cuts. Gentle low sweep + heavy low-pass so it reads
+// as air, NOT a bright hiss/friction (the old bright version rasped, esp. sped up).
 const whoosh = () => {
   const N = secs(0.5), y = new Float32Array(N);
   const rng = mulberry32(7);
@@ -121,13 +131,28 @@ const whoosh = () => {
     const t = i / SR;
     const prog = t / (N / SR);
     const nz = rng() * 2 - 1;
-    const fc = 500 + 3200 * Math.sin(Math.PI * prog); // rise then fall
+    const fc = 350 + 1500 * Math.sin(Math.PI * prog); // gentler, lower sweep
     lp += onepole(fc) * (nz - lp);
-    sub += onepole(160) * (nz - sub); // remove rumble
-    const swell = Math.sin(Math.PI * prog) ** 1.5; // 0→1→0
+    sub += onepole(140) * (nz - sub); // remove rumble
+    const swell = Math.sin(Math.PI * prog) ** 1.6; // 0→1→0
     y[i] = (lp - sub) * swell;
   }
-  return normalize(y, 0.7);
+  lowpass(y, 2000, 2); // soften the hiss into air
+  return normalize(y, 0.6);
+};
+
+// sheet — soft panel-rise: a gentle upward tonal glide with a swell, heavily low-passed.
+// A pleasant "woomp", NOT the noise whoosh (which rasped like friction on the sheet open).
+const sheet = () => {
+  const N = secs(0.42), y = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, prog = t / (N / SR);
+    const f = 260 + 340 * prog; // gentle upward glide
+    const tone = Math.sin(TAU * f * t) + 0.22 * Math.sin(TAU * f * 2 * t);
+    y[i] = tone * Math.sin(Math.PI * prog) * 0.5; // 0→1→0 swell
+  }
+  lowpass(y, 1600, 2); // very soft, no highs
+  return normalize(y, 0.5);
 };
 
 // success — layered arpeggio (backbone tones) + high shimmer + short fake reverb tail
@@ -286,6 +311,7 @@ report.push(writeWav("select.wav", [select()]));
 report.push(writeWav("confirm.wav", [confirm()]));
 report.push(writeWav("pop.wav", [pop()]));
 report.push(writeWav("whoosh.wav", [whoosh()]));
+report.push(writeWav("sheet.wav", [sheet()]));
 report.push(writeWav("success.wav", [success()]));
 report.push(writeWav("count.wav", [count()]));
 report.push(writeWav("bed.wav", bed()));
