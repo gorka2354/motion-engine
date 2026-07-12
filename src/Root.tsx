@@ -19,6 +19,7 @@ import { ServiceTile } from "./bybit/ServiceTile";
 import { BybitGif, BYBIT_GIF_DURATION } from "./bybit/BybitGif";
 import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
+import { InteractionSandbox, INTERACTION_SANDBOX_DURATION } from "./lib/InteractionSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
 import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
@@ -81,6 +82,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="BybitCardGif" component={BybitGif} durationInFrames={BYBIT_GIF_DURATION + 2} fps={FPS} width={1080} height={1080} />
       <Composition id="LibSandbox" component={LibSandbox} durationInFrames={LIB_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
+      <Composition id="InteractionSandbox" component={InteractionSandbox} durationInFrames={INTERACTION_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="GltfSandbox" component={GltfSandbox} durationInFrames={GLTF_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="Showcase3D" component={Showcase3D} durationInFrames={SHOWCASE_3D_DURATION} fps={FPS} width={1920} height={1080} />
