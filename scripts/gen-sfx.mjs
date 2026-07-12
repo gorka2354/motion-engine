@@ -169,6 +169,7 @@ const success = () => {
 // nothing crosses the seam). PLACEHOLDER: a real Pixabay track (e.g. "Minimal Tech Corporate")
 // is the premium swap — download it to public/audio/bed.wav and it drops straight in.
 const saw = (f, t) => 2 * ((f * t) % 1) - 1;
+const tri = (f, t) => 2 * Math.abs(2 * ((f * t) % 1) - 1) - 1; // softer than saw (1/n² harmonics)
 
 const bed = () => {
   const N = secs(8);
@@ -189,7 +190,7 @@ const bed = () => {
     const s0 = secs(tStart), len = secs(dur);
     for (let i = 0; i < len && s0 + i < N; i++) {
       const tt = i / SR;
-      const v = wave === "saw" ? saw(f, tt) : Math.sin(TAU * f * tt);
+      const v = wave === "saw" ? saw(f, tt) : wave === "tri" ? tri(f, tt) : Math.sin(TAU * f * tt);
       chan[s0 + i] += v * env(tt, attack, tau) * gain;
     }
   };
@@ -216,22 +217,28 @@ const bed = () => {
         hitL[s0 + i] += k; hitR[s0 + i] += k;
       }
     }
-    // arpeggio pluck — 8th notes, saw, bright then quick decay (the hook), octave up
+    // arpeggio pluck — 8th notes, TRIANGLE (soft, not the piercing saw), mid register
+    // (no octave-up — saw + an octave up was the "mosquito" whine), gentle attack, quick decay
     for (let n = 0; n < 8; n++) {
-      const f = c.triad[ARP[n]] * 2;
-      add(hitL, barT + n * (beat / 2), f, 0.3, 0.003, 0.09, 0.13, "saw");
-      add(hitR, barT + n * (beat / 2), f, 0.3, 0.003, 0.09, 0.13, "saw");
+      const f = c.triad[ARP[n]];
+      add(hitL, barT + n * (beat / 2), f, 0.34, 0.006, 0.11, 0.14, "tri");
+      add(hitR, barT + n * (beat / 2), f, 0.34, 0.006, 0.11, 0.14, "tri");
     }
   }
 
   // sidechain "breath": duck the pad/bass right on each beat, recover before the next
   const dip = (t) => 0.45 + 0.55 * Math.pow((t % beat) / beat, 0.6);
+  // 2-pole low-pass on the mix — rolls off the harsh highs / saw aliasing that read as a
+  // "mosquito" whine, for the warm, soft character these beds have. Cutoff ~3 kHz.
+  const lpa = onepole(3000);
+  let fL1 = 0, fL2 = 0, fR1 = 0, fR2 = 0;
   for (let i = 0; i < N; i++) {
     const d = dip(i / SR);
-    // drive >1 into tanh = light bus compression: tames the kick/pluck peaks and lifts RMS
-    // so the loop carries loudness with headroom (lower crest factor → safer true peak)
-    L[i] = Math.tanh((padL[i] * d + hitL[i]) * 1.8);
-    R[i] = Math.tanh((padR[i] * d + hitR[i]) * 1.8);
+    // drive >1 into tanh = light bus compression (tames peaks, lifts RMS, keeps headroom)
+    const mixL = Math.tanh((padL[i] * d + hitL[i]) * 1.8);
+    const mixR = Math.tanh((padR[i] * d + hitR[i]) * 1.8);
+    fL1 += lpa * (mixL - fL1); fL2 += lpa * (fL1 - fL2); L[i] = fL2;
+    fR1 += lpa * (mixR - fR1); fR2 += lpa * (fR1 - fR2); R[i] = fR2;
   }
   // peak-normalize the pair together
   let m = 0;
