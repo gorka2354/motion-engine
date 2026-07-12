@@ -1,28 +1,24 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import { theme } from "../theme";
-import { SPRING } from "../v2/anim";
-import { Cursor } from "./Cursor";
-import { TapPulse } from "./TapPulse";
+import { tapScale } from "../v2/anim";
+import { TapTarget } from "./TapTarget";
 import { Spotlight } from "./Spotlight";
 
 export const INTERACTION_SANDBOX_DURATION = 150;
 
 /**
- * Test bench for the interaction primitives (Cursor / TapPulse / Spotlight).
- * A mock product screen: cursor travels in and taps the primary button while a
- * Spotlight dims everything else, and the button presses on tap. Check stills at
+ * Test bench for the interaction primitives (Cursor / TapPulse / Spotlight) as used
+ * through the ergonomic layer: ONE <TapTarget> wires the cursor travel + ripple from
+ * a single `at`, and tapScale() drives the button press from that same `at` (footgun
+ * #5 by construction). A rect Spotlight dims the cards above the CTA. Check stills at
  * ~8 (spotlight in, cursor entering) / 32 (arrived) / 42 (tapped + pressed) / 90
- * (settled). The mid-travel + tap frames are the ones to eyeball — a settled still
- * hides whether the cursor/tap/press stay in sync (footgun #5).
+ * (settled). Eyeball the travel + tap frames, not just settled ones.
  */
 
-// Target primary button center (composition px).
+// Target primary button (composition px).
 const BTN = { x: 540, y: 1120, w: 640, h: 132 };
-const BTN_CX = BTN.x;
-const BTN_CY = BTN.y;
-
-const TAP = 40; // tap frame — cursor arrives at 32, taps ~8f later
+const TAP = 40; // tap frame — everything derives from this
 
 const Card: React.FC<{
   top: number;
@@ -53,10 +49,8 @@ export const InteractionSandbox: React.FC = () => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // press-scale on the target — one spring fired at TAP (down then back).
-  const pressIn = spring({ frame: f - TAP, fps, config: SPRING.pop, durationInFrames: 6 });
-  const pressOut = spring({ frame: f - (TAP + 6), fps, config: SPRING.smooth, durationInFrames: 10 });
-  const pressScale = 1 - 0.06 * pressIn + 0.06 * pressOut;
+  // press-scale on the target — one helper, same `at` as the tap.
+  const pressScale = tapScale(f, fps, TAP);
 
   return (
     <AbsoluteFill style={{ background: theme.jumper.bg }}>
@@ -122,31 +116,30 @@ export const InteractionSandbox: React.FC = () => {
         Send transfer
       </div>
 
-      {/* focus the eye on the button — dims the three cards above */}
+      {/* rect spotlight hugging the pill — dims the three cards above */}
       <Spotlight
-        cx={BTN_CX}
-        cy={BTN_CY}
-        radius={430}
-        softness={340}
-        intensity={0.6}
+        cx={BTN.x}
+        cy={BTN.y}
+        shape="rect"
+        w={BTN.w + 130}
+        h={BTN.h + 90}
+        corner={BTN.h / 2 + 45}
+        softness={210}
+        intensity={0.58}
         enterAt={2}
         enterDur={12}
         exitAt={112}
         exitDur={16}
       />
 
-      {/* tap indicator — fires after the cursor arrives, above the spotlight.
-          White here: an accent ripple on the accent button would be invisible. */}
-      <TapPulse at={TAP} x={BTN_CX + 70} y={BTN_CY + 26} size={56} color="#ffffff" />
-
-      {/* traveling cursor — arrives (14+18=32) ~8f before the tap. Aimed just below
-          the label (touch-like) and white, so it reads on the magenta CTA. */}
-      <Cursor
+      {/* one call = cursor travels in + ripple, synced. White so it reads on the
+          magenta CTA; aimed just below the label (touch-like). Press is tapScale above. */}
+      <TapTarget
+        at={TAP}
+        x={BTN.x + 70}
+        y={BTN.y + 26}
         from={[300, 1620]}
-        to={[BTN_CX + 70, BTN_CY + 26]}
-        moveStart={14}
-        moveDur={18}
-        hideAfter={72}
+        travel={18}
         color="#ffffff"
       />
     </AbsoluteFill>

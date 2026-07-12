@@ -16,7 +16,7 @@ export const TapPulse: React.FC<{
   color?: string;
   size?: number; // max ring radius
   dur?: number; // frames the ripple lives
-}> = ({ at, x, y, color = theme.jumper.accent, size = 52, dur = 20 }) => {
+}> = ({ at, x, y, color = theme.color.primary, size = 52, dur = 20 }) => {
   const frame = useCurrentFrame();
   if (frame < at) return null;
   const p = clamp01((frame - at) / dur);

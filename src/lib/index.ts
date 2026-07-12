@@ -5,8 +5,10 @@ export { Parallax } from "./Parallax";
 export { MagicMove } from "./MagicMove";
 export type { MagicRect } from "./MagicMove";
 export { Cursor } from "./Cursor";
+export type { CursorStop } from "./Cursor";
 export { TapPulse } from "./TapPulse";
 export { Spotlight } from "./Spotlight";
+export { TapTarget } from "./TapTarget";
 export { morphPath, drawPath01 } from "./morph";
 export { hexToRgba } from "./color";
 export {
@@ -14,6 +16,8 @@ export {
   EASE_INOUT,
   EASE_OUT,
   SPRING,
+  DUR,
+  tapScale,
   clamp01,
   kf,
   stagger,

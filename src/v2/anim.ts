@@ -34,6 +34,39 @@ export const SPRING = {
   bounce: { damping: 11, stiffness: 170, mass: 1 },
 } as const;
 
+/**
+ * Interaction timing ladder @30fps (research: Kowalski 100–300ms motion windows).
+ * Values are FRAMES — pass to moveDur / dur props so demo timings stay consistent
+ * instead of scattering magic numbers (16, 20, …) across compositions.
+ */
+export const DUR = {
+  /** ~130ms — ripple / press dip. */
+  tap: 4,
+  /** ~330ms — cursor travel between nearby targets. */
+  hop: 10,
+  /** ~460ms — element entrance. */
+  reveal: 14,
+  /** ~660ms — big surface / camera move. */
+  settle: 20,
+} as const;
+
+/**
+ * Press-scale for a tap target: dips by `depth` at `at`, then springs back to 1.
+ * Returns a scale multiplier — apply to the target element's transform so a
+ * <TapPulse>/<Cursor> tap actually presses the thing it lands on (from one frame
+ * source, footgun #5). Needs fps from useVideoConfig.
+ */
+export const tapScale = (
+  frame: number,
+  fps: number,
+  at: number,
+  depth = 0.06,
+) => {
+  const down = spring({ frame: frame - at, fps, config: SPRING.pop, durationInFrames: 6 });
+  const up = spring({ frame: frame - (at + 6), fps, config: SPRING.smooth, durationInFrames: 10 });
+  return 1 - depth * down + depth * up;
+};
+
 /** Start frame of the i-th staggered item. */
 export const stagger = (i: number, start: number, step: number) =>
   start + i * step;
