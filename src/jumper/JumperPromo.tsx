@@ -237,6 +237,7 @@ const CUE = {
   success: A + T.routeFound, // hero chime
   cut2: START.benefits - 14, // cut → benefits
   benefitsIn: START.benefits + 6,
+  countUp: START.benefits + 64, // stat counters climb 64→132 (local) — sound climbs with them
   cut3: START.cta - 14, // cut → cta
   ctaBtn: START.cta + 20,
 };
@@ -245,7 +246,7 @@ const JumperSound: React.FC = () => (
   <>
     <Music
       src={staticFile("audio/bed.wav")}
-      peak={0.6}
+      peak={0.66}
       fadeIn={20}
       fadeOut={44}
       duckAround={[
@@ -275,6 +276,7 @@ const JumperSound: React.FC = () => (
     {/* benefits + cta */}
     <Sfx clip="whoosh" at={CUE.cut2} volume={0.6} />
     <Sfx clip="pop" at={CUE.benefitsIn} volume={0.4} />
+    <Sfx clip="count" at={CUE.countUp} volume={0.6} />
     <Sfx clip="whoosh" at={CUE.cut3} volume={0.6} />
     <Sfx clip="confirm" at={CUE.ctaBtn} volume={0.6} />
   </>

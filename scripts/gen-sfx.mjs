@@ -160,42 +160,71 @@ const success = () => {
   return normalize(y, 0.82);
 };
 
-// music bed — soft Am7-ish pad, 8s seamless loop (all partials complete whole cycles in 8s),
-// stereo width via L/R phase offset. Upper octave voices give it air/presence so it carries
-// loudness (LUFS K-weighting favours mids/highs) instead of being a dull bass drone, and
-// reads fuller under the SFX. PLACEHOLDER: swap for a Pixabay track for the final cut.
+// music bed — bright, warm Cmaj9 pad (major, NOT the earlier minor Am7 which read as
+// tense/ominous), 8s seamless loop (all partials complete whole cycles in 8s). No sub-bass
+// (dropped the 110 Hz drone that made it muddy/heavy); mid register + airy maj7/9 voices
+// give it an optimistic "clean tech" feel. Gentle saturation only. Stereo via L/R phase.
+// PLACEHOLDER: swap for a Pixabay track for the final cut.
 const bed = () => {
   const dur = 8, N = secs(dur);
   const L = new Float32Array(N), R = new Float32Array(N);
-  // A2 C3 E3 G3 A3 + upper octave (E4 G4 A4 C5) — all integer cycles over 8s → no loop seam.
-  // `hi` voices sit above the fundamentals and breathe with the filter LFO.
+  // C3 G3 C4 E4 G4 + B4(maj7) D5(add9) — Cmaj9, mid/upper register, all integer cycles/8s.
   const voices = [
-    { f: 110, a: 0.55, hi: false }, { f: 131, a: 0.5, hi: false },
-    { f: 165, a: 0.52, hi: false }, { f: 196, a: 0.4, hi: false }, { f: 220, a: 0.48, hi: false },
-    { f: 330, a: 0.3, hi: true }, { f: 392, a: 0.24, hi: true },
-    { f: 440, a: 0.22, hi: true }, { f: 523, a: 0.16, hi: true },
+    { f: 131, a: 0.4, hi: false }, { f: 196, a: 0.48, hi: false },
+    { f: 262, a: 0.55, hi: false }, { f: 330, a: 0.5, hi: false }, { f: 392, a: 0.42, hi: false },
+    { f: 494, a: 0.3, hi: true }, { f: 588, a: 0.22, hi: true },
   ];
   for (let i = 0; i < N; i++) {
     const t = i / SR;
     const lfo = 0.5 + 0.5 * Math.sin(TAU * 0.125 * t); // 8s period → 1 whole cycle
-    const filt = 0.5 + 0.5 * Math.sin(TAU * 0.25 * t); // slow timbral movement, 2 cycles
+    const filt = 0.55 + 0.45 * Math.sin(TAU * 0.25 * t); // slow timbral movement, 2 cycles
     let l = 0, r = 0;
     for (const v of voices) {
       const amp = v.a * (v.hi ? filt : 1); // upper partials shimmer with the filter
       l += Math.sin(TAU * v.f * t) * amp;
       r += Math.sin(TAU * v.f * t + 0.5) * amp; // phase offset = width
     }
-    const g = 0.10 + 0.05 * lfo; // gentle breathing
-    // soft saturation (tanh) — warms the pad and raises RMS toward the peak so it carries
-    // presence/loudness at a moderate level instead of being a peaky, quiet sine drone
-    L[i] = Math.tanh(l * 0.6) * g;
-    R[i] = Math.tanh(r * 0.6) * g;
+    const g = 0.11 + 0.05 * lfo; // gentle breathing
+    // light saturation — warms the pad + raises RMS a touch, but soft enough to stay airy
+    L[i] = Math.tanh(l * 0.38) * g;
+    R[i] = Math.tanh(r * 0.38) * g;
   }
   // peak-normalize the pair together to keep stereo balance
   let m = 0;
   for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i]));
   if (m > 0) for (let i = 0; i < N; i++) { L[i] = (L[i] / m) * 0.5; R[i] = (R[i] / m) * 0.5; }
   return [L, R];
+};
+
+// count-up — accelerating ticks (interval shrinks) rising in pitch as numbers climb, then a
+// soft major "ding" as they land. ~2.3s so its resolve lines up with a staggered group of
+// counters finishing. Place its start on the first counter's count-up frame.
+const count = () => {
+  const N = secs(2.3), y = new Float32Array(N);
+  const times = [];
+  let t = 0, iv = 0.13;
+  while (t < 2.02) { times.push(t); iv = Math.max(0.045, iv * 0.955); t += iv; } // accelerate
+  for (const tk of times) {
+    const freq = 1500 + 1500 * (tk / 2.05); // pitch climbs with the count
+    const start = secs(tk), len = secs(0.03);
+    for (let i = 0; i < len && start + i < N; i++) {
+      const tt = i / SR;
+      y[start + i] += Math.sin(TAU * freq * tt) * env(tt, 0.001, 0.008) * 0.5;
+    }
+  }
+  // resolve ding — major third C6+E6, soft
+  const dAt = secs(2.08), dNotes = [1046.5, 1318.5];
+  for (let i = dAt; i < N; i++) {
+    const tt = (i - dAt) / SR;
+    let s = 0;
+    for (const f of dNotes) s += Math.sin(TAU * f * tt) + 0.3 * Math.sin(TAU * f * 2 * tt);
+    y[i] += s * env(tt, 0.004, 0.22) * 0.4;
+  }
+  // short reverb tail for air
+  const dry = Float32Array.from(y);
+  for (const [d, g] of [[secs(0.05), 0.3], [secs(0.11), 0.18]])
+    for (let i = d; i < N; i++) y[i] += dry[i - d] * g;
+  return normalize(y, 0.7);
 };
 
 // ── run ──
@@ -207,6 +236,7 @@ report.push(writeWav("confirm.wav", [confirm()]));
 report.push(writeWav("pop.wav", [pop()]));
 report.push(writeWav("whoosh.wav", [whoosh()]));
 report.push(writeWav("success.wav", [success()]));
+report.push(writeWav("count.wav", [count()]));
 report.push(writeWav("bed.wav", bed()));
 console.log("generated → public/audio/");
 for (const r of report)

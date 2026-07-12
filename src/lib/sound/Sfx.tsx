@@ -18,6 +18,7 @@ export const CLIPS = {
   pop: "audio/pop.wav",
   whoosh: "audio/whoosh.wav",
   success: "audio/success.wav",
+  count: "audio/count.wav", // ~2.3s accelerating ticks + resolve ding — for count-up beats
 } as const;
 
 export type SfxClip = keyof typeof CLIPS;
@@ -30,6 +31,7 @@ const DEFAULT_VOL: Record<SfxClip, number> = {
   pop: 0.6,
   whoosh: 0.8,
   success: 0.95,
+  count: 0.6,
 };
 
 export const Sfx: React.FC<{
