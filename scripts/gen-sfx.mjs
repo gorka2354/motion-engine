@@ -224,44 +224,35 @@ const bed = () => {
     const c = CHORDS[bar], barT = bar * beat * 4;
     // pad — sustained triad (sine, soft), detuned L/R for width; goes to the ducked layer
     for (const f of c.triad) {
-      add(padL, barT, f, 2.0, 0.35, 0.9, 0.15, "sine");
-      add(padR, barT, f * 1.003, 2.0, 0.35, 0.9, 0.15, "sine");
+      add(padL, barT, f, 2.0, 0.4, 0.95, 0.18, "sine");
+      add(padR, barT, f * 1.003, 2.0, 0.4, 0.95, 0.18, "sine");
     }
     // sub-bass on beats 0 & 2 (ducked with the pad)
     for (const b of [0, 2]) {
       add(padL, barT + b * beat, c.root, 0.42, 0.004, 0.16, 0.5, "sine");
       add(padR, barT + b * beat, c.root, 0.42, 0.004, 0.16, 0.5, "sine");
     }
-    // soft kick on every beat (felt, not heard) — not ducked
-    for (let b = 0; b < 4; b++) {
-      const s0 = secs(barT + b * beat), len = secs(0.12);
-      for (let i = 0; i < len && s0 + i < N; i++) {
-        const tt = i / SR;
-        const pitch = 90 - 45 * Math.min(1, tt / 0.04); // pitch drop
-        const k = Math.sin(TAU * pitch * tt) * env(tt, 0.001, 0.05) * 0.4;
-        hitL[s0 + i] += k; hitR[s0 + i] += k;
-      }
-    }
-    // arpeggio pluck — 8th notes, TRIANGLE (soft, not the piercing saw), mid register
-    // (no octave-up — saw + an octave up was the "mosquito" whine), gentle attack, quick decay
-    for (let n = 0; n < 8; n++) {
+    // arpeggio pluck — SPARSE (quarter notes, every other 8th) + soft/quiet, triangle: a gentle
+    // sparkle over the pad, not an insistent "ticking" that grates over 36s. NO kick (the four-
+    // on-the-floor pulse read as too busy/annoying) — the shallow sidechain breath alone gives
+    // subtle motion. This deliberately leans ambient/soft (stopgap until a real track drops in).
+    for (let n = 0; n < 8; n += 2) {
       const f = c.triad[ARP[n]];
-      add(hitL, barT + n * (beat / 2), f, 0.34, 0.006, 0.11, 0.14, "tri");
-      add(hitR, barT + n * (beat / 2), f, 0.34, 0.006, 0.11, 0.14, "tri");
+      add(hitL, barT + n * (beat / 2), f, 0.4, 0.012, 0.16, 0.08, "tri");
+      add(hitR, barT + n * (beat / 2), f, 0.4, 0.012, 0.16, 0.08, "tri");
     }
   }
 
   // sidechain "breath": duck the pad/bass right on each beat, recover before the next
-  const dip = (t) => 0.45 + 0.55 * Math.pow((t % beat) / beat, 0.6);
-  // 2-pole low-pass on the mix — rolls off the harsh highs / saw aliasing that read as a
-  // "mosquito" whine, for the warm, soft character these beds have. Cutoff ~3 kHz.
-  const lpa = onepole(3000);
+  const dip = (t) => 0.68 + 0.32 * Math.pow((t % beat) / beat, 0.6); // shallow breath, no hard pump
+  // 2-pole low-pass — heavier now (~2.2 kHz) for a soft, warm, non-fatiguing character.
+  const lpa = onepole(2200);
   let fL1 = 0, fL2 = 0, fR1 = 0, fR2 = 0;
   for (let i = 0; i < N; i++) {
     const d = dip(i / SR);
     // drive >1 into tanh = light bus compression (tames peaks, lifts RMS, keeps headroom)
-    const mixL = Math.tanh((padL[i] * d + hitL[i]) * 1.8);
-    const mixR = Math.tanh((padR[i] * d + hitR[i]) * 1.8);
+    const mixL = Math.tanh((padL[i] * d + hitL[i]) * 1.6);
+    const mixR = Math.tanh((padR[i] * d + hitR[i]) * 1.6);
     fL1 += lpa * (mixL - fL1); fL2 += lpa * (fL1 - fL2); L[i] = fL2;
     fR1 += lpa * (mixR - fR1); fR2 += lpa * (fR1 - fR2); R[i] = fR2;
   }
