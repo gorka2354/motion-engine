@@ -246,7 +246,7 @@ const JumperSound: React.FC = () => (
   <>
     <Music
       src={staticFile("audio/bed.wav")}
-      peak={0.66}
+      peak={0.56}
       fadeIn={20}
       fadeOut={44}
       duckAround={[

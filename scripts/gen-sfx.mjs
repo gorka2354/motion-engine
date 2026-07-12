@@ -160,39 +160,83 @@ const success = () => {
   return normalize(y, 0.82);
 };
 
-// music bed — bright, warm Cmaj9 pad (major, NOT the earlier minor Am7 which read as
-// tense/ominous), 8s seamless loop (all partials complete whole cycles in 8s). No sub-bass
-// (dropped the 110 Hz drone that made it muddy/heavy); mid register + airy maj7/9 voices
-// give it an optimistic "clean tech" feel. Gentle saturation only. Stereo via L/R phase.
-// PLACEHOLDER: swap for a Pixabay track for the final cut.
+// music bed — the researched tech/crypto-promo profile (2026-07-12): NOT a static sustained
+// pad (which read as a tense "organ drone" with no forward motion) but a MOVING minimal-
+// electronic loop — an 8th-note arpeggio pluck (the hook) over a soft four-on-the-floor
+// pulse + sub-bass on the downbeats, with a sidechain "breath" pumping the pad against the
+// pulse. C-major center (C–G–Am–F, the bright pop progression) so it reads optimistic/clean-
+// tech, not tense. 120 BPM, 8s = 4 bars → seamless loop (every note decays within its bar,
+// nothing crosses the seam). PLACEHOLDER: a real Pixabay track (e.g. "Minimal Tech Corporate")
+// is the premium swap — download it to public/audio/bed.wav and it drops straight in.
+const saw = (f, t) => 2 * ((f * t) % 1) - 1;
+
 const bed = () => {
-  const dur = 8, N = secs(dur);
+  const N = secs(8);
   const L = new Float32Array(N), R = new Float32Array(N);
-  // C3 G3 C4 E4 G4 + B4(maj7) D5(add9) — Cmaj9, mid/upper register, all integer cycles/8s.
-  const voices = [
-    { f: 131, a: 0.4, hi: false }, { f: 196, a: 0.48, hi: false },
-    { f: 262, a: 0.55, hi: false }, { f: 330, a: 0.5, hi: false }, { f: 392, a: 0.42, hi: false },
-    { f: 494, a: 0.3, hi: true }, { f: 588, a: 0.22, hi: true },
+  const padL = new Float32Array(N), padR = new Float32Array(N); // sidechained layer
+  const hitL = new Float32Array(N), hitR = new Float32Array(N); // kick + pluck (not ducked)
+  const BPM = 120, beat = 60 / BPM; // 0.5s; bar = 4 beats = 2s; 4 bars = 8s
+  const CHORDS = [
+    { root: 65.41, triad: [261.63, 329.63, 392.0] }, // C  : C4 E4 G4
+    { root: 98.0, triad: [293.66, 392.0, 493.88] }, // G  : D4 G4 B4
+    { root: 110.0, triad: [220.0, 261.63, 329.63] }, // Am : A3 C4 E4
+    { root: 87.31, triad: [261.63, 349.23, 440.0] }, // F  : C4 F4 A4
   ];
-  for (let i = 0; i < N; i++) {
-    const t = i / SR;
-    const lfo = 0.5 + 0.5 * Math.sin(TAU * 0.125 * t); // 8s period → 1 whole cycle
-    const filt = 0.55 + 0.45 * Math.sin(TAU * 0.25 * t); // slow timbral movement, 2 cycles
-    let l = 0, r = 0;
-    for (const v of voices) {
-      const amp = v.a * (v.hi ? filt : 1); // upper partials shimmer with the filter
-      l += Math.sin(TAU * v.f * t) * amp;
-      r += Math.sin(TAU * v.f * t + 0.5) * amp; // phase offset = width
+  const ARP = [0, 1, 2, 1, 0, 2, 1, 2]; // 8th-note index into the triad — gentle up/down
+
+  // additive note writer
+  const add = (chan, tStart, f, dur, attack, tau, gain, wave) => {
+    const s0 = secs(tStart), len = secs(dur);
+    for (let i = 0; i < len && s0 + i < N; i++) {
+      const tt = i / SR;
+      const v = wave === "saw" ? saw(f, tt) : Math.sin(TAU * f * tt);
+      chan[s0 + i] += v * env(tt, attack, tau) * gain;
     }
-    const g = 0.11 + 0.05 * lfo; // gentle breathing
-    // light saturation — warms the pad + raises RMS a touch, but soft enough to stay airy
-    L[i] = Math.tanh(l * 0.38) * g;
-    R[i] = Math.tanh(r * 0.38) * g;
+  };
+
+  for (let bar = 0; bar < 4; bar++) {
+    const c = CHORDS[bar], barT = bar * beat * 4;
+    // pad — sustained triad (sine, soft), detuned L/R for width; goes to the ducked layer
+    for (const f of c.triad) {
+      add(padL, barT, f, 2.0, 0.35, 0.9, 0.15, "sine");
+      add(padR, barT, f * 1.003, 2.0, 0.35, 0.9, 0.15, "sine");
+    }
+    // sub-bass on beats 0 & 2 (ducked with the pad)
+    for (const b of [0, 2]) {
+      add(padL, barT + b * beat, c.root, 0.42, 0.004, 0.16, 0.5, "sine");
+      add(padR, barT + b * beat, c.root, 0.42, 0.004, 0.16, 0.5, "sine");
+    }
+    // soft kick on every beat (felt, not heard) — not ducked
+    for (let b = 0; b < 4; b++) {
+      const s0 = secs(barT + b * beat), len = secs(0.12);
+      for (let i = 0; i < len && s0 + i < N; i++) {
+        const tt = i / SR;
+        const pitch = 90 - 45 * Math.min(1, tt / 0.04); // pitch drop
+        const k = Math.sin(TAU * pitch * tt) * env(tt, 0.001, 0.05) * 0.4;
+        hitL[s0 + i] += k; hitR[s0 + i] += k;
+      }
+    }
+    // arpeggio pluck — 8th notes, saw, bright then quick decay (the hook), octave up
+    for (let n = 0; n < 8; n++) {
+      const f = c.triad[ARP[n]] * 2;
+      add(hitL, barT + n * (beat / 2), f, 0.3, 0.003, 0.09, 0.13, "saw");
+      add(hitR, barT + n * (beat / 2), f, 0.3, 0.003, 0.09, 0.13, "saw");
+    }
   }
-  // peak-normalize the pair together to keep stereo balance
+
+  // sidechain "breath": duck the pad/bass right on each beat, recover before the next
+  const dip = (t) => 0.45 + 0.55 * Math.pow((t % beat) / beat, 0.6);
+  for (let i = 0; i < N; i++) {
+    const d = dip(i / SR);
+    // drive >1 into tanh = light bus compression: tames the kick/pluck peaks and lifts RMS
+    // so the loop carries loudness with headroom (lower crest factor → safer true peak)
+    L[i] = Math.tanh((padL[i] * d + hitL[i]) * 1.8);
+    R[i] = Math.tanh((padR[i] * d + hitR[i]) * 1.8);
+  }
+  // peak-normalize the pair together
   let m = 0;
   for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i]));
-  if (m > 0) for (let i = 0; i < N; i++) { L[i] = (L[i] / m) * 0.5; R[i] = (R[i] / m) * 0.5; }
+  if (m > 0) for (let i = 0; i < N; i++) { L[i] = (L[i] / m) * 0.7; R[i] = (R[i] / m) * 0.7; }
   return [L, R];
 };
 
