@@ -21,6 +21,7 @@ import { LibSandbox, LIB_SANDBOX_DURATION } from "./lib/LibSandbox";
 import { FxSandbox, FX_SANDBOX_DURATION } from "./lib/FxSandbox";
 import { InteractionSandbox, INTERACTION_SANDBOX_DURATION } from "./lib/InteractionSandbox";
 import { DataSandbox, DATA_SANDBOX_DURATION } from "./lib/DataSandbox";
+import { SoundSandbox, SOUND_SANDBOX_DURATION } from "./lib/SoundSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
 import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
@@ -85,6 +86,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="FxSandbox" component={FxSandbox} durationInFrames={FX_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="InteractionSandbox" component={InteractionSandbox} durationInFrames={INTERACTION_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="DataSandbox" component={DataSandbox} durationInFrames={DATA_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
+      <Composition id="SoundSandbox" component={SoundSandbox} durationInFrames={SOUND_SANDBOX_DURATION} fps={FPS} width={W} height={H} />
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="GltfSandbox" component={GltfSandbox} durationInFrames={GLTF_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="Showcase3D" component={Showcase3D} durationInFrames={SHOWCASE_3D_DURATION} fps={FPS} width={1920} height={1080} />

@@ -31,10 +31,12 @@
 **Риск:** MED (меняет look — но обратимо, before-эталон есть).
 **Итог (2026-07-05):** V2 переведён на тёмную сцену: токены `theme.dark` (bg/vignette/text/textMuted/accent/scrim/shadowFloat/phoneGlow), `LivingBackground` → rich navy + 2 гроу-блоба primary/primaryDeep (один accent) + `<Grain 0.07>`; ambient-глоу за телефоном. Spring-входы: `springWindow()` в anim.ts → TypoBeat (overshoot на translate), FloatingChips/Certificate (SPRING.pop). Motion-blur: камера-риг выделен в `CameraRig` (blur сэмплирует движение честно), `BLUR_WINDOWS` = только окна реального движения (rise/zoom-in/zoom-out/pull-back), samples 8 / shutter 240. Хореография: хиро-биты y 520→290 (коллизия текста с рамкой на f90 устранена), wordmark → белый (CSS invert) с гашением к половине зума (фикс «призрака» поверх экрана). V1 (TixuPromo) не тронут — остался на светлой теме. Стиллы: `out/inc3/`. Полный рендер: `out/tixu-promo-v2-AFTER-inc3.mp4`.
 
-## inc-4 — Звук 🔲
+## inc-4 — Звук ✅
 **Цель:** закрыть главный пробел качества.
-**Что:** `@remotion/media` + `@remotion/sfx`; музыка (Artlist — лицензия под заказ); слой `sfxTrack(event, frame)` — SFX по битам (tap/push/appear); music ducking под ключевые моменты.
-**Валидация:** рендер mp4 со звуком, послушать; SFX на кадре НАЧАЛА анимации.
+**Что (2026-07-12):** ресёрч 3 агента (техинтеграция / бесплатные лицензии / крафт). Слой `src/lib/sound/`: `<Music>` (луп-bed, `@remotion/media` Audio, volume = pure-функция кадра, fade+ducking), `<Sfx clip at>` (one-shot на кадр, реестр `CLIPS`), `duck(f,events)` (sidechain-множитель). **Self-contained DSP-синтез набора** `scripts/gen-sfx.mjs` (`npm run gen-sfx` → `public/audio/*.wav`: tap/select/confirm/pop/whoosh/success + bed-пад с tanh-сатурацией; детерминированно, лицензионно наш; реестр drop-in заменяем на Kenney CC0/Pixabay). Аудио self-check `scripts/check-audio.mjs` (`npm run check-audio` — ffprobe audio-stream + loudnorm LUFS/TP, гейт [−20,−12]/−1). Крафт по числам: SFX на смысловых битах (не на движении), anticipation, ducking −4…−6 dB, integrated ≈ −16 LUFS. Стенд `SoundSandbox`.
+**Озвучен `JumperPromo`** (`JumperSound` на корне, кадры из общих `T`/`START`/`CUE`): bed + 16 SFX-событий + ducking → **−16.7 LUFS · TP −1.75, check-audio PASS** (`out/jumper-promo.mp4`). Footgun #13 (аудио — «немой» класс) в CLAUDE.md, L5-audio в TESTING.md.
+**Остаток:** bed — синтез-placeholder; под премиум-финал заменить на живую музыку (Pixabay/Kenney, реестр готов). Субъективный синхрон/качество на слух — за человеком (L6). Открывает inc-9 (звук-акцент на склейке) и inc-10 (аудио-реактивность).
+**Валидация:** рендер mp4 со звуком, `npm run check-audio`; SFX на кадре НАЧАЛА анимации/результата.
 
 ## inc-5 — Scene-Map (AI-authoring) ✅
 **Цель:** авторинг ролика из данных, а не из JSX.

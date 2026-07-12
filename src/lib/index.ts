@@ -15,6 +15,8 @@ export { BarStat } from "./BarStat";
 export type { BarRow } from "./BarStat";
 export { morphPath, drawPath01 } from "./morph";
 export { hexToRgba } from "./color";
+export { Music, Sfx, CLIPS, duck } from "./sound";
+export type { SfxClip, DuckEvent } from "./sound";
 export {
   EASE,
   EASE_INOUT,

@@ -15,7 +15,9 @@
     "test": "vitest run --project node",
     "test:layout": "vitest run --project browser",
     "check-render": "node scripts/check-render.mjs",
-    "check-assets": "node scripts/check-assets.mjs"
+    "check-assets": "node scripts/check-assets.mjs",
+    "check-audio": "node scripts/check-audio.mjs",
+    "gen-sfx": "node scripts/gen-sfx.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",

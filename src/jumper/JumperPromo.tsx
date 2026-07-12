@@ -18,6 +18,7 @@ import { slide } from "@remotion/transitions/slide";
 import { loadFont } from "@remotion/google-fonts/Inter";
 import { theme } from "../theme";
 import { Grain } from "../lib/Grain";
+import { Music, Sfx } from "../lib/sound";
 import { springWindow, window01, kf, clamp01 } from "../v2/anim";
 import { SwapWidget, ASSETS } from "./SwapWidget";
 import { SelectSheet } from "./SelectSheet";
@@ -34,7 +35,25 @@ const j = theme.jumper;
 export const SCENES = { hook: 130, transfer: 410, benefits: 200, cta: 150 };
 export const XFADE = 16; // transition frames (each overlaps two scenes)
 export const JUMPER_PROMO_DURATION =
-  SCENES.hook + SCENES.transfer + SCENES.benefits + SCENES.cta - 3 * XFADE; // 840
+  SCENES.hook + SCENES.transfer + SCENES.benefits + SCENES.cta - 3 * XFADE; // 842
+
+// local frame timeline of the transfer flow — shared by TransferScene (visual) AND the
+// sound layer (which needs these as composition-absolute frames). Single source so the
+// SFX can't drift from the visual after a timing edit (footgun: hand-copied cue frames).
+const T = {
+  fromTap: 70, fromSheetUp: 76, fromNetTap: 120, fromTokTap: 148, fromSheetDown: 168,
+  toTap: 216, toSheetUp: 222, toNetTap: 256, toTokTap: 284, toSheetDown: 304,
+  sendTap: 330, amountDone: 362, routeFound: 370,
+};
+
+// composition-absolute start frame of each act (transitions overlap two scenes, so each
+// start pulls back by one XFADE). Derived from SCENES so it survives duration tweaks.
+const START = {
+  hook: 0,
+  transfer: SCENES.hook - XFADE, // 114
+  benefits: SCENES.hook + SCENES.transfer - 2 * XFADE, // 508
+  cta: SCENES.hook + SCENES.transfer + SCENES.benefits - 3 * XFADE, // 692
+};
 
 const GRID_CHAINS = [
   "ethereum", "arbitrum", "base", "optimism", "solana", "avalanche",
@@ -84,11 +103,7 @@ const TransferScene: React.FC = () => {
   // first tap; the sheet holds so the chain list reads; each pick holds before the next).
   // From is deliberate (first time), To is a touch quicker (pattern is now familiar).
   // Flow ends ~40f before the scene so "route found / Review route" breathes before the cut.
-  const T = {
-    fromTap: 70, fromSheetUp: 76, fromNetTap: 120, fromTokTap: 148, fromSheetDown: 168,
-    toTap: 216, toSheetUp: 222, toNetTap: 256, toTokTap: 284, toSheetDown: 304,
-    sendTap: 330, amountDone: 362, routeFound: 370,
-  };
+  // T (the flow timeline) now lives at module scope — shared with the sound layer.
 
   // widget rises in; it does NOT exit — the scene transition handles the outro
   const wY = kf(f, [[0, 220], [34, 0]]);
@@ -202,6 +217,69 @@ const CtaScene: React.FC = () => {
   );
 };
 
+// ── sound layer: bed + SFX on composition-absolute cue frames (START + local T) ──
+// Lives at the ROOT (not inside the TransitionSeries) so every cue and the music share
+// one absolute frame-space → ducking lines up. Cues derive from the same START/T the
+// visuals use, so re-timing the flow keeps sound in sync automatically.
+const A = START.transfer;
+const CUE = {
+  hookRise: 4, // soft riser under the logo
+  cut1: START.transfer + 2, // scene cut → transfer
+  fromTap: A + T.fromTap,
+  fromSheet: A + T.fromSheetUp,
+  fromNet: A + T.fromNetTap,
+  fromTok: A + T.fromTokTap,
+  toTap: A + T.toTap,
+  toSheet: A + T.toSheetUp,
+  toNet: A + T.toNetTap,
+  toTok: A + T.toTokTap,
+  send: A + T.sendTap,
+  success: A + T.routeFound, // hero chime
+  cut2: START.benefits - 14, // cut → benefits
+  benefitsIn: START.benefits + 6,
+  cut3: START.cta - 14, // cut → cta
+  ctaBtn: START.cta + 20,
+};
+
+const JumperSound: React.FC = () => (
+  <>
+    <Music
+      src={staticFile("audio/bed.wav")}
+      peak={0.6}
+      fadeIn={20}
+      fadeOut={44}
+      duckAround={[
+        { at: CUE.cut1, depth: 0.4 },
+        { at: CUE.send, depth: 0.4 },
+        { at: CUE.success, depth: 0.6, hold: 12, tail: 22 },
+        { at: CUE.cut2, depth: 0.4 },
+        { at: CUE.cut3, depth: 0.4 },
+        { at: CUE.ctaBtn, depth: 0.4 },
+      ]}
+    />
+    <Sfx clip="whoosh" at={CUE.hookRise} volume={0.3} playbackRate={0.9} />
+    <Sfx clip="whoosh" at={CUE.cut1} volume={0.6} />
+    {/* From selector */}
+    <Sfx clip="tap" at={CUE.fromTap} />
+    <Sfx clip="whoosh" at={CUE.fromSheet} volume={0.32} playbackRate={1.5} />
+    <Sfx clip="select" at={CUE.fromNet} />
+    <Sfx clip="select" at={CUE.fromTok} />
+    {/* To selector */}
+    <Sfx clip="tap" at={CUE.toTap} />
+    <Sfx clip="whoosh" at={CUE.toSheet} volume={0.32} playbackRate={1.5} />
+    <Sfx clip="select" at={CUE.toNet} />
+    <Sfx clip="select" at={CUE.toTok} />
+    {/* confirm + result */}
+    <Sfx clip="confirm" at={CUE.send} />
+    <Sfx clip="success" at={CUE.success} />
+    {/* benefits + cta */}
+    <Sfx clip="whoosh" at={CUE.cut2} volume={0.6} />
+    <Sfx clip="pop" at={CUE.benefitsIn} volume={0.4} />
+    <Sfx clip="whoosh" at={CUE.cut3} volume={0.6} />
+    <Sfx clip="confirm" at={CUE.ctaBtn} volume={0.6} />
+  </>
+);
+
 // ── persistent brand background + sequenced acts ──
 export const JumperPromo: React.FC = () => {
   const frame = useCurrentFrame();
@@ -229,6 +307,7 @@ export const JumperPromo: React.FC = () => {
       </TransitionSeries>
 
       <Grain opacity={0.05} />
+      <JumperSound />
     </AbsoluteFill>
   );
 };
