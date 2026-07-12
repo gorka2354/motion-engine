@@ -9,6 +9,10 @@ export type { CursorStop } from "./Cursor";
 export { TapPulse } from "./TapPulse";
 export { Spotlight } from "./Spotlight";
 export { TapTarget } from "./TapTarget";
+export { Counter } from "./Counter";
+export { SplitCompare } from "./SplitCompare";
+export { BarStat } from "./BarStat";
+export type { BarRow } from "./BarStat";
 export { morphPath, drawPath01 } from "./morph";
 export { hexToRgba } from "./color";
 export {
