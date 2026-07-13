@@ -51,12 +51,51 @@ bev.width = 0.03
 bev.segments = 5
 deck.data.materials.append(body_m)
 
+# ── keyboard: dark base plate + a grid of individual keycaps (joined) ──
 bpy.ops.mesh.primitive_cube_add(size=1)
-kb = bpy.context.object
-kb.name = "Keys"
-kb.scale = (2.9, 1.44, 0.02)
-kb.location = (0, 0.28, 0.055)
-kb.data.materials.append(keys_m)
+kbase = bpy.context.object
+kbase.name = "KeyBase"
+kbase.scale = (2.98, 1.52, 0.014)
+kbase.location = (0, 0.28, 0.05)
+kbase.data.materials.append(keys_m)
+
+keycap_m = metal("Keycap", (0.03, 0.035, 0.052), rough=0.72, met=0.2)
+KB_TOP = 0.057  # top surface of the base plate
+COLS, ROWS = 14, 5
+AREA_W, AREA_D = 2.86, 1.42
+col_w, row_d = AREA_W / COLS, AREA_D / ROWS
+kw, kd, kh = col_w * 0.82, row_d * 0.80, 0.022
+x0 = -AREA_W / 2 + col_w / 2
+y0 = 0.28 - AREA_D / 2 + row_d / 2
+caps = []
+for r in range(ROWS):
+    for c in range(COLS):
+        if r == 0 and 3 <= c <= 10:      # leave a gap for the spacebar
+            continue
+        bpy.ops.mesh.primitive_cube_add(size=1)
+        k = bpy.context.object
+        k.scale = (kw, kd, kh)
+        k.location = (x0 + c * col_w, y0 + r * row_d, KB_TOP + kh / 2)
+        k.data.materials.append(keycap_m)
+        caps.append(k)
+# wide spacebar on the front row
+bpy.ops.mesh.primitive_cube_add(size=1)
+sp = bpy.context.object
+sp.scale = (col_w * 8 * 0.9, kd, kh)
+sp.location = (x0 + 6.5 * col_w, y0, KB_TOP + kh / 2)
+sp.data.materials.append(keycap_m)
+caps.append(sp)
+# join all keycaps into ONE "Keys" mesh (keeps the export list stable), bevel once
+bpy.ops.object.select_all(action="DESELECT")
+for k in caps:
+    k.select_set(True)
+bpy.context.view_layer.objects.active = caps[0]
+bpy.ops.object.join()
+keys = bpy.context.object
+keys.name = "Keys"
+kcbev = keys.modifiers.new("b", "BEVEL")
+kcbev.width = 0.008
+kcbev.segments = 2
 
 bpy.ops.mesh.primitive_cube_add(size=1)
 tp = bpy.context.object
@@ -64,6 +103,30 @@ tp.name = "Trackpad"
 tp.scale = (1.0, 0.54, 0.014)
 tp.location = (0, -0.72, 0.055)
 tp.data.materials.append(keys_m)
+
+# ── rubber feet (4) under the deck ──
+foot_m = metal("Foot", (0.008, 0.008, 0.012), rough=0.92, met=0.0)
+feet = []
+for fx, fy in ((-1.36, 0.86), (1.36, 0.86), (-1.36, -0.86), (1.36, -0.86)):
+    bpy.ops.mesh.primitive_cube_add(size=1)
+    ft = bpy.context.object
+    ft.scale = (0.22, 0.22, 0.02)
+    ft.location = (fx, fy, -0.052)
+    ft.data.materials.append(foot_m)
+    feet.append(ft)
+bpy.ops.object.select_all(action="DESELECT")
+for ft in feet:
+    ft.select_set(True)
+bpy.context.view_layer.objects.active = feet[0]
+bpy.ops.object.join()
+bpy.context.object.name = "Feet"
+
+# ── hinge barrel along the back edge (static — not parented to the lid) ──
+hinge_m = metal("HingeMetal", (0.03, 0.035, 0.05), rough=0.35, met=0.85)
+bpy.ops.mesh.primitive_cylinder_add(radius=0.05, depth=2.5, location=(0, 1.075, 0.05), rotation=(0, math.radians(90), 0))
+hinge = bpy.context.object
+hinge.name = "Hinge"
+hinge.data.materials.append(hinge_m)
 
 # ── lid, CLOSED over the deck; origin moved onto the hinge line ──
 bpy.ops.mesh.primitive_cube_add(size=1)
@@ -125,7 +188,7 @@ lid.rotation_euler[0] = 0  # export CLOSED
 
 # ── export geometry only ──
 bpy.ops.object.select_all(action="DESELECT")
-for name in ("Deck", "Keys", "Trackpad", "Lid", "ScreenFace"):
+for name in ("Deck", "KeyBase", "Keys", "Trackpad", "Feet", "Hinge", "Lid", "ScreenFace"):
     bpy.data.objects[name].select_set(True)
 bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format="GLB", export_apply=True, use_selection=True)
 print("EXPORTED:", OUT_GLB)

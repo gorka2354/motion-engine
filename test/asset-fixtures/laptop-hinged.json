@@ -1,15 +1,15 @@
 {
-  "meshes": 5,
-  "materials": 3,
-  "nodes": 5,
-  "triangles": 882,
+  "meshes": 8,
+  "materials": 6,
+  "nodes": 8,
+  "triangles": 7858,
   "hasUV": true,
   "hasNormal": true,
   "bounds": {
     "min": [
       -1.6,
-      -0.045,
-      -1.075
+      -0.062,
+      -1.125
     ],
     "max": [
       1.6,
