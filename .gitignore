@@ -13,3 +13,7 @@ out
 # test / scouting artifacts
 .vitest-attachments/
 jumper-snap.md
+
+# local video base (heavy renders, not versioned)
+final/
+docs/scout/

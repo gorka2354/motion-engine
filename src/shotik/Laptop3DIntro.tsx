@@ -23,42 +23,48 @@ const Rig3D: React.FC<{ scene: Group; screenMat: MeshStandardMaterial | null }> 
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const open = f < 8 ? 0 : spring({ frame: f - 8, fps, config: SPRING.smooth, durationInFrames: 76 });
+  // showcase spin: the CLOSED laptop rotates in on display, then turns to
+  // face the camera (~f0-46) — a livelier open than a static reveal
+  const orbit = kf(f, [
+    [0, -3.6],
+    [30, 0.18],
+    [46, 0],
+  ]);
+  // lid opens only AFTER the laptop has turned to face us
+  const open = f < 30 ? 0 : spring({ frame: f - 30, fps, config: SPRING.smooth, durationInFrames: 58 });
   // during the dolly the lid straightens a touch toward the camera plane,
   // so the baked desktop lands square-on for the match-cut
   const straighten = kf(f, [
-    [58, 0],
+    [62, 0],
     [102, 0.14],
   ]);
   const lid = scene.getObjectByName("Lid");
   if (lid) lid.rotation.x = -(0.1 + 1.68 * open) + straighten;
-  // Screen stays dark while the hook headline crosses it, then powers on
-  // to EXACTLY the 2D desktop brightness (the texture IS the 2D still).
+  // Screen powers on only once the lid is open, to EXACTLY the 2D desktop
+  // brightness (the texture IS the 2D still).
   if (screenMat) {
     screenMat.emissiveIntensity = kf(f, [
-      [0, 0.04],
-      [64, 0.08],
-      [96, 1.0],
+      [0, 0.02],
+      [72, 0.08],
+      [98, 1.0],
     ]);
   }
 
   // dolly LOCKS at f102 — the image is frozen through most of the fade,
   // so the cross-dissolve happens between two static, aligned pictures
   const dolly = kf(f, [
-    [58, 1.0],
+    [66, 1.0],
     [102, 3.26],
   ]);
   const py = kf(f, [
-    [58, -0.78],
+    [66, -0.78],
     [102, -1.52],
   ]);
+  // a touch more top-down tilt while it spins, settling flat for the dive-in
   const tilt = kf(f, [
-    [0, 0.24],
+    [0, 0.42],
+    [30, 0.26],
     [98, 0],
-  ]);
-  const orbit = kf(f, [
-    [0, -0.6],
-    [100, 0],
   ]);
 
   return (

@@ -27,6 +27,8 @@ import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
 import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
+import { LumoPromo, LUMO_DURATION } from "./lumo/LumoPromo";
+import { LUMO_DEFAULTS } from "./lumo/lumo.map";
 
 const FPS = 30;
 const W = 1080;
@@ -48,6 +50,16 @@ export const RemotionRoot: React.FC = () => {
         height={H}
         schema={promoSchema}
         defaultProps={PROMO_DEFAULTS}
+      />
+      <Composition
+        id="LumoPromo"
+        component={LumoPromo}
+        durationInFrames={LUMO_DURATION}
+        fps={FPS}
+        width={W}
+        height={H}
+        schema={promoSchema}
+        defaultProps={LUMO_DEFAULTS}
       />
       <Composition
         id="TixuCourseTeaser"

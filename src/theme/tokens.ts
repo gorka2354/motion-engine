@@ -91,6 +91,31 @@ export const theme = {
     glow: "radial-gradient(closest-side, rgba(211,92,255,0.34), transparent 72%)",
     ctaGlow: "0 24px 48px -14px rgba(211,92,255,0.5)",
   },
+  /** Lumo brand stage (fictional EdTech preset) — deep warm charcoal + coral-rose.
+   *  Dark stage for the floating phone; light product screens use accentSolid. */
+  lumo: {
+    bg: "linear-gradient(180deg, #150E13 0%, #251621 52%, #110A0F 100%)",
+    vignette:
+      "radial-gradient(120% 90% at 50% 40%, transparent 52%, rgba(0,0,0,0.44) 100%)",
+    text: "#FAF4F6",
+    textMuted: "#B79BA7",
+    accent: "#FB7185", // coral-rose accent word on the dark stage
+    scrim:
+      "linear-gradient(180deg, rgba(17,10,15,0.98) 0%, rgba(17,10,15,0.9) 42%, rgba(17,10,15,0))",
+    shadowFloat: "0 40px 80px -24px rgba(0,0,0,0.62)",
+    phoneGlow: "radial-gradient(closest-side, rgba(251,113,133,0.42), transparent 72%)",
+    blobA: "#FB7185", // living-background glow blob 1
+    blobB: "#9F1239", // deep rose glow blob 2
+    // solid accent — CTA + in-screen primary on the light product screens
+    accentSolid: "#FB7185",
+    accentDeep: "#F1466A",
+    ctaGradient: "linear-gradient(135deg, #FB7185 0%, #F1466A 100%)",
+    ctaGlow: "0 24px 48px -14px rgba(251,113,133,0.55)",
+    buttonGlow: "0 14px 26px -10px rgba(251,113,133,0.5)",
+    cardHighlight: "0 12px 24px -12px rgba(251,113,133,0.42)",
+    tint: "#FFF0F3", // light coral card / ring-track tint
+    tintDeep: "#FFE4E9",
+  },
   shadow: {
     phone:
       "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",
