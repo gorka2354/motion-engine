@@ -59,32 +59,44 @@ kbase.scale = (2.98, 1.52, 0.014)
 kbase.location = (0, 0.28, 0.05)
 kbase.data.materials.append(keys_m)
 
-keycap_m = metal("Keycap", (0.03, 0.035, 0.052), rough=0.72, met=0.2)
+keycap_m = metal("Keycap", (0.032, 0.037, 0.055), rough=0.72, met=0.2)
 KB_TOP = 0.057  # top surface of the base plate
-COLS, ROWS = 14, 5
-AREA_W, AREA_D = 2.86, 1.42
-col_w, row_d = AREA_W / COLS, AREA_D / ROWS
-kw, kd, kh = col_w * 0.82, row_d * 0.80, 0.022
-x0 = -AREA_W / 2 + col_w / 2
-y0 = 0.28 - AREA_D / 2 + row_d / 2
+AREA_W, AREA_D = 2.84, 1.42
+KB_CX, KB_CY = 0.0, 0.28
+GAP = 0.026
+kh = 0.022
+# realistic per-row layout, BACK (function row, by the hinge) → FRONT (spacebar,
+# by the user). Widths are in key-units "u" (1u = a letter key); wider keys are
+# Tab/Caps/Shift/Enter/Backspace/modifiers, and the function row is shorter.
+LAYOUT = [
+    {"h": 0.66, "keys": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]},   # Esc + F1–F12
+    {"h": 1.0, "keys": [1] * 13 + [1.9]},                           # ` 1…0 - =  ⌫
+    {"h": 1.0, "keys": [1.5] + [1] * 12 + [1.4]},                   # ⇥ q…]  \
+    {"h": 1.0, "keys": [1.8] + [1] * 11 + [2.1]},                   # ⇪ a…'  ⏎
+    {"h": 1.0, "keys": [2.3] + [1] * 10 + [2.6]},                   # ⇧ z…/  ⇧
+    {"h": 1.0, "keys": [1.3, 1.3, 1.3, 6.4, 1.3, 1.3, 1.3]},        # ctrl win alt ␣ alt fn ctrl
+]
+h_total = sum(r["h"] for r in LAYOUT)
+row_d_u = (AREA_D - GAP * len(LAYOUT)) / h_total
+y_back = KB_CY + AREA_D / 2
 caps = []
-for r in range(ROWS):
-    for c in range(COLS):
-        if r == 0 and 3 <= c <= 10:      # leave a gap for the spacebar
-            continue
+for row in LAYOUT:
+    rd = row["h"] * row_d_u
+    cy = y_back - rd / 2
+    y_back -= rd + GAP
+    units = sum(row["keys"])
+    n = len(row["keys"])
+    w_u = (AREA_W - GAP * n) / units
+    x = KB_CX - AREA_W / 2 + GAP / 2
+    for ku in row["keys"]:
+        kw = ku * w_u
         bpy.ops.mesh.primitive_cube_add(size=1)
         k = bpy.context.object
-        k.scale = (kw, kd, kh)
-        k.location = (x0 + c * col_w, y0 + r * row_d, KB_TOP + kh / 2)
+        k.scale = (kw, rd, kh)
+        k.location = (x + kw / 2, cy, KB_TOP + kh / 2)
         k.data.materials.append(keycap_m)
         caps.append(k)
-# wide spacebar on the front row
-bpy.ops.mesh.primitive_cube_add(size=1)
-sp = bpy.context.object
-sp.scale = (col_w * 8 * 0.9, kd, kh)
-sp.location = (x0 + 6.5 * col_w, y0, KB_TOP + kh / 2)
-sp.data.materials.append(keycap_m)
-caps.append(sp)
+        x += kw + GAP
 # join all keycaps into ONE "Keys" mesh (keeps the export list stable), bevel once
 bpy.ops.object.select_all(action="DESELECT")
 for k in caps:
@@ -94,7 +106,7 @@ bpy.ops.object.join()
 keys = bpy.context.object
 keys.name = "Keys"
 kcbev = keys.modifiers.new("b", "BEVEL")
-kcbev.width = 0.008
+kcbev.width = 0.006
 kcbev.segments = 2
 
 bpy.ops.mesh.primitive_cube_add(size=1)
