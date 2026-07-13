@@ -6,10 +6,21 @@ import { clamp01, EASE_OUT, SPRING } from "./anim";
 /**
  * Certificate card that floats out of the device during the pull-back —
  * the payoff of the learning path. Viewport space, gentle tilt and drift.
+ * Brand content (wordmark, course, awardee) is overridable; the defaults
+ * reproduce the original tixu certificate exactly.
  */
-export const FloatingCertificate: React.FC<{ from: number; to: number }> = ({
+export const FloatingCertificate: React.FC<{
+  from: number;
+  to: number;
+  logo?: React.ReactNode;
+  courseTitle?: string;
+  awardedTo?: string;
+}> = ({
   from,
   to,
+  logo = <Img src={staticFile("logo.svg")} style={{ height: 26 }} />,
+  courseTitle = "Claude Advanced Workflows",
+  awardedTo = "Awarded to Denis · tixu.ai",
 }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -45,7 +56,7 @@ export const FloatingCertificate: React.FC<{ from: number; to: number }> = ({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Img src={staticFile("logo.svg")} style={{ height: 26 }} />
+        {logo}
         <div
           style={{
             fontSize: 14,
@@ -64,13 +75,13 @@ export const FloatingCertificate: React.FC<{ from: number; to: number }> = ({
             Certificate of completion
           </div>
           <div style={{ fontSize: 30, fontWeight: 800, color: theme.color.ink, marginTop: 4, letterSpacing: -0.5 }}>
-            Claude Advanced Workflows
+            {courseTitle}
           </div>
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 26 }}>
         <div style={{ fontSize: 18, fontWeight: 600, color: theme.color.muted }}>
-          Awarded to Denis · tixu.ai
+          {awardedTo}
         </div>
         <div
           style={{
