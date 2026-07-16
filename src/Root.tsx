@@ -29,6 +29,9 @@ import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
 import { LumoPromo, LUMO_DURATION } from "./lumo/LumoPromo";
 import { LUMO_DEFAULTS } from "./lumo/lumo.map";
+import { LevelUpCreative, LEVELUP_DURATION } from "./creative/LevelUpCreative";
+import { LevelUpCreativeV2, LEVELUP2_DURATION } from "./creative/LevelUpCreativeV2";
+import { LevelUpMorph, LEVELUP_MORPH_DURATION } from "./creative/LevelUpMorph";
 
 const FPS = 30;
 const W = 1080;
@@ -104,6 +107,9 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="Showcase3D" component={Showcase3D} durationInFrames={SHOWCASE_3D_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="HeroManifest" component={HeroManifest} durationInFrames={HERO_MANIFEST_DURATION} fps={FPS} width={1080} height={1080} />
       <Composition id="JumperPromo" component={JumperPromo} durationInFrames={JUMPER_PROMO_DURATION} fps={FPS} width={W} height={H} />
+      <Composition id="LevelUpCreative" component={LevelUpCreative} durationInFrames={LEVELUP_DURATION} fps={FPS} width={1080} height={1920} />
+      <Composition id="LevelUpCreativeV2" component={LevelUpCreativeV2} durationInFrames={LEVELUP2_DURATION} fps={FPS} width={1080} height={1920} />
+      <Composition id="LevelUpMorph" component={LevelUpMorph} durationInFrames={LEVELUP_MORPH_DURATION} fps={FPS} width={1080} height={1920} />
     </>
   );
 };

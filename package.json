@@ -17,7 +17,8 @@
     "check-render": "node scripts/check-render.mjs",
     "check-assets": "node scripts/check-assets.mjs",
     "check-audio": "node scripts/check-audio.mjs",
-    "gen-sfx": "node scripts/gen-sfx.mjs"
+    "gen-sfx": "node scripts/gen-sfx.mjs",
+    "ai-gen": "node scripts/ai-gen.mjs"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",

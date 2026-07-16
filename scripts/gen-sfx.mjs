@@ -294,6 +294,51 @@ const count = () => {
   return normalize(y, 0.7);
 };
 
+// level-up chime — soft rising two-note "ta-da" (a perfect fifth up), rounder/gentler than
+// the bright 'success' arpeggio. Soft attack, low-passed so nothing pierces. For the beat.
+const levelUp = () => {
+  const N = secs(0.7), y = new Float32Array(N);
+  const notes = [[0.0, 587.33], [0.085, 880.0]]; // D5 → A5, gentle rising fifth
+  for (const [start, f] of notes) {
+    for (let i = 0; i < N; i++) {
+      const t = i / SR - start;
+      if (t < 0) continue;
+      y[i] += (Math.sin(TAU * f * t) + 0.24 * Math.sin(TAU * f * 2 * t)) * env(t, 0.006, 0.26) * 0.5;
+    }
+  }
+  const dry = Float32Array.from(y);
+  for (const [d, g] of [[secs(0.05), 0.28], [secs(0.11), 0.16]]) // short air tail
+    for (let i = d; i < N; i++) y[i] += dry[i - d] * g;
+  lowpass(y, 3600, 2); // keep it soft
+  return normalize(y, 0.6);
+};
+
+// city ambient — distant traffic rumble: brown noise, heavy low-pass (no harsh highs so it
+// never grates), slow amplitude drift so it breathes instead of being static. Stereo, ~8s,
+// intentionally quiet — a background texture. PLACEHOLDER: a real Pixabay "city ambience"
+// (CC0) drops straight into public/audio/cityAmbient.wav if a hand-picked one is preferred.
+const cityAmbient = () => {
+  const N = secs(8);
+  const L = new Float32Array(N), R = new Float32Array(N);
+  const rL = mulberry32(101), rR = mulberry32(202);
+  let bL = 0, bR = 0; // brown-noise accumulators (leaky-integrated white)
+  let a1 = 0, a2 = 0, a3 = 0, c1 = 0, c2 = 0, c3 = 0;
+  const k = onepole(430); // heavy 3-pole low-pass → distant, warm, no hiss
+  for (let i = 0; i < N; i++) {
+    const t = i / SR;
+    bL = (bL + (rL() * 2 - 1) * 0.02) * 0.995;
+    bR = (bR + (rR() * 2 - 1) * 0.02) * 0.995;
+    a1 += k * (bL - a1); a2 += k * (a1 - a2); a3 += k * (a2 - a3);
+    c1 += k * (bR - c1); c2 += k * (c1 - c2); c3 += k * (c2 - c3);
+    const drift = 0.78 + 0.16 * Math.sin(TAU * 0.07 * t + 0.6) + 0.08 * Math.sin(TAU * 0.024 * t);
+    L[i] = a3 * drift; R[i] = c3 * drift;
+  }
+  let m = 0;
+  for (let i = 0; i < N; i++) m = Math.max(m, Math.abs(L[i]), Math.abs(R[i]));
+  if (m > 0) for (let i = 0; i < N; i++) { L[i] = (L[i] / m) * 0.55; R[i] = (R[i] / m) * 0.55; }
+  return [L, R];
+};
+
 // ── run ──
 fs.mkdirSync(OUT, { recursive: true });
 const report = [];
@@ -305,6 +350,8 @@ report.push(writeWav("whoosh.wav", [whoosh()]));
 report.push(writeWav("sheet.wav", [sheet()]));
 report.push(writeWav("success.wav", [success()]));
 report.push(writeWav("count.wav", [count()]));
+report.push(writeWav("levelup.wav", [levelUp()]));
+report.push(writeWav("cityAmbient.wav", cityAmbient()));
 report.push(writeWav("bed.wav", bed()));
 console.log("generated → public/audio/");
 for (const r of report)

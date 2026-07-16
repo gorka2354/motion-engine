@@ -20,6 +20,10 @@ export const CLIPS = {
   sheet: "audio/sheet.wav", // soft tonal panel-rise (use for sheet/drawer opens, not whoosh)
   success: "audio/success.wav",
   count: "audio/count.wav", // ~2.3s accelerating ticks + resolve ding — for count-up beats
+  levelup: "audio/levelup.wav", // soft rising "ta-da" — for level-up beats
+  hmm1: "audio/hmm1.wav", // recorded vocal reaction (surprise/approval) for smiles
+  hmm2: "audio/hmm2.wav",
+  hmm3: "audio/hmm3.wav",
 } as const;
 
 export type SfxClip = keyof typeof CLIPS;
@@ -34,6 +38,10 @@ const DEFAULT_VOL: Record<SfxClip, number> = {
   sheet: 0.55,
   success: 0.95,
   count: 0.6,
+  levelup: 0.6,
+  hmm1: 0.7,
+  hmm2: 0.7,
+  hmm3: 0.7,
 };
 
 export const Sfx: React.FC<{
@@ -45,7 +53,7 @@ export const Sfx: React.FC<{
   <Sequence from={at} name={`sfx:${clip}`} layout="none">
     <Audio
       src={staticFile(CLIPS[clip])}
-      volume={volume ?? DEFAULT_VOL[clip]}
+      volume={() => volume ?? DEFAULT_VOL[clip]}
       playbackRate={playbackRate}
     />
   </Sequence>
