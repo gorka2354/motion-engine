@@ -1,0 +1,29 @@
+node_modules
+out
+.DS_Store
+*.log
+
+.playwright-mcp/
+.netlify/
+
+# scratch screenshots dropped in the project root during still/verify loops
+# (public/**/*.png assets are unaffected — this only matches the repo root)
+/*.png
+
+# test / scouting artifacts
+.vitest-attachments/
+jumper-snap.md
+
+# local video base (heavy renders, not versioned)
+final/
+docs/scout/
+
+# secrets — API keys, НЕ коммитить
+.env
+.env.local
+.env.*.local
+*.key
+
+# heavy generated AI assets (regenerated via `npm run ai-gen`; masters live in final/ + local backup)
+public/levelup/
+public/levelup2/
