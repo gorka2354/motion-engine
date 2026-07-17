@@ -1,0 +1,20 @@
+{
+  "meshes": 8,
+  "materials": 6,
+  "nodes": 8,
+  "triangles": 8938,
+  "hasUV": true,
+  "hasNormal": true,
+  "bounds": {
+    "min": [
+      -1.6,
+      -0.062,
+      -1.125
+    ],
+    "max": [
+      1.6,
+      0.115,
+      1.075
+    ]
+  }
+}
