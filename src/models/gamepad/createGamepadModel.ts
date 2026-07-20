@@ -192,6 +192,12 @@ export const GAMEPAD_CONTRACT: PartsContract = {
     ["buttonA", "buttonB"],
     ["buttonX", "buttonY"],
   ],
+  // The face buttons carry extruded letter glyphs — a button mounted backwards hides its legend
+  // while keeping its position, size and spacing intact.
+  orientation: [
+    { of: "buttonA", points: "forward", minDot: 0.8 },
+    { of: "buttonY", points: "forward", minDot: 0.8 },
+  ],
   minSeparation: 0.12,
 };
 

@@ -1,4 +1,5 @@
-import { Box3, DoubleSide, Mesh, Object3D, Raycaster, Vector3 } from "three";
+import { Box3, DoubleSide, Mesh, Object3D, Quaternion, Raycaster, Vector3 } from "three";
+import { inspectMesh } from "./meshHealth";
 import type { Group } from "three";
 
 /**
@@ -270,6 +271,99 @@ export const checkSameSize = (
   return failures;
 };
 
+// ── orientation ─────────────────────────────────────────────────────────
+
+const DIRECTIONS = {
+  up: new Vector3(0, 1, 0),
+  down: new Vector3(0, -1, 0),
+  left: new Vector3(-1, 0, 0),
+  right: new Vector3(1, 0, 0),
+  /** Toward the viewer. */
+  forward: new Vector3(0, 0, 1),
+  back: new Vector3(0, 0, -1),
+} as const;
+
+/**
+ * "The screen faces the viewer." "The glyph faces out of the button."
+ *
+ * Position and size say nothing about FACING: a part mounted backwards keeps its bounding-box
+ * centre and its dimensions exactly, so every other check in this file passes it. That is the same
+ * defect shape as an inside-out shell — technically valid, visually broken — and until now the
+ * layer built to catch that class could not see it.
+ */
+export interface OrientationRule {
+  of: string;
+  /** Which of the part's own axes to test. Defaults to +Z, the face direction by convention. */
+  localAxis?: [number, number, number];
+  points: keyof typeof DIRECTIONS;
+  /** Cosine floor. 0.5 ≈ within 60°; raise it to demand a tighter alignment. */
+  minDot?: number;
+}
+
+export const checkOrientation = (
+  root: Group,
+  parts: Record<string, Object3D>,
+  rules: OrientationRule[],
+): string[] => {
+  root.updateMatrixWorld(true);
+  const failures: string[] = [];
+  const quaternion = new Quaternion();
+  for (const rule of rules) {
+    const part = parts[rule.of];
+    if (!part) {
+      failures.push(`orientation rule references unknown part "${rule.of}"`);
+      continue;
+    }
+    const axis = new Vector3(...(rule.localAxis ?? [0, 0, 1])).normalize();
+    part.getWorldQuaternion(quaternion);
+    const world = axis.clone().applyQuaternion(quaternion);
+    const want = DIRECTIONS[rule.points];
+    const dot = world.dot(want);
+    const min = rule.minDot ?? 0.5;
+    if (dot < min) {
+      failures.push(
+        `${rule.of} should face ${rule.points} but its axis points ` +
+          `(${world.x.toFixed(2)}, ${world.y.toFixed(2)}, ${world.z.toFixed(2)}) — dot ${dot.toFixed(2)} < ${min}`,
+      );
+    }
+  }
+  return failures;
+};
+
+/**
+ * Is the model's SHELL built outward?
+ *
+ * Independent of `checkPartsOnSurface` on purpose. That function flips shell materials to
+ * DoubleSide for the duration of its raycast — necessary, or FrontSide culling would hide a buried
+ * part — but the side effect is that it cannot perceive which way the shell's own faces point.
+ * The layer written in response to an inside-out shell was structurally blind to inside-out
+ * shells. This closes that, reusing the signed-volume test from meshHealth.
+ *
+ * Only closed meshes are judged: a flat ShapeGeometry screen or an uncapped loft has no meaningful
+ * enclosed volume, so anything with boundary edges is skipped rather than failed.
+ */
+export const checkShellOutward = (root: Group): string[] => {
+  // EVERY closed mesh, parts included. An earlier version excluded declared parts — which meant
+  // the phone, whose body IS a declared part, had its shell skipped by the check written for
+  // inside-out shells. "Faces the right way" applies to any solid, whatever role it plays.
+  const meshes: Mesh[] = [];
+  root.traverse((o) => {
+    if (o instanceof Mesh) meshes.push(o);
+  });
+  const failures: string[] = [];
+  for (const mesh of meshes) {
+    const report = inspectMesh(mesh.geometry);
+    if (report.boundaryEdges > 0) continue; // open by design — nothing to say about its volume
+    if (report.signedVolume <= 0) {
+      failures.push(
+        `"${mesh.name || "(unnamed mesh)"}" is inside-out (signed volume ` +
+          `${report.signedVolume.toFixed(4)}) — with FrontSide materials its faces will vanish`,
+      );
+    }
+  }
+  return failures;
+};
+
 /**
  * What a KIND of object must have. Written per object class, so "a gamepad has four face buttons
  * in a diamond and two sticks" becomes an assertion instead of a hope.
@@ -283,6 +377,10 @@ export interface PartsContract {
   proportions?: ProportionRule[];
   /** Parts that must match each other in size. */
   sameSize?: [string, string][];
+  /** Which way parts must face — position and size cannot express this. */
+  orientation?: OrientationRule[];
+  /** Verify the shell itself is built outward. Defaults to on. */
+  checkShell?: boolean;
   /** Minimum distance between any two part anchors. */
   minSeparation?: number;
   /**
@@ -302,7 +400,9 @@ export interface ContractViolation {
     | "stray"
     | "layout"
     | "proportion"
-    | "asymmetry";
+    | "asymmetry"
+    | "orientation"
+    | "inside-out";
   detail: string;
 }
 
@@ -344,6 +444,14 @@ export const checkPartsContract = (
   }
   for (const failure of checkSameSize(root, present, contract.sameSize ?? [])) {
     violations.push({ kind: "asymmetry", detail: failure });
+  }
+  for (const failure of checkOrientation(root, present, contract.orientation ?? [])) {
+    violations.push({ kind: "orientation", detail: failure });
+  }
+  if (contract.checkShell !== false) {
+    for (const failure of checkShellOutward(root)) {
+      violations.push({ kind: "inside-out", detail: failure });
+    }
   }
   return violations;
 };

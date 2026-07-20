@@ -37,6 +37,31 @@ describe("createPhoneModel", () => {
     expect(violations.some((v) => v.kind === "layout")).toBe(true);
   });
 
+  it("DETECTS a screen mounted backwards", () => {
+    // Position and size are untouched by a 180° flip — bounding box identical, layout rules
+    // satisfied, proportions satisfied. Only an orientation check can see it.
+    const { group, parts } = createPhoneModel();
+    parts.screen.rotation.y = Math.PI;
+    const violations = checkPartsContract(group, object3dParts(parts), PHONE_CONTRACT);
+    expect(violations.some((v) => v.kind === "orientation")).toBe(true);
+  });
+
+  it("DETECTS an inside-out body independently of the raycast check", () => {
+    // checkPartsOnSurface flips shell materials to DoubleSide for its raycast, so it is
+    // structurally blind to which way the shell faces. This is the check that isn't.
+    const { group, parts } = createPhoneModel();
+    const geo = parts.body.geometry;
+    const index = geo.getIndex()!;
+    for (let t = 0; t < index.count; t += 3) {
+      const b = index.getX(t + 1);
+      index.setX(t + 1, index.getX(t + 2));
+      index.setX(t + 2, b);
+    }
+    index.needsUpdate = true;
+    const violations = checkPartsContract(group, object3dParts(parts), PHONE_CONTRACT);
+    expect(violations.some((v) => v.kind === "inside-out")).toBe(true);
+  });
+
   it("exposes the screen material so a scene can mount real UI on it", () => {
     // The factory must not load images itself — that reintroduces the delayRender race (rule #6).
     // Handing the material out lets a component that DOES own loading attach a texture.

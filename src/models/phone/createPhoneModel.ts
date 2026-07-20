@@ -123,6 +123,9 @@ export const PHONE_CONTRACT: PartsContract = {
     { what: "screen", measure: "width", per: "body", range: [0.85, 0.99], note: "bezels are thin on a modern phone" },
     { what: "cameraIsland", measure: "width", per: "body", range: [0.2, 0.55] },
   ],
+  // Facing is not expressible as position or size: a screen mounted backwards keeps its bounding
+  // box exactly and passes every other check in the contract.
+  orientation: [{ of: "screen", points: "forward", minDot: 0.9 }],
   surfaceAxis: null,
 };
 
