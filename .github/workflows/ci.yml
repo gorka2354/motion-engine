@@ -74,8 +74,11 @@ jobs:
         run: |
           npm run check-render LumoPromo -- --frames 5 --trim 60
           npm run check-render JumperPromo -- --frames 5 --trim 60
-          npm run check-render LevelUpCreative -- --frames 5 --trim 60
 
+      # LevelUpCreative is deliberately absent: its AI-generated footage lives in public/levelup/,
+      # which .gitignore excludes (heavy binaries), so the composition cannot render on a fresh
+      # checkout at all. It keeps a local golden baseline; CI can only cover self-contained comps.
+      #
       # 3D does NOT: ShotikPromo scored 0.9243 here against the same Windows baseline, with the GL
       # renderer already pinned to swangle. Rasterising a 3D scene is not bit-identical across
       # SwiftShader builds, so the gate is loosened for these two rather than for everything —
