@@ -47,6 +47,13 @@ const MOTION_MIN_DIFF = 0.5; // consecutive-sample mean abs diff below this ⇒ 
 const LOOP_MAX_DIFF = 6; // first↔last mean abs diff above this ⇒ "seam"
 const SEQ_MAX_DIFF = 4; // still-vs-sequence mean abs diff above this ⇒ "state bug"
 const GOLDEN_MIN_SSIM = 0.98; // candidate-vs-baseline SSIM below this ⇒ "look changed"
+//
+// ⚠️ 0.98 holds for 2D compositions ACROSS PLATFORMS — measured, a Windows-captured baseline
+// re-rendered on a Linux CI runner scored 0.9989 (Lumo) and 0.9993 (Jumper). It does NOT hold for
+// 3D: the same comparison on ShotikPromo scored 0.9243, even with the GL renderer pinned to
+// swangle. Rasterising a 3D scene is not bit-identical across SwiftShader builds, so a 3D golden
+// captured on one OS cannot be gated at 2D tolerances on another. Pass --min-ssim to loosen it
+// where that is the situation, rather than lowering the bar for everything.
 
 // ── args ──
 const argv = process.argv.slice(2);
@@ -54,7 +61,7 @@ const compId = argv[0];
 if (!compId || compId.startsWith("--")) {
   console.error(
     "Usage: node scripts/check-render.mjs <CompId> [--frames N] [--loop] [--trim N]\n" +
-      "         [--seq] [--gl swangle] [--accept-baseline] [--props file]",
+      "         [--seq] [--gl swangle] [--min-ssim 0.98] [--accept-baseline] [--props file]",
   );
   process.exit(2);
 }
@@ -74,6 +81,7 @@ const doSeq = has("seq");
 const GL = flag("gl", "swangle");
 const chromiumOptions = { gl: GL };
 const acceptBaseline = has("accept-baseline");
+const minSsimGate = parseFloat(flag("min-ssim", String(GOLDEN_MIN_SSIM)));
 const propsFile = flag("props", null);
 const inputProps = propsFile ? JSON.parse(readFileSync(propsFile, "utf8")) : undefined;
 
@@ -169,8 +177,8 @@ if (acceptBaseline) {
     const maxRatio = Math.max(...cmp.map((c) => c.ratio));
     record(
       "golden-check",
-      minSsim >= GOLDEN_MIN_SSIM,
-      `min SSIM ${minSsim.toFixed(4)} (min ${GOLDEN_MIN_SSIM}) · max pixel-diff ${(maxRatio * 100).toFixed(2)}% · ${cmp.length}/${samples.length} have baseline`,
+      minSsim >= minSsimGate,
+      `min SSIM ${minSsim.toFixed(4)} (min ${minSsimGate}) · max pixel-diff ${(maxRatio * 100).toFixed(2)}% · ${cmp.length}/${samples.length} have baseline`,
     );
   }
 }
