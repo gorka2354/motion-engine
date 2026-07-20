@@ -15,6 +15,8 @@ import { SoundSandbox, SOUND_SANDBOX_DURATION } from "./lib/SoundSandbox";
 import { ThreeSandbox, THREE_SANDBOX_DURATION } from "./lib/ThreeSandbox";
 import { GltfSandbox, GLTF_SANDBOX_DURATION } from "./lib/GltfSandbox";
 import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
+import { LaptopGlbBench, LaptopFactoryBench, LAPTOP_BENCH_DURATION } from "./models/laptop/LaptopBench";
+import { GamepadBench, GAMEPAD_BENCH_DURATION } from "./models/gamepad/GamepadBench";
 import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
 import { LumoPromo, LUMO_DURATION } from "./lumo/LumoPromo";
@@ -84,6 +86,12 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="ThreeSandbox" component={ThreeSandbox} durationInFrames={THREE_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="GltfSandbox" component={GltfSandbox} durationInFrames={GLTF_SANDBOX_DURATION} fps={FPS} width={1920} height={1080} />
       <Composition id="Showcase3D" component={Showcase3D} durationInFrames={SHOWCASE_3D_DURATION} fps={FPS} width={1920} height={1080} />
+      {/* A/B stand for the two model sources — same rig, flat backdrop, so a
+          fidelity diff measures the model itself. Square keeps the subject big. */}
+      <Composition id="LaptopGlbBench" component={LaptopGlbBench} durationInFrames={LAPTOP_BENCH_DURATION} fps={FPS} width={1080} height={1080} />
+      <Composition id="LaptopFactoryBench" component={LaptopFactoryBench} durationInFrames={LAPTOP_BENCH_DURATION} fps={FPS} width={1080} height={1080} />
+      {/* photo-sourced model: traced from a single product shot, no GLB counterpart */}
+      <Composition id="GamepadBench" component={GamepadBench} durationInFrames={GAMEPAD_BENCH_DURATION} fps={FPS} width={1080} height={1080} />
     </>
   );
 };

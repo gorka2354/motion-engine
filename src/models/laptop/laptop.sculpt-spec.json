@@ -1,0 +1,2648 @@
+{
+  "targetName": "Laptop",
+  "targetId": "laptop",
+  "schemaVersion": "2.0",
+  "terminologyProfile": {
+    "domain": "real-time procedural Three.js asset",
+    "geometryTerms": [
+      "silhouette",
+      "topology",
+      "primitive",
+      "bevel",
+      "chamfer",
+      "taper",
+      "bend",
+      "boolean cut",
+      "edge loop",
+      "surface normal",
+      "displacement"
+    ],
+    "materialTerms": [
+      "albedo",
+      "baseColor",
+      "roughness",
+      "metalness",
+      "normal map",
+      "bump map",
+      "ambient occlusion",
+      "cavity dirt",
+      "edge wear",
+      "clearcoat"
+    ],
+    "lightingTerms": [
+      "key light",
+      "fill light",
+      "rim light",
+      "HDRI/environment reflection",
+      "contact shadow"
+    ],
+    "descriptionRule": "Use measurable 3D graphics terms. Avoid vague words unless they are paired with concrete geometry/material/shader parameters."
+  },
+  "sourceImage": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopGlbBench-0.png",
+  "referenceCamera": {
+    "solved": false,
+    "fovDegrees": 40.0,
+    "aspect": 1.0,
+    "orientation": {
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "roll": 0.0
+    },
+    "positionHint": [
+      0.0,
+      0.0,
+      3.0
+    ],
+    "note": "For likeness work, solve the reference camera (forge/stage1_intake/solve_camera_pose.py) so the review render aligns with the photo and the reference can be projected. Confirm by overlay review."
+  },
+  "suitability": "conditional",
+  "scores": {
+    "object_isolation": 0,
+    "silhouette_readability": 0,
+    "depth_inference": 0,
+    "primitive_decomposition": 0,
+    "material_procedurality": 0,
+    "occlusion_risk": 0,
+    "interaction_fit": 0
+  },
+  "preSpecAssessment": {
+    "objectClass": {
+      "primaryType": "consumer-electronics-laptop",
+      "primaryDomain": "object",
+      "formLanguage": [
+        "hard-surface",
+        "rectilinear-slab",
+        "chamfered-edges",
+        "thin-profile"
+      ],
+      "structureKind": [
+        "two-body-hinged",
+        "recessed-inset-panels",
+        "dense-planar-array"
+      ],
+      "motionPotential": [
+        "lid-hinge-rotation-x",
+        "screen-emissive-ramp",
+        "whole-body-turntable"
+      ],
+      "materialFamilies": [
+        "anodized-metal-satin",
+        "matte-keycap-plastic",
+        "emissive-display-panel"
+      ],
+      "notes": "Clamshell laptop, lid open ~102 degrees. Two macro bodies (deck, lid) joined by a hinge bar whose pivot lies on the rear edge of the deck. Deck top carries a dense keycap array and a recessed trackpad. Reference is a synthetic render on a flat backdrop, so lighting is clean and the silhouette is unambiguous."
+    },
+    "complexity": {
+      "tier": "moderate",
+      "scores": {
+        "silhouetteComplexity": 1,
+        "componentCount": 2,
+        "hierarchyDepth": 2,
+        "repetitionDensity": 3,
+        "materialLayerCount": 2,
+        "localDetailDensity": 2,
+        "occlusionRisk": 1,
+        "actionReadinessNeed": 3
+      },
+      "estimatedCounts": {
+        "macroComponents": 2,
+        "mesoComponents": 6,
+        "microFeatureGroups": 3,
+        "materialLayers": 5,
+        "repetitionSystems": 1
+      },
+      "reasoning": [
+        "Silhouette is simple (two slabs at an angle) but the keycap array is the dominant detail system.",
+        "Hierarchy must be 4 deep: root > lid > screen-face, root > deck > keyboard > keycap.",
+        "Action readiness is high: the lid hinge is the whole point of the model.",
+        "Occlusion is low - two reference views cover front and three-quarter; the underside is unseen and mirrored from the top plate."
+      ]
+    },
+    "specDepthDecision": {
+      "requiredDepth": "moderate",
+      "minimumComponentLevels": [
+        "macro",
+        "meso",
+        "micro"
+      ],
+      "needsRepetitionSystems": true,
+      "needsMaterialLocalOverrides": true,
+      "needsMultipleReviewViews": true,
+      "needsActionReadyHierarchy": true,
+      "rationale": "The keycap array is a genuine repetition system (rows of varying key widths), and the trackpad/bezel need local material overrides against the body metal. The hinge demands an action-ready pivot."
+    },
+    "unknownsToResolveBeforeImplementation": [],
+    "detailInventory": {
+      "scanMethod": "component-zones",
+      "targetMinDetails": 6,
+      "note": "Enumerate every identity-defining small detail before authoring the spec. Each detail must map to a component.localFeatures entry or material.localOverrides entry, never prose only. Use forge/stage1_intake/build_detail_inventory.py to scan zones.",
+      "details": [
+        {
+          "id": "deck-edge-chamfer",
+          "kind": "bevel",
+          "zone": "r2c1",
+          "description": "Front and side edges of the deck carry a visible chamfer that catches a bright rim highlight against the darker top face.",
+          "mapsTo": {
+            "ref": "deck/edge-chamfer",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.9
+        },
+        {
+          "id": "keycap-array",
+          "kind": "fastener",
+          "zone": "r1c1",
+          "description": "Dense grid of individual keycaps, ~14 columns x 5 rows, each separated by a dark gap; keycap tops are slightly inset from their base footprint.",
+          "mapsTo": {
+            "ref": "keycap-unit",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.95
+        },
+        {
+          "id": "keycap-width-variation",
+          "kind": "contour",
+          "zone": "r1c1",
+          "description": "Row-dependent key widths - modifiers (Tab/Caps/Shift/Enter/Backspace) are wider than letter keys, and the bottom row carries a long spacebar.",
+          "mapsTo": {
+            "ref": "keyboard-plate/row-width-variation",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.85
+        },
+        {
+          "id": "trackpad-recess",
+          "kind": "groove",
+          "zone": "r2c1",
+          "description": "Rectangular trackpad set into the palm rest, delimited by a thin dark seam; its surface reads marginally darker and smoother than the surrounding deck.",
+          "mapsTo": {
+            "ref": "trackpad/recess-seam",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.9
+        },
+        {
+          "id": "hinge-bar",
+          "kind": "seam",
+          "zone": "r1c1",
+          "description": "Darker horizontal bar spanning the deck's rear edge where the lid attaches - reads as a distinct part, not a painted line.",
+          "mapsTo": {
+            "ref": "hinge-bar/lid-seam",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.85
+        },
+        {
+          "id": "screen-bezel",
+          "kind": "groove",
+          "zone": "r0c1",
+          "description": "Dark bezel frames the active display area on all four sides, wider at the bottom; the panel sits recessed behind it.",
+          "mapsTo": {
+            "ref": "bezel/panel-inset",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.9
+        },
+        {
+          "id": "screen-emissive",
+          "kind": "emissive",
+          "zone": "r0c1",
+          "description": "Display panel is self-lit and spills a cool tint onto the keyboard deck below it - an emissive channel, not a bright albedo.",
+          "mapsTo": {
+            "ref": "screen/emissive-panel",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.95
+        },
+        {
+          "id": "body-satin-response",
+          "kind": "gloss",
+          "zone": "r1c0",
+          "description": "Body metal is satin, not mirror: broad soft speculars along the chamfers with mid roughness across the flats, no sharp reflections.",
+          "mapsTo": {
+            "ref": "body/chamfer-sheen",
+            "via": "component.localFeatures | material.localOverrides"
+          },
+          "confidence": 0.85
+        }
+      ]
+    },
+    "anatomy": {
+      "applies": false,
+      "styleHeads": 0.0,
+      "proportions": {
+        "headUnit": 0.0,
+        "torso": 0.0,
+        "legs": 0.0,
+        "shoulderWidth": 0.0,
+        "hipWidth": 0.0
+      },
+      "pose": {
+        "type": "unassessed",
+        "jointAngles": {}
+      },
+      "faceLandmarks": {
+        "eyeLine": 0.0,
+        "eyeSpacing": 0.0,
+        "noseBase": 0.0,
+        "mouthLine": 0.0,
+        "hairline": 0.0
+      },
+      "features": [],
+      "confidence": 0.0,
+      "note": "Only meaningful when objectClass.primaryDomain is character or hybrid. Set applies=true and fill from forge/stage1_intake/extract_landmarks.py. See grimoire/character/reconstruction.md and grimoire/character/likeness_maximization.md."
+    },
+    "sourceImage": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopGlbBench-0.png"
+  },
+  "qualityContract": {
+    "qualityBar": "moderate",
+    "definitionOfDone": [
+      "The rendered model matches the reference silhouette, primary proportions, visible component hierarchy, material response, and most recognizable local features for the selected fidelity tier."
+    ],
+    "minimumSpecDepth": {
+      "macroComponents": 2,
+      "mesoComponents": 3,
+      "microFeatureGroups": 2,
+      "materialLayers": 2,
+      "repetitionSystems": 0,
+      "reviewViewpoints": 3
+    },
+    "featureGroups": [
+      {
+        "id": "overall-silhouette",
+        "name": "Overall silhouette and proportions",
+        "required": true,
+        "qualityCriteria": [
+          "Bounding shape, dominant curves, negative spaces, and scale relationships are explicitly described."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model reads as a generic placeholder instead of the reference object",
+          "major proportions are guessed without evidence"
+        ]
+      },
+      {
+        "id": "primary-structure",
+        "name": "Primary structure and hierarchy",
+        "required": true,
+        "qualityCriteria": [
+          "Major parts, joints, seams, contact points, and parent-child relationships are named before code generation."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "large visible parts are merged into one mesh",
+          "component hierarchy is too shallow for the observed complexity"
+        ]
+      },
+      {
+        "id": "attachment-joint-correctness",
+        "name": "Attachment and joint correctness",
+        "required": true,
+        "qualityCriteria": [
+          "Every visible child appendage, branch, limb, handle, connector, tube, cable, horn, wing, leg, or hinged part has an attachment contract with parent socket, localStart/localEnd, contact type, embed/overlap, and gap tolerance."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "child part root floats away from the parent",
+          "branch/limb/tube is centered in space instead of pivoting from its root",
+          "parent-child transform mixes world and local coordinates"
+        ]
+      },
+      {
+        "id": "surface-material-response",
+        "name": "Surface material response",
+        "required": true,
+        "qualityCriteria": [
+          "Albedo zones, roughness, normal/bump/displacement intent, cavity dirt, edge wear, and local overrides are specified where visible.",
+          "Important materials define independent albedo, roughness, height/normal, and AO responses instead of reusing one texture for unrelated PBR channels.",
+          "Surface response is decomposed into macro, meso, and micro frequency bands with scale and amplitude tied to object scale."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "surface looks like flat plastic",
+          "local material variation is missing or not tied to image evidence"
+        ]
+      },
+      {
+        "id": "reference-lookdev",
+        "name": "Reference color, material, and lighting response",
+        "required": true,
+        "qualityCriteria": [
+          "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+          "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
+          "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
+          "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model has acceptable shape but reads as flat shaded or plastic",
+          "colors are a generic average instead of reference-observed local color zones",
+          "lighting is evenly ambient and cannot reproduce the source value range"
+        ]
+      }
+    ],
+    "visualDeltaChecks": [
+      "silhouette and negative-space delta",
+      "component hierarchy depth delta",
+      "repetition density and distribution delta",
+      "material albedo/roughness/normal response delta",
+      "local feature placement and scale delta"
+    ],
+    "antiShallowSpecRules": [
+      "Do not proceed to code if qualityContract.qualityBar is unassessed.",
+      "Do not proceed to code if the spec only contains a root component for a moderate or complex object.",
+      "Do not proceed to code if required featureGroups are not represented by componentTree, materials, or repetitionSystems.",
+      "Do not proceed to code if visible local features are described only in prose and not attached to components/materials/evidenceRefs.",
+      "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
+      "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
+      "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+      "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+      "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity."
+    ]
+  },
+  "qualityTargets": {
+    "targetFidelity": 0.7,
+    "mustMatch": [
+      "macro silhouette and proportions",
+      "primary material albedo/roughness response",
+      "reference-derived PBR material response at or above 0.7 confidence when source pixels are usable",
+      "most recognizable local features"
+    ],
+    "niceToHave": [
+      "micro scratches, stains, chips, and dirt masks",
+      "secondary lighting match"
+    ],
+    "fpsTarget": 60,
+    "reviewViewpoints": [
+      "front",
+      "three-quarter",
+      "side"
+    ]
+  },
+  "selfCorrectLoop": {
+    "enabled": true,
+    "visualAcceptance": {
+      "reviewer": "ai-vision",
+      "threshold": 0.7,
+      "comparisonArtifactRequired": true,
+      "layerScoresRequired": true,
+      "codePixelDiffIsAcceptanceAuthority": false,
+      "scoringRule": "AI vision must inspect a side-by-side reference/render sheet and score the current pass from 0 to 1. Pixel-diff code may assist diagnostics but cannot approve a pass.",
+      "requiredLayerScores": [
+        "silhouetteProportion",
+        "componentStructure",
+        "formDetail",
+        "materialSurface",
+        "lightingCamera"
+      ],
+      "featureReviewPolicy": {
+        "enabled": true,
+        "reviewUnit": "semantic-subsystem",
+        "maxCriticalFeaturesPerPass": 5,
+        "maxImportantFeaturesPerPass": 3,
+        "criticalDefaultThreshold": 0.8,
+        "importantAverageThreshold": 0.65,
+        "adaptiveEscalation": true,
+        "singleImagePairOnly": true,
+        "selectionRule": "Choose only the most visually salient, identity-defining, user-prioritized, or high-risk semantic systems. Group repeated parts instead of reviewing every mesh. AI vision scores every selected feature from the same full reference/render pair."
+      }
+    },
+    "reviewAfterPasses": [
+      "blockout",
+      "structural-pass",
+      "form-refinement",
+      "material-pass",
+      "surface-pass",
+      "lighting-pass",
+      "interaction-pass",
+      "optimization-pass"
+    ],
+    "allowedActions": [
+      "continue",
+      "refine-spec",
+      "refine-code",
+      "request-input",
+      "stop"
+    ],
+    "specRefineTriggers": [
+      "missing component",
+      "wrong primitive family",
+      "wrong proportions",
+      "material layer under-specified",
+      "local feature not traceable to viewEvidence",
+      "reference ambiguity discovered during implementation"
+    ],
+    "codeRefineTriggers": [
+      "spec is adequate but generated geometry/material does not match",
+      "browser render differs from reference",
+      "performance budget exceeded",
+      "lighting hides geometry or material response"
+    ],
+    "stopCriteria": [
+      "target fidelity reached or user accepts current approximation",
+      "remaining gaps require new reference images or manual art"
+    ],
+    "screenshotPolicy": {
+      "requiredForPasses": [
+        "blockout",
+        "structural-pass",
+        "form-refinement",
+        "material-pass",
+        "surface-pass",
+        "lighting-pass",
+        "interaction-pass"
+      ],
+      "preferredCapture": "in-app-browser-screenshot",
+      "fallbackCapture": "user-supplied-screenshot-path",
+      "minimumEvidence": "Each visual pass needs a reference image, rendered screenshot, side-by-side comparison sheet, AI vision score, layer scores, and critique before choosing continue.",
+      "reviewPairRule": "Compare the same camera/viewpoint whenever possible; do not judge a front reference against a random render angle.",
+      "acceptanceAuthority": "AI vision review of the comparison sheet. Code-generated pixel similarity is not sufficient evidence."
+    }
+  },
+  "featureReviewTargets": [
+    {
+      "id": "lid-hinge-pivot",
+      "name": "Lid hinge pivot and open angle",
+      "threshold": 0.75,
+      "criteria": "Lid rotates about the deck's rear top edge; no gap or interpenetration at the hinge; open angle matches the reference recline.",
+      "failureModes": [
+        "lid pivots about its own centre",
+        "lid floats above the deck"
+      ],
+      "tier": "critical"
+    },
+    {
+      "id": "keycap-array-density",
+      "name": "Keycap array density and row layout",
+      "threshold": 0.7,
+      "criteria": "Key count, row count and modifier-key widths read like the reference; gaps are even and the spacebar spans the bottom row.",
+      "failureModes": [
+        "uniform key widths",
+        "wrong row count",
+        "gaps too wide - reads as tiles not keys"
+      ],
+      "tier": "critical"
+    },
+    {
+      "id": "body-proportions",
+      "name": "Deck and lid proportions",
+      "threshold": 0.75,
+      "criteria": "Deck width:depth:thickness and lid height match the reference silhouette; the machine reads thin.",
+      "failureModes": [
+        "deck too thick",
+        "lid too tall - reads as a monitor"
+      ],
+      "tier": "critical"
+    },
+    {
+      "id": "screen-emissive-response",
+      "name": "Emissive panel response",
+      "threshold": 0.65,
+      "criteria": "Panel is self-lit through an emissive channel and spills light onto the deck; bezel stays matte-dark.",
+      "failureModes": [
+        "bright albedo instead of emissive",
+        "no spill onto the keyboard"
+      ],
+      "tier": "important"
+    },
+    {
+      "id": "chamfer-highlight",
+      "name": "Chamfer highlight on body edges",
+      "threshold": 0.6,
+      "criteria": "Chamfered edges catch a distinctly brighter satin line than the flats.",
+      "failureModes": [
+        "perfectly sharp edges",
+        "uniform roughness everywhere"
+      ],
+      "tier": "important"
+    }
+  ],
+  "sculptPipeline": {
+    "passGateMode": "locked-sequential",
+    "passOrder": [
+      "blockout",
+      "structural-pass",
+      "form-refinement",
+      "material-pass",
+      "surface-pass",
+      "lighting-pass",
+      "interaction-pass",
+      "optimization-pass"
+    ],
+    "currentPass": "blockout",
+    "completedPasses": [],
+    "lastCompletedPass": "",
+    "blockedReason": "",
+    "nextRequiredEvidence": [
+      "Silhouette reads correctly without materials.",
+      "Quality contract has named all required macro feature groups before code generation.",
+      "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold.",
+      "browser render screenshot from your agent's browser/screenshot tool",
+      "single side-by-side full reference/render comparison sheet",
+      "all critical semantic feature scores at or above their thresholds",
+      "self-correction review appended with action=continue before the next pass"
+    ]
+  },
+  "lookDevTargets": {
+    "qualityPriority": "reference-fidelity",
+    "materialPass": {
+      "albedoPaletteRequired": true,
+      "roughnessVariationRequired": true,
+      "normalOrBumpRequired": true,
+      "localOverridesRequired": true,
+      "minimumTextureResolution": 1024,
+      "preferredTextureResolution": 2048,
+      "independentMapChannels": [
+        "albedo",
+        "roughness",
+        "height",
+        "normal",
+        "ambient-occlusion"
+      ],
+      "requiredSurfaceFrequencyBands": [
+        "macro",
+        "meso",
+        "micro"
+      ],
+      "geometryReliefRequiredWhenSilhouetteAffected": true,
+      "referencePbrExtraction": {
+        "requiredWhenSourceImagePresent": true,
+        "targetThreshold": 0.7,
+        "stopOnLowConfidence": true,
+        "script": "forge/stage1_intake/extract_pbr_evidence.py",
+        "acceptedLimitation": "single-image extraction is reference-derived inference, not exact photogrammetry"
+      },
+      "mustAvoid": [
+        "single flat albedo per material",
+        "uniform roughness",
+        "albedo texture reused as roughness/height/normal/AO",
+        "single-frequency random noise",
+        "plastic-looking smooth bark, stone, cloth, foliage, or aged material",
+        "local color/detail described only in prose without material masks",
+        "claiming exact PBR recovery when confidence is below the target threshold"
+      ]
+    },
+    "lightingPass": {
+      "requiredTerms": [
+        "key light",
+        "fill light",
+        "rim or environment light",
+        "exposure",
+        "tone mapping",
+        "background",
+        "contact shadow"
+      ],
+      "mustAvoid": [
+        "ambient-only lighting",
+        "flat value range",
+        "missing contact shadow",
+        "reference lighting copied without separating material readability"
+      ]
+    },
+    "screenshotReview": [
+      "Compare albedo palette and local color zones.",
+      "Compare roughness/normal/bump response under light.",
+      "Compare cavity dirt, edge wear, stains, moss, scratches, or other local masks.",
+      "Compare key/fill/rim structure, exposure, tone mapping, background, and contact shadows.",
+      "Capture a neutral-light render to verify material readability without reference lighting.",
+      "Capture a grazing-light close-up to expose flat normals, uniform roughness, tiling, and plastic highlights.",
+      "Capture a reference-matched render from the same camera framing as the source."
+    ]
+  },
+  "actionReadiness": {
+    "contract": "Every macro/meso component should be generated as a stable named Object3D pivot node with a mesh child, action metadata, optional sockets, collider proxy, and destruction metadata.",
+    "defaultRigType": "action-ready-static-rig",
+    "rootMotionNode": "root",
+    "requiredComponentFields": [
+      "id",
+      "parent",
+      "transform",
+      "attachment for child appendages, connectors, limbs, tubes, handles, legs, horns, wings, branches, or cables",
+      "actionProfile.animationRole",
+      "actionProfile.pivot",
+      "actionProfile.collider",
+      "actionProfile.destruction"
+    ],
+    "transformChannels": [
+      "translate",
+      "rotate",
+      "scale",
+      "bend",
+      "twist",
+      "detach",
+      "visibility",
+      "material-state"
+    ],
+    "authoringRules": [
+      "Do not collapse independently movable parts into one mesh.",
+      "Put transforms on component pivot groups, not only on raw meshes.",
+      "For attached child parts, put the pivot at the semantic root/socket and build visible geometry from localStart to localEnd.",
+      "Represent hinge, socket, detachable, and breakable intent even when no animation is implemented yet.",
+      "Use simplified collider proxies for runtime physics instead of visual mesh colliders by default."
+    ],
+    "destructionPolicy": {
+      "defaultBreakable": false,
+      "fractureGroupNaming": "Use stable semantic names such as body-shell, left-hinge, glass-panel, branch-segment.",
+      "debrisStrategy": "Prefer detachable component groups and a small number of procedural fragments over random mesh explosion."
+    }
+  },
+  "assumptions": [
+    "Underside of the deck is never visible in either reference view - mirror the top plate profile and keep it featureless.",
+    "Port cutouts on the side walls are not resolvable at this resolution - omit rather than invent.",
+    "Screen content is a baked photo texture in the reference; the pilot deliberately substitutes a neutral emissive panel.",
+    "Deck underside is never visible in either reference view; it mirrors the top plate profile and stays featureless.",
+    "Keycap legends are below the resolvable resolution of the reference and are deliberately omitted rather than invented.",
+    "Trim PBR evidence is conditional (0.647 < 0.7 threshold): a flat dark matte surface yields little extractable signal. Trim is authored from direct observation instead and flagged utility."
+  ],
+  "coordinateFrame": {
+    "up": "+Y",
+    "forward": "+Z",
+    "handedness": "right",
+    "originPolicy": "deck footprint centre, resting on Y=0",
+    "unitScale": "relative units; deck width 3.2"
+  },
+  "silhouette": {
+    "boundingShape": "two thin slabs meeting at a rear hinge, lid reclined ~102 degrees from the deck plane",
+    "dominantCurves": [
+      "straight chamfered edges",
+      "shallow rounded corners on both slabs"
+    ],
+    "negativeSpaces": [
+      "wedge of empty space between the open lid and the deck"
+    ],
+    "scaleRelationships": [
+      "lid height is ~0.93 of deck depth",
+      "deck thickness is ~0.028 of deck width - the machine reads as thin",
+      "keyboard plate spans ~0.93 of deck width"
+    ]
+  },
+  "viewEvidence": [
+    {
+      "id": "full-object",
+      "view": "primary",
+      "imageRegion": {
+        "x": 0.0,
+        "y": 0.0,
+        "width": 1.0,
+        "height": 1.0,
+        "units": "normalized"
+      },
+      "observations": [],
+      "confidence": 0.5
+    }
+  ],
+  "componentTree": [
+    {
+      "id": "root",
+      "name": "Laptop",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry",
+        "groupingIntent": "container group in code; box is the bounding proxy for spec purposes"
+      },
+      "parent": null,
+      "attachment": null,
+      "dimensions": {
+        "width": 1.0,
+        "height": 1.0,
+        "depth": 1.0,
+        "units": "relative",
+        "confidence": 1.0,
+        "note": "container node - unit scale on purpose; children carry the real sizes"
+      },
+      "transform": {
+        "position": [
+          0,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": null,
+      "localFeatures": [],
+      "actionProfile": {
+        "movable": false,
+        "role": "assembly-root",
+        "note": "staged by the rig (turntable), not self-animated"
+      }
+    },
+    {
+      "id": "deck",
+      "name": "Lower deck",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "chamfer",
+          "bevelRadius": 0.03,
+          "segments": 4
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "root",
+      "attachment": null,
+      "dimensions": {
+        "width": 3.2,
+        "height": 0.09,
+        "depth": 2.15,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.045,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "body",
+      "localFeatures": [
+        {
+          "id": "edge-chamfer",
+          "kind": "bevel",
+          "placement": "all four top edges, strongest along the front lip",
+          "size": 0.03,
+          "orientation": "outward",
+          "materialEffect": "catches a bright rim highlight against the darker top face",
+          "geometryEffect": "4-segment chamfer",
+          "confidence": 0.9
+        },
+        {
+          "id": "front-lip",
+          "kind": "contour",
+          "placement": "front edge centre",
+          "size": 0.12,
+          "orientation": "horizontal",
+          "materialEffect": "slight shadow catch",
+          "geometryEffect": "shallow scoop",
+          "confidence": 0.6
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-base",
+        "note": "the machine rests on this; it never moves relative to root"
+      }
+    },
+    {
+      "id": "lid",
+      "name": "Hinged lid",
+      "level": "macro",
+      "role": "body",
+      "importance": 1.0,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry",
+        "groupingIntent": "container group in code; box is the bounding proxy for spec purposes"
+      },
+      "parent": "root",
+      "attachment": {
+        "parentSocket": "hinge-axis",
+        "localStart": [
+          0,
+          0,
+          0
+        ],
+        "localEnd": [
+          0,
+          0.02,
+          0
+        ],
+        "contactType": "revolute-joint",
+        "embedDepth": 0.02,
+        "gapTolerance": 0.005
+      },
+      "dimensions": {
+        "width": 1.0,
+        "height": 1.0,
+        "depth": 1.0,
+        "units": "relative",
+        "confidence": 1.0,
+        "note": "container node - unit scale on purpose; children carry the real sizes"
+      },
+      "transform": {
+        "position": [
+          0,
+          0.09,
+          -1.075
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "body",
+      "localFeatures": [],
+      "actionProfile": {
+        "movable": true,
+        "role": "revolute-joint",
+        "axis": "x",
+        "pivot": {
+          "position": [
+            0,
+            0.09,
+            -1.075
+          ],
+          "axis": [
+            1,
+            0,
+            0
+          ],
+          "space": "parent-local",
+          "note": "ON the hinge line - the whole point: rotating about the lid centre would sink it through the deck"
+        },
+        "rangeRad": [
+          -1.78,
+          0.0
+        ],
+        "note": "THE action of this model: rotation.x opens/closes the clamshell"
+      }
+    },
+    {
+      "id": "lid-shell",
+      "name": "Lid shell",
+      "level": "macro",
+      "role": "body",
+      "importance": 0.9,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "chamfer",
+          "bevelRadius": 0.025,
+          "segments": 3
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "lid",
+      "attachment": null,
+      "dimensions": {
+        "width": 3.15,
+        "height": 2.0,
+        "depth": 0.06,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          1.0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "body",
+      "localFeatures": [
+        {
+          "id": "shell-chamfer",
+          "kind": "bevel",
+          "placement": "outer lid edges",
+          "size": 0.025,
+          "orientation": "outward",
+          "materialEffect": "soft specular line",
+          "geometryEffect": "chamfer",
+          "confidence": 0.85
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-shell",
+        "note": "rides the lid pivot"
+      }
+    },
+    {
+      "id": "hinge-bar",
+      "name": "Hinge bar",
+      "level": "meso",
+      "role": "connector",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "cylinder",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "deck",
+      "attachment": {
+        "parentSocket": "deck-rear-edge",
+        "localStart": [
+          -1.45,
+          0,
+          0
+        ],
+        "localEnd": [
+          1.45,
+          0,
+          0
+        ],
+        "contactType": "seated-in-recess",
+        "embedDepth": 0.03,
+        "gapTolerance": 0.004
+      },
+      "dimensions": {
+        "width": 2.9,
+        "height": 0.07,
+        "depth": 0.07,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.09,
+          -1.075
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5708
+        ]
+      },
+      "materialId": "trim",
+      "localFeatures": [
+        {
+          "id": "lid-seam",
+          "kind": "seam",
+          "placement": "along the deck rear edge",
+          "size": 2.9,
+          "orientation": "horizontal",
+          "materialEffect": "reads darker than the body metal",
+          "geometryEffect": "distinct cylindrical part, not a painted line",
+          "confidence": 0.85
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "joint-housing",
+        "note": "visually bridges deck and lid; the pivot lives on lid"
+      }
+    },
+    {
+      "id": "keyboard-plate",
+      "name": "Keyboard plate",
+      "level": "meso",
+      "role": "panel",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "deck",
+      "attachment": null,
+      "dimensions": {
+        "width": 2.98,
+        "height": 0.014,
+        "depth": 1.52,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.097,
+          -0.28
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "trim",
+      "localFeatures": [
+        {
+          "id": "row-width-variation",
+          "kind": "contour",
+          "placement": "per keyboard row",
+          "size": 1.52,
+          "orientation": "horizontal",
+          "materialEffect": "none - purely a layout contour",
+          "geometryEffect": "modifier keys wider than letter keys; long bottom spacebar",
+          "confidence": 0.85
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-panel",
+        "note": "carries the keycap array"
+      }
+    },
+    {
+      "id": "trackpad",
+      "name": "Trackpad",
+      "level": "meso",
+      "role": "panel",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "deck",
+      "attachment": null,
+      "dimensions": {
+        "width": 0.95,
+        "height": 0.008,
+        "depth": 0.62,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.094,
+          0.66
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "trackpad",
+      "localFeatures": [
+        {
+          "id": "recess-seam",
+          "kind": "groove",
+          "placement": "perimeter of the trackpad",
+          "size": 0.004,
+          "orientation": "outline",
+          "materialEffect": "thin dark AO line, surface slightly smoother than the deck",
+          "geometryEffect": "inset panel with a shallow seam",
+          "confidence": 0.9
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-panel",
+        "note": "inset panel, no motion in this pilot"
+      }
+    },
+    {
+      "id": "screen-panel",
+      "name": "Display panel",
+      "level": "meso",
+      "role": "panel",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "plane-card",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry",
+        "groupingIntent": "container group in code; box is the bounding proxy for spec purposes"
+      },
+      "parent": "lid",
+      "attachment": null,
+      "dimensions": {
+        "width": 2.86,
+        "height": 1.72,
+        "depth": 0.01,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          1.0,
+          0.035
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "screen",
+      "localFeatures": [
+        {
+          "id": "emissive-panel",
+          "kind": "emissive",
+          "placement": "active display area",
+          "size": 2.86,
+          "orientation": "facing +Z",
+          "materialEffect": "self-lit; spills a cool tint onto the deck below",
+          "geometryEffect": "flat inset plane",
+          "confidence": 0.95
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "emissive-panel",
+        "note": "rides the lid; animated via material emissiveIntensity, not transform"
+      }
+    },
+    {
+      "id": "bezel",
+      "name": "Screen bezel",
+      "level": "meso",
+      "role": "trim",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "lid",
+      "attachment": null,
+      "dimensions": {
+        "width": 3.15,
+        "height": 2.0,
+        "depth": 0.02,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          1.0,
+          0.02
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "trim",
+      "localFeatures": [
+        {
+          "id": "panel-inset",
+          "kind": "groove",
+          "placement": "frames the display on all four sides, wider at the bottom",
+          "size": 0.14,
+          "orientation": "outline",
+          "materialEffect": "matte dark trim against the emissive panel",
+          "geometryEffect": "panel sits recessed behind the bezel plane",
+          "confidence": 0.9
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-trim",
+        "note": "rides the lid"
+      }
+    },
+    {
+      "id": "keycap-unit",
+      "name": "Keycap",
+      "level": "micro",
+      "role": "detail",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "chamfer",
+          "bevelRadius": 0.006,
+          "segments": 2
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "keyboard-plate",
+      "attachment": null,
+      "dimensions": {
+        "width": 0.185,
+        "height": 0.022,
+        "depth": 0.185,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.018,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "keycap",
+      "localFeatures": [
+        {
+          "id": "cap-chamfer",
+          "kind": "bevel",
+          "placement": "keycap top rim",
+          "size": 0.006,
+          "orientation": "outward",
+          "materialEffect": "narrow highlight along each cap edge",
+          "geometryEffect": "top face inset from the base footprint",
+          "confidence": 0.9
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-detail",
+        "note": "keys are visual only in this pilot; per-key press would need individual pivots"
+      }
+    },
+    {
+      "id": "deck-chamfer-band",
+      "name": "Deck chamfer band",
+      "level": "micro",
+      "role": "detail",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "deck",
+      "attachment": null,
+      "dimensions": {
+        "width": 3.2,
+        "height": 0.012,
+        "depth": 2.15,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0.086,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "body",
+      "localFeatures": [
+        {
+          "id": "chamfer-sheen",
+          "kind": "gloss",
+          "placement": "along the chamfer band",
+          "size": 3.2,
+          "orientation": "outward",
+          "materialEffect": "broad soft specular, mid roughness - satin not mirror",
+          "geometryEffect": "none - shading only",
+          "confidence": 0.85
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "shading-band",
+        "note": "no independent motion - rides the deck"
+      }
+    },
+    {
+      "id": "bezel-inset-lip",
+      "name": "Bezel inset lip",
+      "level": "micro",
+      "role": "detail",
+      "importance": 0.6,
+      "confidence": 0.85,
+      "primitive": "box",
+      "geometryDescriptor": {
+        "topologyIntent": "low-poly hard-surface with bevel-ready edges",
+        "edgeTreatment": {
+          "type": "none",
+          "bevelRadius": 0.0,
+          "segments": 1
+        },
+        "deformationStack": [],
+        "uvStrategy": "generated procedural coordinates",
+        "normalStrategy": "vertex normals from generated geometry"
+      },
+      "parent": "bezel",
+      "attachment": null,
+      "dimensions": {
+        "width": 2.9,
+        "height": 1.76,
+        "depth": 0.008,
+        "units": "relative",
+        "confidence": 0.85
+      },
+      "transform": {
+        "position": [
+          0,
+          0,
+          0.012
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "materialId": "trim",
+      "localFeatures": [
+        {
+          "id": "inset-lip",
+          "kind": "ridge",
+          "placement": "inner edge of the bezel",
+          "size": 0.02,
+          "orientation": "outline",
+          "materialEffect": "thin shadow line where the panel drops back",
+          "geometryEffect": "raised lip",
+          "confidence": 0.7
+        }
+      ],
+      "actionProfile": {
+        "movable": false,
+        "role": "static-detail",
+        "note": "rides the lid"
+      }
+    }
+  ],
+  "materials": [
+    {
+      "id": "body",
+      "name": "Anodised body metal",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#575E6B",
+      "color": "#575E6B",
+      "albedo": {
+        "dominant": "#575E6B",
+        "secondary": [
+          "#585F6C",
+          "#626A7C"
+        ],
+        "samplingNotes": "sampled from reference crops, not a single averaged colour"
+      },
+      "colorVariation": {
+        "palette": [
+          "#575E6B",
+          "#585F6C",
+          "#626A7C",
+          "#59606D",
+          "#242932"
+        ],
+        "pattern": "flat with subtle facet-driven variation",
+        "amplitude": 0.06,
+        "regionalMasks": []
+      },
+      "roughness": {
+        "base": 0.42,
+        "variation": 0.08,
+        "mapSource": "procedural facet variation",
+        "map": "body_roughness.png (reference-extracted, independent channel)"
+      },
+      "metalness": {
+        "base": 0.55,
+        "localChanges": []
+      },
+      "normal": {
+        "pattern": "none",
+        "strength": 0.0,
+        "scale": 1.0
+      },
+      "bump": {
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "amount": 0.0,
+        "scale": 1.0
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": 0.0,
+        "chips": 0.0,
+        "polish": 0.1,
+        "notes": "reference is a clean product render - no wear present"
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#000000",
+        "streaking": 0.0
+      },
+      "ao": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO along seams and key gaps"
+      },
+      "localOverrides": [
+        {
+          "id": "chamfer-sheen",
+          "region": "chamfer bands on deck and lid",
+          "roughness": 0.24,
+          "note": "satin sheen along the chamfer; flats stay rougher",
+          "evidence": "bright rim visible on the front lip in the front view"
+        }
+      ],
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "out/bench/crops/body.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "reference-pixel-extraction (inference, not inverse rendering)",
+        "verdict": "pass",
+        "hardLimit": "single-image PBR extraction is an estimate; needs render-review confirmation",
+        "usable": true,
+        "confidence": 0.729,
+        "estimatedFidelity": 0.729,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "url": "body_albedo.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/body_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "url": "body_roughness.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/body_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "url": "body_height.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/body_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "url": "body_normal.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/body_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "url": "body_ao.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/body_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      },
+      "textureResolution": 2048,
+      "textureProjection": {
+        "mode": "triplanar-world",
+        "texelDensity": "~512 px per unit at the review distance",
+        "intent": "procedural coordinates only - no external texture files are shipped"
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "feature": "slab form and chamfer bands",
+          "amplitude": 1.0,
+          "scale": "whole part",
+          "frequency": 1.0
+        },
+        {
+          "id": "meso",
+          "feature": "panel seams and the hinge recess",
+          "amplitude": 0.35,
+          "scale": "0.1-0.5 units",
+          "frequency": 8.0
+        },
+        {
+          "id": "micro",
+          "feature": "fine anodised grain, sub-visible",
+          "amplitude": 0.06,
+          "scale": "<0.01 units",
+          "frequency": 64.0
+        }
+      ],
+      "ambientOcclusion": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO, independent of albedo",
+        "regions": [
+          "key gaps",
+          "trackpad perimeter",
+          "hinge recess",
+          "bezel inner lip"
+        ]
+      }
+    },
+    {
+      "id": "keycap",
+      "name": "Keycap plastic",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#6F7486",
+      "color": "#6F7486",
+      "albedo": {
+        "dominant": "#6F7486",
+        "secondary": [
+          "#717688",
+          "#73798A"
+        ],
+        "samplingNotes": "sampled from reference crops, not a single averaged colour"
+      },
+      "colorVariation": {
+        "palette": [
+          "#6F7486",
+          "#717688",
+          "#73798A",
+          "#5C6270",
+          "#3C404F"
+        ],
+        "pattern": "flat with subtle facet-driven variation",
+        "amplitude": 0.06,
+        "regionalMasks": []
+      },
+      "roughness": {
+        "base": 0.68,
+        "variation": 0.08,
+        "mapSource": "procedural facet variation",
+        "map": "keycap_roughness.png (reference-extracted, independent channel)"
+      },
+      "metalness": {
+        "base": 0.18,
+        "localChanges": []
+      },
+      "normal": {
+        "pattern": "none",
+        "strength": 0.0,
+        "scale": 1.0
+      },
+      "bump": {
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "amount": 0.0,
+        "scale": 1.0
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": 0.0,
+        "chips": 0.0,
+        "polish": 0.1,
+        "notes": "reference is a clean product render - no wear present"
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#000000",
+        "streaking": 0.0
+      },
+      "ao": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO along seams and key gaps"
+      },
+      "localOverrides": [
+        {
+          "id": "cap-top",
+          "region": "keycap top face",
+          "roughness": 0.62,
+          "note": "cap tops read slightly lighter than the plate below",
+          "evidence": "keycap crop palette is lighter than the body crop"
+        }
+      ],
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "out/bench/crops/keycap.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "reference-pixel-extraction (inference, not inverse rendering)",
+        "verdict": "pass",
+        "hardLimit": "single-image PBR extraction is an estimate; needs render-review confirmation",
+        "usable": true,
+        "confidence": 0.77,
+        "estimatedFidelity": 0.77,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "url": "keycap_albedo.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/keycap_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "url": "keycap_roughness.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/keycap_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "url": "keycap_height.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/keycap_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "url": "keycap_normal.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/keycap_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "url": "keycap_ao.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/keycap_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      },
+      "textureResolution": 2048,
+      "textureProjection": {
+        "mode": "box-uv",
+        "texelDensity": "~512 px per unit at the review distance",
+        "intent": "procedural coordinates only - no external texture files are shipped"
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "feature": "cap footprint and top inset",
+          "amplitude": 1.0,
+          "scale": "per key",
+          "frequency": 1.0
+        },
+        {
+          "id": "meso",
+          "feature": "cap chamfer and inter-key gap shadow",
+          "amplitude": 0.4,
+          "scale": "0.005-0.03 units",
+          "frequency": 8.0
+        },
+        {
+          "id": "micro",
+          "feature": "matte plastic texture",
+          "amplitude": 0.1,
+          "scale": "<0.002 units",
+          "frequency": 64.0
+        }
+      ],
+      "ambientOcclusion": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO, independent of albedo",
+        "regions": [
+          "key gaps",
+          "trackpad perimeter",
+          "hinge recess",
+          "bezel inner lip"
+        ]
+      }
+    },
+    {
+      "id": "trackpad",
+      "name": "Trackpad glass",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#575E6B",
+      "color": "#575E6B",
+      "albedo": {
+        "dominant": "#575E6B",
+        "secondary": [
+          "#585F6D",
+          "#2C323E"
+        ],
+        "samplingNotes": "sampled from reference crops, not a single averaged colour"
+      },
+      "colorVariation": {
+        "palette": [
+          "#575E6B",
+          "#585F6D",
+          "#2C323E",
+          "#626A7C",
+          "#575E6C"
+        ],
+        "pattern": "flat with subtle facet-driven variation",
+        "amplitude": 0.06,
+        "regionalMasks": []
+      },
+      "roughness": {
+        "base": 0.28,
+        "variation": 0.08,
+        "mapSource": "procedural facet variation",
+        "map": "trackpad_roughness.png (reference-extracted, independent channel)"
+      },
+      "metalness": {
+        "base": 0.3,
+        "localChanges": []
+      },
+      "normal": {
+        "pattern": "none",
+        "strength": 0.0,
+        "scale": 1.0
+      },
+      "bump": {
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "amount": 0.0,
+        "scale": 1.0
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": 0.0,
+        "chips": 0.0,
+        "polish": 0.1,
+        "notes": "reference is a clean product render - no wear present"
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#000000",
+        "streaking": 0.0
+      },
+      "ao": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO along seams and key gaps"
+      },
+      "localOverrides": [
+        {
+          "id": "recess-seam",
+          "region": "trackpad perimeter",
+          "roughness": 0.5,
+          "note": "dark AO seam where the panel is inset",
+          "evidence": "thin dark outline around the pad in the front view"
+        }
+      ],
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "out/bench/crops/trackpad.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "reference-pixel-extraction (inference, not inverse rendering)",
+        "verdict": "pass",
+        "hardLimit": "single-image PBR extraction is an estimate; needs render-review confirmation",
+        "usable": true,
+        "confidence": 0.773,
+        "estimatedFidelity": 0.773,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "url": "trackpad_albedo.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trackpad_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "url": "trackpad_roughness.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trackpad_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "url": "trackpad_height.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trackpad_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "url": "trackpad_normal.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trackpad_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "url": "trackpad_ao.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trackpad_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      },
+      "textureResolution": 2048,
+      "textureProjection": {
+        "mode": "box-uv",
+        "texelDensity": "~512 px per unit at the review distance",
+        "intent": "procedural coordinates only - no external texture files are shipped"
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "feature": "inset rectangle",
+          "amplitude": 1.0,
+          "scale": "whole pad",
+          "frequency": 1.0
+        },
+        {
+          "id": "meso",
+          "feature": "perimeter seam and AO line",
+          "amplitude": 0.5,
+          "scale": "0.004 units",
+          "frequency": 8.0
+        },
+        {
+          "id": "micro",
+          "feature": "smooth glass, near-featureless",
+          "amplitude": 0.04,
+          "scale": "<0.001 units",
+          "frequency": 64.0
+        }
+      ],
+      "ambientOcclusion": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO, independent of albedo",
+        "regions": [
+          "key gaps",
+          "trackpad perimeter",
+          "hinge recess",
+          "bezel inner lip"
+        ]
+      }
+    },
+    {
+      "id": "screen",
+      "name": "Display panel",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#20263A",
+      "color": "#20263A",
+      "albedo": {
+        "dominant": "#20263A",
+        "secondary": [
+          "#2B3350",
+          "#171B2A"
+        ],
+        "samplingNotes": "sampled from reference crops, not a single averaged colour"
+      },
+      "colorVariation": {
+        "palette": [
+          "#20263A",
+          "#2B3350",
+          "#171B2A"
+        ],
+        "pattern": "flat with subtle facet-driven variation",
+        "amplitude": 0.06,
+        "regionalMasks": []
+      },
+      "roughness": {
+        "base": 0.22,
+        "variation": 0.08,
+        "mapSource": "procedural facet variation",
+        "map": "screen_roughness.png (reference-extracted, independent channel)"
+      },
+      "metalness": {
+        "base": 0.0,
+        "localChanges": []
+      },
+      "normal": {
+        "pattern": "none",
+        "strength": 0.0,
+        "scale": 1.0
+      },
+      "bump": {
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "amount": 0.0,
+        "scale": 1.0
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": 0.0,
+        "chips": 0.0,
+        "polish": 0.1,
+        "notes": "reference is a clean product render - no wear present"
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#000000",
+        "streaking": 0.0
+      },
+      "ao": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO along seams and key gaps"
+      },
+      "localOverrides": [
+        {
+          "id": "emissive-panel",
+          "region": "active display area",
+          "roughness": 0.18,
+          "note": "low roughness glass over the emissive layer",
+          "evidence": "panel glows and tints the deck below it"
+        }
+      ],
+      "emissive": {
+        "color": "#8FA0FF",
+        "intensity": 1.0,
+        "note": "neutral emissive placeholder - the reference's baked UI texture is deliberately NOT reproduced in this pilot"
+      },
+      "textureResolution": 2048,
+      "textureProjection": {
+        "mode": "box-uv",
+        "texelDensity": "~512 px per unit at the review distance",
+        "intent": "procedural coordinates only - no external texture files are shipped"
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "feature": "flat emissive panel",
+          "amplitude": 1.0,
+          "scale": "whole panel",
+          "frequency": 1.0
+        },
+        {
+          "id": "meso",
+          "feature": "bezel drop-shadow at the panel edge",
+          "amplitude": 0.3,
+          "scale": "0.02 units",
+          "frequency": 8.0
+        },
+        {
+          "id": "micro",
+          "feature": "glass sheen, no visible pixel structure at this scale",
+          "amplitude": 0.03,
+          "scale": "<0.001 units",
+          "frequency": 64.0
+        }
+      ],
+      "ambientOcclusion": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO, independent of albedo",
+        "regions": [
+          "key gaps",
+          "trackpad perimeter",
+          "hinge recess",
+          "bezel inner lip"
+        ]
+      },
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "out/bench/crops/screen.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "reference-pixel-extraction (inference, not inverse rendering)",
+        "verdict": "pass",
+        "hardLimit": "single-image PBR extraction is an estimate; needs render-review confirmation",
+        "usable": true,
+        "confidence": 0.86,
+        "estimatedFidelity": 0.86,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "url": "screen_albedo.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/screen_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "url": "screen_roughness.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/screen_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "url": "screen_height.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/screen_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "url": "screen_normal.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/screen_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "url": "screen_ao.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/screen_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      }
+    },
+    {
+      "id": "trim",
+      "name": "Dark trim",
+      "type": "standard",
+      "shaderModel": "MeshStandardMaterial / PBR approximation",
+      "baseColor": "#242932",
+      "color": "#242932",
+      "albedo": {
+        "dominant": "#242932",
+        "secondary": [
+          "#2C323E",
+          "#3C404F"
+        ],
+        "samplingNotes": "sampled from reference crops, not a single averaged colour"
+      },
+      "colorVariation": {
+        "palette": [
+          "#242932",
+          "#2C323E",
+          "#3C404F"
+        ],
+        "pattern": "flat with subtle facet-driven variation",
+        "amplitude": 0.06,
+        "regionalMasks": []
+      },
+      "roughness": {
+        "base": 0.72,
+        "variation": 0.08,
+        "mapSource": "procedural facet variation",
+        "map": "trim_roughness.png (reference-extracted, independent channel)"
+      },
+      "metalness": {
+        "base": 0.25,
+        "localChanges": []
+      },
+      "normal": {
+        "pattern": "none",
+        "strength": 0.0,
+        "scale": 1.0
+      },
+      "bump": {
+        "amplitude": 0.0,
+        "scale": 1.0
+      },
+      "displacement": {
+        "amount": 0.0,
+        "scale": 1.0
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "scratches": 0.0,
+        "chips": 0.0,
+        "polish": 0.1,
+        "notes": "reference is a clean product render - no wear present"
+      },
+      "dirt": {
+        "amount": 0.0,
+        "cavityBias": 0.0,
+        "color": "#000000",
+        "streaking": 0.0
+      },
+      "ao": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO along seams and key gaps"
+      },
+      "localOverrides": [
+        {
+          "id": "panel-inset",
+          "region": "bezel inner edge",
+          "roughness": 0.78,
+          "note": "matte trim, no specular competition with the panel",
+          "evidence": "bezel reads flat-dark next to the lit panel"
+        }
+      ],
+      "textureResolution": 2048,
+      "textureProjection": {
+        "mode": "triplanar-world",
+        "texelDensity": "~512 px per unit at the review distance",
+        "intent": "procedural coordinates only - no external texture files are shipped"
+      },
+      "surfaceFrequencyBands": [
+        {
+          "id": "macro",
+          "feature": "bezel frame and hinge bar",
+          "amplitude": 1.0,
+          "scale": "whole part",
+          "frequency": 1.0
+        },
+        {
+          "id": "meso",
+          "feature": "inner lip step",
+          "amplitude": 0.25,
+          "scale": "0.01-0.02 units",
+          "frequency": 8.0
+        },
+        {
+          "id": "micro",
+          "feature": "matte texture, not resolvable in the reference",
+          "amplitude": 0.05,
+          "scale": "<0.002 units",
+          "frequency": 64.0
+        }
+      ],
+      "ambientOcclusion": {
+        "strength": 0.35,
+        "source": "cavity-biased procedural AO, independent of albedo",
+        "regions": [
+          "key gaps",
+          "trackpad perimeter",
+          "hinge recess",
+          "bezel inner lip"
+        ]
+      },
+      "referencePbr": {
+        "version": "1",
+        "sourceImage": "out/bench/crops/trim.png",
+        "extractor": "forge/stage1_intake/extract_pbr_evidence.py",
+        "method": "reference-pixel-extraction (inference, not inverse rendering)",
+        "verdict": "conditional",
+        "hardLimit": "single-image PBR extraction is an estimate; needs render-review confirmation",
+        "usable": false,
+        "confidence": 0.647,
+        "estimatedFidelity": 0.647,
+        "targetThreshold": 0.7,
+        "maps": {
+          "albedo": {
+            "url": "trim_albedo.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trim_albedo.png",
+            "channel": "albedo",
+            "source": "reference-pixel-extraction"
+          },
+          "roughness": {
+            "url": "trim_roughness.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trim_roughness.png",
+            "channel": "roughness",
+            "source": "reference-pixel-extraction"
+          },
+          "height": {
+            "url": "trim_height.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trim_height.png",
+            "channel": "height",
+            "source": "reference-pixel-extraction"
+          },
+          "normal": {
+            "url": "trim_normal.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trim_normal.png",
+            "channel": "normal",
+            "source": "reference-pixel-extraction"
+          },
+          "ao": {
+            "url": "trim_ao.png",
+            "path": "C:/Users/pesto/Desktop/motion-engine/out/bench/pbr/trim_ao.png",
+            "channel": "ao",
+            "source": "reference-pixel-extraction"
+          }
+        }
+      },
+      "qualityTier": "utility",
+      "qualityNote": "PBR extraction plateaus at 0.647 confidence regardless of crop size: a flat dark matte surface carries almost no roughness/normal signal. Marked utility rather than inflating the number — the trim is a supporting surface, not a hero material."
+    }
+  ],
+  "repetitionSystems": [
+    {
+      "id": "keycap-grid",
+      "name": "Keyboard keycap array",
+      "componentId": "keycap-unit",
+      "instancing": "InstancedMesh",
+      "count": 66,
+      "pattern": "grid",
+      "layout": {
+        "rows": 5,
+        "columnsNominal": 14,
+        "gap": 0.026,
+        "rowWidthUnits": [
+          [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1.5,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1.5
+          ],
+          [
+            1.75,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2.25
+          ],
+          [
+            2.25,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            2.75
+          ],
+          [
+            1.25,
+            1.25,
+            1.25,
+            6.25,
+            1.25,
+            1.25,
+            1.25
+          ]
+        ],
+        "note": "widths in key units (1u = a letter key); the layout is authored, not random"
+      },
+      "jitter": {
+        "amount": 0.0,
+        "seeded": true,
+        "seed": 1337,
+        "note": "a product render has no key jitter; seed kept for future wear variation"
+      }
+    }
+  ],
+  "buildPasses": [
+    {
+      "id": "blockout",
+      "goal": "Match macro silhouette and proportions.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Silhouette reads correctly without materials.",
+        "Quality contract has named all required macro feature groups before code generation.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "structural-pass",
+      "goal": "Build the component hierarchy implied by the pre-spec complexity assessment.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Macro, meso, and repeated structures meet qualityContract.minimumSpecDepth.",
+        "Parent-child relations, joints, seams, sockets, and contact points are explicit.",
+        "Every attached child appendage/connector has parentSocket, localStart/localEnd, contactType, embedDepth or overlap, and gapTolerance.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "form-refinement",
+      "goal": "Refine shape, deformation, bevels, tapers, curves, asymmetry, and visible local geometry.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Important visible forms are represented in component geometryDescriptor, deformations, localFeatures, or repetitionSystems.",
+        "Endpoint-based child parts are rooted at their attachment sockets and do not visibly float away from parents.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "material-pass",
+      "goal": "Match material color, roughness, bump, and local variation.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Reference-derived albedo palette records dominant, secondary, and accent colors per visible material.",
+        "Each important material defines roughness variation and at least one normal/bump/displacement response.",
+        "Local material overrides, dirt/wear/stains/moss/chips/scratches or equivalent masks are tied to evidenceRefs.",
+        "Thin, transparent, reflective, wet, or fibrous materials document alpha/transmission/clearcoat/metalness/fiber response when relevant.",
+        "Generated preview uses procedural albedo/roughness/bump texture or vertex color variation instead of one flat color.",
+        "Generated preview uses independent PBR maps at 1024px or higher for the quality-first tier.",
+        "If source pixels are available, referencePbr extraction passed at confidence >= 0.7 or the pass is stopped/requesting better references.",
+        "Macro, meso, and micro surface frequency bands are visible at the intended review distance without obvious tiling.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ],
+      "materialOverrides": [
+        {
+          "materialId": "body",
+          "overrideId": "chamfer-sheen",
+          "channel": "roughness",
+          "value": 0.24
+        },
+        {
+          "materialId": "trackpad",
+          "overrideId": "recess-seam",
+          "channel": "ao",
+          "value": 0.55
+        },
+        {
+          "materialId": "keycap",
+          "overrideId": "cap-top",
+          "channel": "roughness",
+          "value": 0.62
+        }
+      ],
+      "ao": {
+        "strength": 0.35,
+        "cavityBias": 0.6,
+        "note": "concentrates in key gaps, the trackpad seam and the hinge recess"
+      },
+      "wear": {
+        "edgeWear": 0.0,
+        "note": "clean product render - deliberately no wear"
+      },
+      "masks": [
+        "key-gap-cavity",
+        "trackpad-perimeter",
+        "hinge-recess"
+      ]
+    },
+    {
+      "id": "surface-pass",
+      "goal": "Add procedural surface locality such as normal/bump/displacement, AO, dirt, stains, chips, grain, moss, scratches, and wear.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Every required material feature group has local overrides or surfaceDetail tied to evidenceRefs.",
+        "A grazing-angle close-up proves that normal/height detail breaks highlights naturally and does not read as smooth plastic.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "lighting-pass",
+      "goal": "Make material and form readable under neutral turntable lighting plus optional reference lighting.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "lightingFromPhoto identifies key light direction/color/intensity, fill light, rim or environment light, and ambient color.",
+        "Exposure, tone mapping, background color/gradient, shadow softness, and contact shadow behavior are specified.",
+        "Lighting does not hide geometry/material gaps and screenshots can be compared fairly to the reference.",
+        "Neutral, grazing, and reference-matched lighting checks distinguish material errors from lighting errors.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ],
+      "lights": [
+        {
+          "role": "key",
+          "type": "point",
+          "position": [
+            4,
+            5,
+            4
+          ],
+          "intensity": 240,
+          "color": "#ffffff",
+          "note": "upper-front-right, drives the chamfer highlight"
+        },
+        {
+          "role": "fill",
+          "type": "point",
+          "position": [
+            -5,
+            3.5,
+            -2
+          ],
+          "intensity": 160,
+          "color": "#ffffff",
+          "note": "opposite side, lifts the shadowed flank"
+        },
+        {
+          "role": "rim",
+          "type": "point",
+          "position": [
+            0,
+            2.0,
+            -4
+          ],
+          "intensity": 90,
+          "color": "#c8d4ff",
+          "note": "behind the lid, separates it from the backdrop"
+        },
+        {
+          "role": "environment",
+          "type": "pmrem-room",
+          "intensity": 0.65,
+          "note": "three's RoomEnvironment through PMREM - gives the metal something to reflect"
+        }
+      ],
+      "environment": {
+        "source": "RoomEnvironment",
+        "intensity": 0.65
+      },
+      "shadows": {
+        "contactShadow": true,
+        "groundShadow": true,
+        "type": "contact-shadow under the deck footprint",
+        "softness": 0.35,
+        "note": "grounds the machine on the flat backdrop; without it the laptop floats"
+      }
+    },
+    {
+      "id": "interaction-pass",
+      "goal": "Make the model ready for future animation, transformation, physics, or destruction.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Macro and movable meso components have stable pivot nodes.",
+        "Sockets, collider proxies, and destruction metadata are present for future runtime actions.",
+        "AI vision comparison score meets selfCorrectLoop.visualAcceptance.threshold."
+      ]
+    },
+    {
+      "id": "optimization-pass",
+      "goal": "Protect runtime performance after visual fidelity is accepted.",
+      "componentRefs": [
+        "root"
+      ],
+      "acceptance": [
+        "Triangle count, draw calls, instancing, LOD strategy, and FPS target are documented or verified.",
+        "Repeated detail is instanced or simplified where possible without breaking silhouette/material believability."
+      ]
+    }
+  ],
+  "visualEvidence": [
+    {
+      "timestamp": "2026-07-20T09:16:06.881427+00:00",
+      "passId": "blockout",
+      "estimatedFidelity": 0.55,
+      "aiVisionScore": 0.55,
+      "visualAcceptanceThreshold": 0.7,
+      "layerScores": {
+        "silhouette": 0.6,
+        "proportion": 0.75,
+        "structure": 0.5,
+        "material": 0.0,
+        "lighting": 0.0
+      },
+      "featureReviews": [],
+      "referenceScreenshot": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopGlbBench-0.png",
+      "renderScreenshot": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopFactoryBench-20.png",
+      "comparisonImage": "C:/Users/pesto/Desktop/motion-engine/out/bench/cmp-blockout.png",
+      "cameraView": "",
+      "notes": "",
+      "aiVisionNotes": ""
+    }
+  ],
+  "reviewHistory": [
+    {
+      "timestamp": "2026-07-20T09:16:06.881427+00:00",
+      "passId": "blockout",
+      "estimatedFidelity": 0.55,
+      "aiVisionScore": 0.55,
+      "visualAcceptanceThreshold": 0.7,
+      "layerScores": {
+        "silhouette": 0.6,
+        "proportion": 0.75,
+        "structure": 0.5,
+        "material": 0.0,
+        "lighting": 0.0
+      },
+      "featureReviews": [],
+      "action": "refine-spec",
+      "summary": "Deck proportions and the two-slab silhouette read correctly, but the lid stands vertical instead of reclined and a parasitic connector block sits mid-deck from the lid attachment vector. Below the 0.7 acceptance threshold.",
+      "matched": [],
+      "mismatches": [],
+      "specFixes": [],
+      "codeFixes": [],
+      "evidence": [],
+      "visualEvidence": {
+        "referenceScreenshot": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopGlbBench-0.png",
+        "renderScreenshot": "C:/Users/pesto/Desktop/motion-engine/out/bench/LaptopFactoryBench-20.png",
+        "comparisonImage": "C:/Users/pesto/Desktop/motion-engine/out/bench/cmp-blockout.png",
+        "cameraView": "",
+        "notes": "",
+        "aiVisionNotes": ""
+      }
+    }
+  ],
+  "lodPlan": [
+    {
+      "tier": "near",
+      "distance": 0,
+      "strategy": "full component tree and material layers"
+    },
+    {
+      "tier": "far",
+      "distance": 30,
+      "strategy": "merge static components and reduce local feature geometry"
+    }
+  ],
+  "performanceBudget": {
+    "qualityPriority": "reference-fidelity",
+    "targetTriangles": 250000,
+    "maxDrawCalls": 160,
+    "textureSize": 2048,
+    "fpsTarget": 30,
+    "optimizationPolicy": "Reach accepted visual fidelity first, then optimize without removing reference-critical geometry or surface layers."
+  },
+  "lightingFromPhoto": [
+    "key: upper-front-right point light (~[4,5,4], intensity 240, neutral white) — drives the bright satin line along the deck chamfer and the top edge of the lid.",
+    "fill: opposite-side point light (~[-5,3.5,-2], intensity 160, neutral white) — lifts the shadowed flank so the body reads as satin metal rather than flat grey.",
+    "rim: low-intensity cool light behind the lid (~[0,2,-4], intensity 90, #c8d4ff) — separates the lid silhouette from the flat backdrop.",
+    "environment: three RoomEnvironment through PMREM at 0.65 — without it the metal renders near-black because there is nothing to reflect.",
+    "practical: the display panel is itself an emissive source and spills a cool tint onto the keyboard deck; it is part of the lighting, not just a bright surface.",
+    "exposure and tone mapping: ACES filmic tone mapping, no adaptive exposure — the reference is a clean product render with unclipped highlights on the chamfers.",
+    "contact/ground shadow: soft contact shadow under the deck footprint grounds the machine on the backdrop - without it the model reads as floating."
+  ],
+  "proceduralStrategy": [
+    "Block out macro silhouette first.",
+    "Add component hierarchy and joints.",
+    "Create stable pivot groups, sockets, collider proxies, and destruction metadata before visual polish.",
+    "Refine forms with bevels, tapers, bends, and procedural noise.",
+    "Run reference PBR extraction for important source-image materials and stop when confidence is below the target threshold.",
+    "Add material variation before adding expensive micro-geometry."
+  ],
+  "animationAnchors": [
+    "root pivot node supports whole-object translation, rotation, scale, and visibility changes",
+    "component pivot groups support later local transforms without rebuilding geometry"
+  ],
+  "destructionAnchors": [
+    "actionProfile.destruction.fractureGroup marks detachable or breakable component sets",
+    "component seams and sockets define plausible break points instead of random explosions"
+  ],
+  "risks": []
+}
