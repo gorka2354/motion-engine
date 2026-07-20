@@ -16,6 +16,9 @@
     "test:layout": "vitest run --project browser",
     "check-render": "node scripts/check-render.mjs",
     "check-assets": "node scripts/check-assets.mjs",
+    "check-fidelity": "node scripts/check-fidelity.mjs",
+    "viewer": "vite --config viewer/vite.config.mjs",
+    "fetch-views": "node scripts/fetch-views.mjs",
     "check-audio": "node scripts/check-audio.mjs",
     "gen-sfx": "node scripts/gen-sfx.mjs",
     "ai-gen": "node scripts/ai-gen.mjs"

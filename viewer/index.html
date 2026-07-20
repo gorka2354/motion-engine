@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>motion-engine · model viewer</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101216;
+        --panel: #181b21;
+        --line: #262b34;
+        --text: #e7eaf0;
+        --muted: #8d95a3;
+        --accent: #7c5cff;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        display: flex;
+        overflow: hidden;
+      }
+      #stage { flex: 1; position: relative; min-width: 0; }
+      #stage canvas { display: block; }
+      aside {
+        width: 268px;
+        flex: none;
+        border-left: 1px solid var(--line);
+        background: var(--panel);
+        padding: 20px;
+        overflow-y: auto;
+      }
+      h1 { font-size: 15px; margin: 0 0 2px; letter-spacing: -0.01em; }
+      .sub { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
+      .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 20px 0 8px;
+      }
+      button.model {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 9px 12px;
+        margin-bottom: 6px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #1e222a;
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+      button.model:hover { border-color: #39404d; }
+      button.model[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: #241f3d;
+      }
+      button.model span { display: block; color: var(--muted); font-size: 12px; }
+      label.row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        cursor: pointer;
+      }
+      input[type="range"] { width: 100%; accent-color: var(--accent); }
+      dl { margin: 0; font-size: 12px; }
+      dt { color: var(--muted); margin-top: 8px; }
+      dd { margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+      .hint {
+        margin-top: 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      kbd {
+        background: #232833;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 1px 5px;
+        font: inherit;
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <aside>
+      <h1>Model viewer</h1>
+      <div class="sub">procedural factories from <code>src/models/</code></div>
+
+      <div class="label">Model</div>
+      <div id="models"></div>
+
+      <div class="label">View</div>
+      <label class="row"><input type="checkbox" id="spin" checked /> auto-rotate</label>
+      <label class="row"><input type="checkbox" id="wire" /> wireframe</label>
+      <label class="row"><input type="checkbox" id="grid" checked /> ground grid</label>
+      <div class="label">Background</div>
+      <input type="range" id="bg" min="0" max="100" value="8" />
+
+      <div class="label">Stats</div>
+      <dl>
+        <dt>meshes</dt><dd id="s-meshes">–</dd>
+        <dt>triangles</dt><dd id="s-tris">–</dd>
+        <dt>materials</dt><dd id="s-mats">–</dd>
+        <dt>animated parts</dt><dd id="s-parts">–</dd>
+      </dl>
+
+      <div class="hint">
+        <kbd>drag</kbd> orbit · <kbd>wheel</kbd> zoom · <kbd>right-drag</kbd> pan<br />
+        Same factory code the renders use — no export step.
+      </div>
+    </aside>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
