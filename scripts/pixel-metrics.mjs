@@ -70,3 +70,178 @@ export function ssimScore(a, b) {
     { data: b.data, width: b.width, height: b.height },
   ).mssim;
 }
+
+// ── silhouette (L5-fidelity) — model shape vs a reference image ──
+
+/**
+ * Bounding box of the subject, found by thresholding against the flat backdrop.
+ *
+ * WHY NOT JUST SSIM THE REFERENCE: a photo (or a render from another pipeline) never matches
+ * pixel-for-pixel — different backdrop, lighting, lens, white balance. img2threejs' own docs say
+ * a pixel diff "cannot approve the pass". The silhouette is the one property that survives all
+ * of that, so it's the only thing worth gating on across pipelines.
+ *
+ * Background colour is taken from the frame corners, so it works on any flat backdrop.
+ * Returns null when nothing stands out from the background (empty frame).
+ */
+/**
+ * Binary subject mask + its bbox. Shared by every silhouette metric so the thresholding pass
+ * happens once. `mask[y * width + x]` is 1 where the subject is.
+ */
+export function silhouetteMask(png, tolerance = 18) {
+  const { width: w, height: h } = png;
+  const at = (x, y) => (y * w + x) * 4;
+  const corners = [
+    [2, 2],
+    [w - 3, 2],
+    [2, h - 3],
+    [w - 3, h - 3],
+  ].map(([x, y]) => lumaAt(png, at(x, y)));
+  const bg = corners.slice().sort((a, b) => a - b)[1]; // median-ish, ignores one odd corner
+  const mask = new Uint8Array(w * h);
+  let minX = w,
+    minY = h,
+    maxX = -1,
+    maxY = -1,
+    count = 0;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      if (Math.abs(lumaAt(png, at(x, y)) - bg) <= tolerance) continue;
+      mask[y * w + x] = 1;
+      count++;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  if (maxX < 0) return null;
+  return { mask, width: w, height: h, minX, minY, maxX, maxY, count };
+}
+
+export function silhouetteBox(png, tolerance = 18) {
+  const m = silhouetteMask(png, tolerance);
+  if (!m) return null;
+  const { width: w, height: h, minX, minY, maxX, maxY, count } = m;
+  const bw = maxX - minX + 1;
+  const bh = maxY - minY + 1;
+  return {
+    x: minX,
+    y: minY,
+    width: bw,
+    height: bh,
+    aspect: bw / bh,
+    /** share of the bbox actually covered by the subject — separates an L-shape from a slab */
+    fill: count / (bw * bh),
+    /** share of the whole frame the subject occupies */
+    coverage: count / (w * h),
+  };
+}
+
+// ── viewpoint classification ──
+
+/**
+ * Shape descriptors that say WHICH WAY the object is facing, computed on the mask alone.
+ *
+ * There is no off-the-shelf "is this a side view" tool, and a learned classifier is overkill for
+ * a silhouette on a flat backdrop. These are the classic descriptors:
+ *
+ * - `symmetryH` — mirror the mask across its own vertical centre line and take IoU with itself.
+ *   Manufactured objects are near-symmetric head-on and lose that the moment they turn. This is
+ *   the single strongest front/not-front signal.
+ * - `elongation` / `axisAngle` — eigen-decomposition of the mask's covariance (image moments):
+ *   how stretched the shape is and along which direction.
+ */
+export function silhouetteFeatures(png, tolerance = 18) {
+  const m = silhouetteMask(png, tolerance);
+  if (!m) return null;
+  const { mask, width: w, minX, minY, maxX, maxY, count } = m;
+  const bw = maxX - minX + 1;
+  const bh = maxY - minY + 1;
+
+  // horizontal symmetry: IoU of the mask with its own mirror inside the bbox
+  let inter = 0;
+  let union = 0;
+  for (let y = minY; y <= maxY; y++)
+    for (let x = minX; x <= maxX; x++) {
+      const a = mask[y * w + x];
+      const b = mask[y * w + (maxX - (x - minX))];
+      if (a || b) union++;
+      if (a && b) inter++;
+    }
+  const symmetryH = union === 0 ? 0 : inter / union;
+
+  // second-order image moments → principal axis
+  let sx = 0,
+    sy = 0;
+  for (let y = minY; y <= maxY; y++)
+    for (let x = minX; x <= maxX; x++)
+      if (mask[y * w + x]) {
+        sx += x;
+        sy += y;
+      }
+  const cx = sx / count;
+  const cy = sy / count;
+  let mxx = 0,
+    myy = 0,
+    mxy = 0;
+  for (let y = minY; y <= maxY; y++)
+    for (let x = minX; x <= maxX; x++)
+      if (mask[y * w + x]) {
+        const dx = x - cx;
+        const dy = y - cy;
+        mxx += dx * dx;
+        myy += dy * dy;
+        mxy += dx * dy;
+      }
+  mxx /= count;
+  myy /= count;
+  mxy /= count;
+  const tr = mxx + myy;
+  const det = mxx * myy - mxy * mxy;
+  const disc = Math.sqrt(Math.max(0, (tr * tr) / 4 - det));
+  const l1 = tr / 2 + disc;
+  const l2 = tr / 2 - disc;
+
+  return {
+    aspect: bw / bh,
+    fill: count / (bw * bh),
+    symmetryH,
+    /** 0 = circular, →1 = strongly stretched along one axis */
+    elongation: l1 === 0 ? 0 : 1 - l2 / l1,
+    /** radians; 0 = principal axis horizontal */
+    axisAngle: Math.atan2(2 * mxy, mxx - myy) / 2,
+  };
+}
+
+/**
+ * Name the viewpoint from those descriptors.
+ *
+ * Deliberately conservative — it answers "is this facing us or not", which is what the fidelity
+ * gate actually needs (it must not compare a front render against a side photo). Telling `side`
+ * from `top` needs a known reference width, so pass `frontWidth` when you have it; without it,
+ * anything clearly turned is reported as `three-quarter` rather than guessed.
+ */
+export function classifyView(features, options = {}) {
+  if (!features) return { view: "unknown", confidence: 0, reason: "no subject found" };
+  const { frontSymmetry = 0.9, turnedSymmetry = 0.78 } = options;
+  const { symmetryH } = features;
+  if (symmetryH >= frontSymmetry) {
+    return {
+      view: "front",
+      confidence: Math.min(1, (symmetryH - frontSymmetry) / (1 - frontSymmetry) + 0.5),
+      reason: `mirror-IoU ${symmetryH.toFixed(3)} ≥ ${frontSymmetry}`,
+    };
+  }
+  if (symmetryH <= turnedSymmetry) {
+    return {
+      view: "side",
+      confidence: Math.min(1, (turnedSymmetry - symmetryH) / turnedSymmetry + 0.5),
+      reason: `mirror-IoU ${symmetryH.toFixed(3)} ≤ ${turnedSymmetry}`,
+    };
+  }
+  return {
+    view: "three-quarter",
+    confidence: 0.5,
+    reason: `mirror-IoU ${symmetryH.toFixed(3)} between ${turnedSymmetry} and ${frontSymmetry}`,
+  };
+}

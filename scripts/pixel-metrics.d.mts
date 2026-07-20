@@ -9,3 +9,43 @@ export function centerStats(
 export function frameDiff(a: Frame, b: Frame): number;
 export function pixelmatchRatio(a: Frame, b: Frame, threshold?: number): number;
 export function ssimScore(a: Frame, b: Frame): number;
+export function silhouetteBox(
+  png: Frame,
+  tolerance?: number,
+): {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  aspect: number;
+  fill: number;
+  coverage: number;
+} | null;
+export function silhouetteMask(
+  png: Frame,
+  tolerance?: number,
+): {
+  mask: Uint8Array;
+  width: number;
+  height: number;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  count: number;
+} | null;
+export type SilhouetteFeatures = {
+  aspect: number;
+  fill: number;
+  symmetryH: number;
+  elongation: number;
+  axisAngle: number;
+};
+export function silhouetteFeatures(
+  png: Frame,
+  tolerance?: number,
+): SilhouetteFeatures | null;
+export function classifyView(
+  features: SilhouetteFeatures | null,
+  options?: { frontSymmetry?: number; turnedSymmetry?: number },
+): { view: "front" | "side" | "three-quarter" | "unknown"; confidence: number; reason: string };
