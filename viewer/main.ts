@@ -29,6 +29,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import { createGamepadModel } from "../src/models/gamepad/createGamepadModel";
 import { createLaptopModel } from "../src/models/laptop/createLaptopModel";
+import { createPhoneModel } from "../src/models/phone/createPhoneModel";
 
 type Entry = {
   id: string;
@@ -43,6 +44,12 @@ const CATALOG: Entry[] = [
     name: "Game controller",
     note: "traced from one product photo",
     build: () => createGamepadModel(),
+  },
+  {
+    id: "phone",
+    name: "Smartphone",
+    note: "generic handset — lofted shell",
+    build: () => createPhoneModel(),
   },
   {
     id: "laptop",
