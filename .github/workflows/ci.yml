@@ -24,7 +24,63 @@ jobs:
       - name: Lint & typecheck
         run: npm run lint
 
-      # vitest, node project — pure-logic units: geometry/orbit invariants,
-      # anim math, determinism guard, scene-graph smoke. No rendering needed.
+      # vitest, node project — pure-logic units: geometry/orbit invariants, anim math,
+      # determinism guard, mesh topology, part contracts, material invariants. No rendering.
       - name: Unit tests
         run: npm test
+
+  # Everything above is CPU-cheap and runs on every push. Everything below actually renders, so
+  # it lives in a second job: slower, but it is the only thing that can catch a visual regression.
+  #
+  # Until now this job did not exist, and docs/TESTING.md's "CI tiering" table described an
+  # intention rather than reality — a PR could change a shipped video's pixels, break a model's
+  # silhouette or invalidate a GLB and CI would stay green.
+  #
+  # `--gl=swangle` is not optional here: GitHub runners have no GPU, angle fails outright, and
+  # SwiftShader-on-ANGLE is deterministic across machines, which is what makes a committed golden
+  # baseline meaningful at all.
+  visual-checks:
+    name: Render self-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Remotion drives headless Chromium; the runner image needs its shared libraries.
+      - name: Install Chromium dependencies
+        run: npx remotion browser ensure
+
+      # glTF validation + metadata fixtures for the Blender-authored assets.
+      - name: 3D assets
+        run: npm run check-assets
+
+      # Shipped compositions vs their committed golden frames. A drift here means a promo that
+      # already went out now renders differently.
+      #
+      # The flags MUST match the ones the baselines were accepted with: check-render picks its
+      # sample frames from --frames/--trim, so a different trim asks for frames that have no
+      # golden and the comparison silently degrades to a SKIP. --trim 60 also clears Lumo's
+      # opening fade, which is dark enough that content-check reads it as an empty frame.
+      - name: Golden frames — shipped promos
+        run: |
+          npm run check-render LumoPromo -- --frames 5 --trim 60
+          npm run check-render JumperPromo -- --frames 5 --trim 60
+          npm run check-render ShotikPromo -- --frames 5 --trim 60
+          npm run check-render BybitCardGif -- --frames 5 --trim 60
+          npm run check-render LevelUpCreative -- --frames 5 --trim 60
+
+      # Procedural models: silhouette, flatness, depth and regression against accepted baselines.
+      # The phone declares a looser depth floor because a handset really is that thin — a gate
+      # nobody ever argues with is a gate that measures nothing.
+      - name: Model fidelity
+        run: |
+          npm run check-fidelity LaptopFactoryBench -- --views front=0,quarter=15,side=30
+          npm run check-fidelity GamepadBench -- --views front=0,quarter=15,side=30
+          npm run check-fidelity PhoneBench -- --views front=0,quarter=15,side=30 --min-depth-ratio 0.1
