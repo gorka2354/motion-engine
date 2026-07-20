@@ -61,6 +61,52 @@ which returns a different value per render thread.
 | zod contract via `selectComposition({inputProps})` | broken props / schema in ms (runs `calculateMetadata` + zod) | 🔲 |
 | property-based (`fast-check`) over `(frame,fps,from,to,config)` anim | invariants across ALL inputs, not fixed cases | 🔲 stretch |
 
+## L1-semantic — Does the model contain what this KIND of object contains?
+
+`src/models/contract.ts`, asserted per model in its `*.test.ts`. Pure geometry, no renderer.
+
+Every other layer asks a different question, and none of them notices a part that is present,
+mounted, described in the spec — and **buried inside the shell**: the sculpt spec's
+`detailInventory` only proves a detail was *written down*; `check-fidelity` measures the outside
+silhouette; the L2 scene-graph tests prove components mount.
+
+```ts
+export const GAMEPAD_CONTRACT: PartsContract = {
+  required: ["leftStick", "rightStick", "buttonA", "buttonB", "buttonX", "buttonY"],
+  layout: [{ of: "buttonY", is: "above", than: "buttonA" },
+           { of: "buttonX", is: "leftOf", than: "buttonB" }, /* … */],
+  minSeparation: 0.12,
+};
+```
+
+| Mechanism | Catches | Status |
+|---|---|---|
+| `checkPartsOnSurface` — rays out of / behind each part's anchor | parts sunk into the shell, or floating off it | ✅ |
+| `findOverlappingParts` / `findStrayParts` | two parts on one spot; a part detached from the body | ✅ |
+| `checkLayout` — "Y above A", "X left of B" | class-level arrangement quietly broken | ✅ |
+| `checkProportions` — "a stick is 0.10–0.19 of body width" | **right parts, right places, wrong SIZE** — dinner-plate buttons pass every other gate | ✅ |
+| `checkSameSize` — paired parts must match | one of a pair drifting out of symmetry | ✅ |
+| `required` keys | a part of the object class missing entirely | ✅ |
+
+⚠️ Two traps, both caught by tests that assert the detector **fires** (not merely passes):
+`Raycaster` honours `material.side`, so a ray starting inside a FrontSide shell discards the hit
+that proves burial — materials are flipped to `DoubleSide` for the cast; and "is there body
+behind it" doesn't detect floating, because a part shoved far in front still has body behind it
+— distance is the signal.
+
+Real failure this exists for: changing the gamepad's loft profile moved the face plate behind
+its own buttons, sinking every stick, button and d-pad into the body. Silhouette unchanged,
+gates green, tests green, model visibly empty.
+
+Applying the same contract to a second model (the laptop) immediately paid for itself by
+exposing three flaws — two in the checker, one in the contract:
+- an `InstancedMesh` keeps its origin at zero and its real placement in per-instance matrices, so
+  a 57-key keyboard reported as sitting at the model origin → anchors are now **bounds centres**;
+- "stray" was measured against a fixed shell, which nearly vanishes when most meshes are named
+  parts → each part is now compared against *everything else*;
+- asserting "the lid sits behind the keyboard" failed on the model's own closed default. A
+  contract states invariants of the **class**, and the position of a hinged part is not one.
+
 ## L1b — Layout in a real browser (`npm run test:layout`, vitest browser mode)
 
 jsdom **does not compute layout** — "a child escaped its container" is invisible to it (and
@@ -158,13 +204,66 @@ Command: **`npm run check-assets`** (`--accept` to write fixtures) — validates
 | `check-assets.mjs` → `gltf-validator` (Khronos) per GLB, hard-fail on severity-0 | missing UVs under a texture, `ACCESSOR_INVALID_FLOAT` (NaN → black geometry), degenerate triangles | ✅ |
 | metadata fixtures `test/asset-fixtures/<name>.json` (`{meshes, materials, nodes, triangles, hasUV, hasNormal, bounds}`, Δ on regen via `@gltf-transform/core`) | a silent change to bounds / topology / UVs — the 3D analogue of golden Δ=0 | ✅ |
 | `scripts/blender/_qa.py` before `export_scene.gltf()`: `mesh.validate()` + applied-transform + UV presence + optional `dimensions` | the "size=1" gotcha, "parent shifts children", missing UVs, degenerate meshes | ✅ helper (wired into `bybit-card.py`) |
-| front/side ortho stills as a pixelmatch baseline (tolerant, flag-on-diff) | formalizes "ground truth before export" | 🔲 |
+| front stills as a silhouette baseline (tolerant, flag-on-diff) | formalizes "ground truth before export" | ✅ → L5-fidelity below |
 
 Last run: all 4 GLBs (card / tiles / laptop ×2) — **0 errors**, UVs + normals everywhere, fixtures pinned.
 
 ⚠️ **Real gap:** `export_apply=True` in `scripts/blender/*.py` applies only **modifiers, not the
 object transform** → "parent shifts children" and "size=1" pass silently. The explicit
 `transform_apply(scale=True)` + assert in `_qa.py` closes this.
+
+## L5-fidelity — Procedural-model check (`npm run check-fidelity`, on model edits)
+
+Command: **`npm run check-fidelity <CompId> [--reference img.png] [--accept-baseline]`**.
+
+Models authored in code (`src/models/`) fall through both existing 3D gates: there is no `.glb`
+for `check-assets` to validate, and golden-master only ever compares a comp against *its own*
+past self — never against the thing it is supposed to look like.
+
+| Mechanism | Catches | Status |
+|---|---|---|
+| `silhouetteBox` vs a **reference image, per view** (`--views front=0,quarter=15,side=30`), soft gate (default 15% aspect drift) | "the proportions drifted from the thing we're modelling" | ✅ |
+| **`classifyView`** — is the reference actually the view it was handed in as? Mirror-IoU of the mask against itself; front is near-symmetric, a turned object is not | a front photo passed as `--reference-side`: every downstream number becomes meaningless, and the silhouette check alone reports a huge drift without saying **why** | ✅ |
+| **flatness-check** — how much of its own bbox the SIDE silhouette fills, gate 0.85 | **a model extruded from a traced front outline at constant thickness** — passes a front-only gate while reading as a flat biscuit from any other angle. Needs no second reference photo. | ✅ |
+| **depth-ratio** — side-view width ÷ front-view width | "correct outline, no volume behind it" | ✅ |
+| **SSIM vs accepted baseline** `test/fidelity-fixtures/<Comp>/<frame>.png`, gate 0.95 | someone edited the factory and the model silently changed | ✅ |
+| mean subject colour printed as **info, never gating** | albedo/hue drift a human should look at | ✅ |
+| `--accept-baseline` (explicit, never silent) | baseline discipline, same as L4 | ✅ |
+
+⚠️ **Why flatness exists.** The first photo-sourced model (a controller) scored **1.4% silhouette
+drift against its reference photo and still looked wrong** — the front outline was traced
+accurately and then extruded at constant thickness, so it had no volume. A front-only gate
+cannot see that. Calibrated fills: Blender-authored laptop 49.5%, procedural laptop 44.8%,
+extruded controller **92.0%** → gate at 0.85. Genuinely flat subjects (cards, coins) must raise
+it per-comp.
+
+⚠️ **Why the reference is compared by silhouette and NOT by SSIM.** A reference photo — or a
+render from another pipeline — never matches pixel-for-pixel: different backdrop, lighting, lens,
+white balance. img2threejs' own `grimoire/feedback/render_capture.md` says a pixel diff *"cannot
+approve the pass"*. SSIM against a reference would fail a perfect reconstruction, so it is
+deliberately not implemented. Gate the silhouette; leave likeness to L6 eyes.
+
+Thresholds (15% / 0.95) are first-pass estimates, calibrated by running the check on a
+known-identical pair (drift measured 0.0%). Re-calibrate rather than trust them blind.
+
+**View classification**, calibrated on real frames — mirror-IoU of the subject mask:
+
+| Frame | symmetry | classified |
+|---|---|---|
+| controller product photo, head-on | 0.967 | front |
+| our render, 0° | 0.995 | front |
+| our render, 45° | 0.890 | three-quarter |
+| our render, 90° | 0.694 | side |
+| Blender laptop, turned 60° | 0.427 | side |
+
+Gates at 0.9 (front) / 0.78 (turned). Note the *photo* scores 0.967, not 1.0 — real lighting and
+noise cost symmetry, so the front threshold must sit below what a genuine head-on photo achieves.
+
+The same classifier powers `npm run fetch-views <url>`, which collects reference views off a
+product page and files them by viewpoint. Its parsing half (`scripts/gallery.mjs` — srcset,
+URL resolution, junk filtering, dedupe, robots.txt) is pure and unit-tested in
+`src/lib/gallery.test.ts`; only the browser/network half lives in the script. Page-scraping logic
+that can only be tested against a live site is logic that never gets tested.
 
 ## L5-audio — Audio self-check (`npm run check-audio`, on voiced comps)
 
@@ -199,6 +298,13 @@ Final aesthetics, rhythm, "aliveness". Not automatable — but an AI agent revie
 | warm-up / loop seam | L3 loop-check + **L4** stability-retry | ✅ loop / 🔲 retry |
 | corners past the clip | **L3** clip-check | 🔲 backlog |
 | size=1 / transforms | **L5** `_qa.py` transform-assert + `check-assets` bounds fixture | ✅ |
+| procedural model drifts from its accepted look | **L5-fidelity** regression-check (SSIM vs baseline) | ✅ |
+| traced outline extruded flat — right silhouette, no volume | **L5-fidelity** flatness-check (side-view bbox fill) | ✅ |
+| factory reaches for `document`/canvas → unusable in the node test project, and a texture that silently never loads in a render | **L1** factory test (runs where `document` is undefined) | ✅ |
+| glyph with a mis-wound hole triangulates into an empty/exploded mesh — valid, invisible | **L1** `glyphs.test.ts` vertex-count assertion | ✅ |
+| **parts sink inside the shell** after a geometry change — silhouette identical, model visibly empty | **L1-semantic** `contract.ts` `checkPartsOnSurface` (raycast out/in) | ✅ |
+| a required part of the object CLASS is missing, duplicated onto one spot, or arranged wrong (ABXY no longer a diamond) | **L1-semantic** `checkPartsContract` against a per-class `PartsContract` | ✅ |
+| sampled pixel colour used as albedo → model renders washed out (lighting applied twice) | **L5-fidelity** palette-info + L6 eyes | ✅ info / L6 |
 | flex overflow past container | **L1b** browser-mode `getBoundingClientRect` (`test:layout`) | ✅ |
 | scene overlap at the seam | **architecture** — `TransitionSeries` (scenes can't overlap by construction) + durations-math test | ✅ |
 | aliasing | L4 golden-diff + L6 eyes | 🔲/L6 |
@@ -210,6 +316,7 @@ Final aesthetics, rhythm, "aliveness". Not automatable — but an AI agent revie
 | Every save | L0 + L1 (`npm test`, `npm run lint`) | ms |
 | Every PR / commit | L2 scene-graph + L3 `check-render` stills for hero comps + L4 golden-diff | seconds |
 | On asset regen | L5 gltf-validate + `_qa.py` + metadata Δ | seconds |
+| On `src/models/` edit | L5-fidelity `check-fidelity` (silhouette + regression) | seconds |
 | Nightly / pre-release | L3 `--seq` (full mp4 + ffmpeg) + L4 full golden sweep | minutes |
 
 **TurboSnap principle:** run `check-render`/golden only for comps whose scene/screen files

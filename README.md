@@ -102,6 +102,7 @@ are replaced wholesale). Camera art (zoom/pull-back keyframes, blur windows) liv
 | `Bybit*` · `ShotikDesktopStill` | card faces / service tile / desktop still — rendered standalone |
 | `LibSandbox` · `FxSandbox` · `InteractionSandbox` · `DataSandbox` · `SoundSandbox` | dev benches for the `src/lib` primitives (grain/glow/blur · magic-move · cursor/tap · counters · sound) |
 | `ThreeSandbox` · `GltfSandbox` · `Showcase3D` | `@remotion/three` pipeline test stands (16:9) |
+| `LaptopGlbBench` · `LaptopFactoryBench` | A/B stand: the same laptop from Blender→GLB vs a procedural factory, identical rig |
 
 ## Toolbox (`src/lib`)
 - `<MotionBlur shutterAngle samples>` — camera-style blur; wrap only moving content during motion windows (cost ×samples)
@@ -119,7 +120,10 @@ are replaced wholesale). Camera art (zoom/pull-back keyframes, blur windows) liv
 a determinism guard, and a `@react-three/test-renderer` scene-graph smoke test. On top of that:
 - `npm run check-render <Comp>` — renders sample frames and runs pixel heuristics (content / motion / loop-seam / state-race) to catch "stills pass, the video is broken".
 - `npm run test:layout` — real-Chromium layout tests (`getBoundingClientRect`) that catch a child overflowing its container — a class jsdom can't see.
+- `npm run viewer` — interactive orbit view of the `src/models/` factories (drag to rotate, wireframe, tri/material counts). Remotion renders frames; this is the inspect-with-the-mouse surface, importing the same factory code — no export step.
+- `npm run fetch-views <product-page-url>` — collect reference views for a real object from a page you point it at, sorted into `front/side/three-quarter` by silhouette symmetry. Honours robots.txt and stops at a bot-wall rather than working around it. References only — the photos stay someone else's copyright.
 - `npm run check-assets` — glTF validation (Khronos) + metadata regression on `public/models/*.glb`.
+- `npm run check-fidelity <Comp>` — for code-authored models: silhouette vs a reference image (soft) + SSIM vs an accepted baseline. Reference likeness is gated by *shape*, never by a pixel diff — a photo and a render never match pixel-for-pixel.
 - `npm run check-audio` — integrated-LUFS + true-peak gate for voiced comps.
 
 The full L0–L6 strategy, the footgun→layer map, and CI tiering live in [`docs/TESTING.md`](docs/TESTING.md).
@@ -130,7 +134,16 @@ The full L0–L6 strategy, the footgun→layer map, and CI tiering live in [`doc
   floats, `promoSchema.ts`) · `device/` (`PhoneFrame` / `LaptopFrame`) · `components/` (`BottomNav`)
 - **Example builds** (worked examples on the engine) — `lumo/` (reference), `jumper/`, `shotik/`,
   `bybit/`, `creative/` (Level-Up)
+- **3D models** — two sources, both live: `scripts/blender/*.py` → `public/models/*.glb` (baked
+  photo textures, arbitrary topology) and `src/models/` (procedural TS factories: synchronous,
+  ~90× lighter, unit-testable, colours from tokens). `src/models/types.ts` holds the contract,
+  `loft.ts` builds sculpted volume from stacked cross-sections (what `ExtrudeGeometry` can't do),
+  `glyphs.ts` draws letterforms as real extruded geometry — no font file, no canvas, and
+  `contract.ts` asserts the model actually *contains what that kind of object contains* (parts
+  present, on the surface rather than buried, arranged the way the class demands).
 - `Root.tsx` — the composition registry · `public/` — assets via `staticFile()` · `docs/TESTING.md` — the test-pyramid reference
+- `.claude/skills/` — agent tooling: `motion-promo` (ours) and `img2threejs` (vendored, MIT ©
+  hoainho, pinned — see its `VENDORED.md`)
 
 ## Stack
 Remotion 4.0.484 · React 19 · TypeScript (strict) · zod 4.3.6 · `@remotion/{transitions, media, motion-blur, noise, paths, three, google-fonts}` · three / @react-three · vitest (node + browser). Master format **9:16 · 1080×1920 · 30fps**.
@@ -150,6 +163,10 @@ Remotion 4.0.484 · React 19 · TypeScript (strict) · zod 4.3.6 · `@remotion/{
 - The first painted frame of a 3D render is a GL warm-up frame — pad +2 frames and trim in ffmpeg for seamless loops.
 - zod must be **exactly 4.3.6** with Remotion 4.0.484 (version-mismatch warning otherwise).
 - Refactors are validated **Δ=0**: stills at fixed frames before/after must be MD5-identical.
+- A procedural model factory must stay **DOM-free and synchronous**: a canvas texture makes it untestable in the node project, and an image-backed map reintroduces the `delayRender` race that `useGltf` exists to solve. Detail belongs in geometry — including *lettering*, which `glyphs.ts` extrudes from `Shape` outlines instead of loading a typeface.
+- `ExtrudeGeometry` sweeps at **constant thickness** — right for slabs, wrong for anything sculpted. A traced outline extruded that way matched its reference silhouette to 1.4% and still read as a flat biscuit; `loft.ts` (stacked scaled sections + a `warp` hook) is the fix, and L5-fidelity's flatness-check is the alarm.
+- A colour sampled off a reference is **lit pixel data, not albedo** — feed it back as `baseColor` and the lighting applies twice, rendering the model washed out. Darken toward plausible albedo.
+- Reference likeness can't be gated by SSIM/pixelmatch: backdrop, lighting and lens differ, so a *perfect* reconstruction still scores badly. Gate the **silhouette**; leave likeness to the eyes.
 
 </details>
 
