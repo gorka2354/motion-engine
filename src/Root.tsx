@@ -18,6 +18,7 @@ import { Showcase3D, SHOWCASE_3D_DURATION } from "./lib/Showcase3D";
 import { LaptopGlbBench, LaptopFactoryBench, LAPTOP_BENCH_DURATION } from "./models/laptop/LaptopBench";
 import { GamepadBench, GAMEPAD_BENCH_DURATION } from "./models/gamepad/GamepadBench";
 import { PhoneBench, PHONE_BENCH_DURATION } from "./models/phone/PhoneBench";
+import { PhoneHero, PHONE_HERO_DURATION } from "./models/phone/PhoneHero";
 import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
 import { LumoPromo, LUMO_DURATION } from "./lumo/LumoPromo";
@@ -94,6 +95,9 @@ export const RemotionRoot: React.FC = () => {
       {/* photo-sourced model: traced from a single product shot, no GLB counterpart */}
       <Composition id="GamepadBench" component={GamepadBench} durationInFrames={GAMEPAD_BENCH_DURATION} fps={FPS} width={1080} height={1080} />
       <Composition id="PhoneBench" component={PhoneBench} durationInFrames={PHONE_BENCH_DURATION} fps={FPS} width={1080} height={1080} />
+      {/* beauty rig: studio softboxes + contact shadow. Separate comp because a gradient
+          backdrop and a floor shadow would corrupt check-fidelity silhouette measurement. */}
+      <Composition id="PhoneHero" component={PhoneHero} durationInFrames={PHONE_HERO_DURATION} fps={FPS} width={1080} height={1080} />
     </>
   );
 };

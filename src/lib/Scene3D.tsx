@@ -39,6 +39,15 @@ export interface Scene3DProps {
    */
   background?: string;
   clockFix?: boolean;
+  /**
+   * Renderer settings forwarded to the canvas — tone mapping, exposure.
+   *
+   * Note what the DEFAULT is: `@react-three/fiber` sets `ACESFilmicToneMapping` on every canvas
+   * unless told otherwise, so ACES is already active everywhere in this repo, including shipped
+   * videos. Overriding it here is per-scene by design; doing it globally would change the pixels
+   * of ShotikPromo, BybitGif and every promo at once.
+   */
+  gl?: Record<string, unknown>;
   children?: React.ReactNode;
 }
 
@@ -53,6 +62,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
   postFX = false,
   background,
   clockFix = true,
+  gl,
   children,
 }) => {
   const config = useVideoConfig();
@@ -61,6 +71,7 @@ export const Scene3D: React.FC<Scene3DProps> = ({
       width={width ?? config.width}
       height={height ?? config.height}
       camera={{ ...DEFAULT_CAMERA, ...camera }}
+      gl={gl}
     >
       {clockFix ? <ClockFix /> : null}
       {environment === false ? null : <Environment3D intensity={environment.intensity} />}
