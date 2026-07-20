@@ -12,6 +12,7 @@ import {
 import type { ModelHandles } from "../types";
 import type { PartsContract } from "../contract";
 import { loftGeometry } from "../loft";
+import { FINISH } from "../materials";
 
 /**
  * Generic smartphone — the 3D counterpart to `src/device/PhoneFrame` (2D).
@@ -127,32 +128,36 @@ export const PHONE_CONTRACT: PartsContract = {
 
 export const createPhoneModel = (options: PhoneModelOptions = {}): ModelHandles<PhoneModelParts> => {
   const on = options.screenOn ?? 1;
+  // Materials follow the real construction rather than one averaged "phone-ish" surface, because
+  // half-tone metalness is what produced the white-mirrored side: the shader lerps between
+  // dielectric and conductor, leaving a surface that is dull AND mirror-like at once.
+  // A handset is a DIELECTRIC back (glass or coated panel) in a METAL frame — so model that.
   const bodyMaterial = new MeshStandardMaterial({
     color: new Color(options.bodyColor ?? COL.body),
-    roughness: 0.52,
-    metalness: 0.35, // anodised aluminium is satin; high metalness mirrors the backdrop white
+    roughness: 0.34, // coated glass back: tight but not mirror
+    metalness: 0,
   });
   const railMaterial = new MeshStandardMaterial({
     color: new Color(COL.rail),
-    roughness: 0.3,
-    metalness: 0.75,
+    roughness: FINISH.beadBlasted, // blasted, not polished — a polished rail mirrors the backdrop
+    metalness: 1, // the frame really is aluminium
   });
   const screenMaterial = new MeshStandardMaterial({
     color: new Color(COL.glass),
     roughness: 0.08, // glass: tight highlight
-    metalness: 0.1,
+    metalness: 0,
     emissive: new Color(options.screenGlow ?? "#8ea6ff"),
     emissiveIntensity: 0.55 * on,
   });
   const lensMaterial = new MeshStandardMaterial({
     color: new Color(COL.lens),
     roughness: 0.05,
-    metalness: 0.4,
+    metalness: 0, // camera glass is a dielectric, however dark it looks
   });
   const ringMaterial = new MeshStandardMaterial({
     color: new Color(COL.lensRing),
-    roughness: 0.25,
-    metalness: 0.85,
+    roughness: FINISH.polished,
+    metalness: 1, // the lens bezel is machined metal
   });
 
   const root = new Group();
