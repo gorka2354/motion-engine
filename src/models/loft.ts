@@ -46,6 +46,19 @@ export const loftGeometry = (
   if (sections.length < 2) throw new Error("loftGeometry: needs at least 2 sections");
   const { warp, caps = true } = options;
 
+  // Drop a repeated closing point. `Shape.getSpacedPoints()` returns a closed ring whose last
+  // point equals its first, and this function closes the ring itself via `% n` — keeping both
+  // produces a zero-width strip of degenerate triangles running the full depth of the shell, plus
+  // the non-manifold edges and boundary edges that come with it. Found by meshHealth on the real
+  // phone and gamepad bodies (10 degenerate triangles each); invisible in a render.
+  if (outline.length > 1) {
+    const first = outline[0];
+    const last = outline[outline.length - 1];
+    if (Math.abs(first.x - last.x) < 1e-9 && Math.abs(first.y - last.y) < 1e-9) {
+      outline = outline.slice(0, -1);
+    }
+  }
+
   // Normalise winding. Face orientation follows the outline's direction, so a contour traced the
   // other way round builds the shell inside-out: with FrontSide materials the sides vanish and
   // the backdrop shows through the object. Callers shouldn't have to know which way to trace —
@@ -105,6 +118,11 @@ export const loftGeometry = (
     }
   }
 
+  // NOTE: zero-area slivers from ShapeUtils.triangulateShape on a concave outline are left ALONE
+  // on purpose. Deleting them was tried and made things worse: removing a triangle turns its three
+  // edges into boundary edges, so a closed shell becomes a holed one (measured: 8 slivers removed
+  // → 9 holes). They are harmless to render — no area means no pixels and no normal contribution.
+  // meshHealth reports them; a model whose outline produces them declares the tolerance instead.
   const geo = new BufferGeometry();
   geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
   geo.setIndex(indices);
