@@ -46,6 +46,16 @@ export const loftGeometry = (
   if (sections.length < 2) throw new Error("loftGeometry: needs at least 2 sections");
   const { warp, caps = true } = options;
 
+  // Normalise winding. Face orientation follows the outline's direction, so a contour traced the
+  // other way round builds the shell inside-out: with FrontSide materials the sides vanish and
+  // the backdrop shows through the object. Callers shouldn't have to know which way to trace —
+  // the phone body was drawn clockwise, the gamepad counter-clockwise, and both must work.
+  const signedArea = outline.reduce((sum, p, i) => {
+    const q = outline[(i + 1) % outline.length];
+    return sum + (p.x * q.y - q.x * p.y);
+  }, 0);
+  if (signedArea < 0) outline = outline.slice().reverse();
+
   const n = outline.length;
   const positions: number[] = [];
   const indices: number[] = [];
@@ -72,9 +82,11 @@ export const loftGeometry = (
     const b = (s + 1) * n;
     for (let i = 0; i < n; i++) {
       const j = (i + 1) % n;
-      // two triangles per quad, wound so the outward face points away from the axis
-      indices.push(a + i, b + i, a + j);
-      indices.push(a + j, b + i, b + j);
+      // Winding matters: reversed, every normal points INWARD, and with FrontSide materials the
+      // shell's sides simply vanish — you see the backdrop through the object. Verified by test
+      // (a vertex normal must have a positive dot with its own outward radius).
+      indices.push(a + i, a + j, b + i);
+      indices.push(a + j, b + j, b + i);
     }
   }
 
@@ -84,8 +96,12 @@ export const loftGeometry = (
     const back = 0;
     const front = (sections.length - 1) * n;
     for (const [a, b, c] of faces) {
-      indices.push(back + c, back + b, back + a); // reversed: back face looks the other way
+      // Caps and sides do NOT share a winding rule — flipping both together (a plausible-looking
+      // fix) leaves the sides right and punches a hole through the front. With the outline
+      // normalised counter-clockwise, triangulateShape's order already faces +Z, so the FRONT cap
+      // is used as-is and only the BACK one is reversed.
       indices.push(front + a, front + b, front + c);
+      indices.push(back + c, back + b, back + a);
     }
   }
 

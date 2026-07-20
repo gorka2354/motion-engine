@@ -226,6 +226,12 @@ past self — never against the thing it is supposed to look like.
 | **`classifyView`** — is the reference actually the view it was handed in as? Mirror-IoU of the mask against itself; front is near-symmetric, a turned object is not | a front photo passed as `--reference-side`: every downstream number becomes meaningless, and the silhouette check alone reports a huge drift without saying **why** | ✅ |
 | **flatness-check** — how much of its own bbox the SIDE silhouette fills, gate 0.85 | **a model extruded from a traced front outline at constant thickness** — passes a front-only gate while reading as a flat biscuit from any other angle. Needs no second reference photo. | ✅ |
 | **depth-ratio** — side-view width ÷ front-view width | "correct outline, no volume behind it" | ✅ |
+
+⚠️ **Both shape gates are class-relative, and that's the point.** The phone bench fails
+`depth-ratio` at its default 0.2 (it measures 0.154) — because a handset genuinely IS that thin.
+That is the gate doing its job: it asks "are you sure?", and the answer here is yes, so the comp
+runs with `--min-depth-ratio 0.1`. Same for `--max-flatness` on cards and coins. A threshold that
+never has to be argued with is a threshold that isn't measuring anything.
 | **SSIM vs accepted baseline** `test/fidelity-fixtures/<Comp>/<frame>.png`, gate 0.95 | someone edited the factory and the model silently changed | ✅ |
 | mean subject colour printed as **info, never gating** | albedo/hue drift a human should look at | ✅ |
 | `--accept-baseline` (explicit, never silent) | baseline discipline, same as L4 | ✅ |

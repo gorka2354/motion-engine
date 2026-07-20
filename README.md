@@ -103,6 +103,7 @@ are replaced wholesale). Camera art (zoom/pull-back keyframes, blur windows) liv
 | `LibSandbox` · `FxSandbox` · `InteractionSandbox` · `DataSandbox` · `SoundSandbox` | dev benches for the `src/lib` primitives (grain/glow/blur · magic-move · cursor/tap · counters · sound) |
 | `ThreeSandbox` · `GltfSandbox` · `Showcase3D` | `@remotion/three` pipeline test stands (16:9) |
 | `LaptopGlbBench` · `LaptopFactoryBench` | A/B stand: the same laptop from Blender→GLB vs a procedural factory, identical rig |
+| `GamepadBench` · `PhoneBench` | photo-sourced controller and a generic handset — turntables for the  factories |
 
 ## Toolbox (`src/lib`)
 - `<MotionBlur shutterAngle samples>` — camera-style blur; wrap only moving content during motion windows (cost ×samples)
