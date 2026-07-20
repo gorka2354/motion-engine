@@ -48,6 +48,7 @@ const slug =
       .toLowerCase(),
   );
 const outDir = path.resolve(slug);
+const MIN_SIDE = 200;
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36";
 
@@ -103,12 +104,20 @@ try {
     process.exit(1);
   }
 
-  const classified = [];
+  const measured = [];
   const skipped = [];
   for (const [i, candidate] of candidates.entries()) {
+    // Pace ourselves. A live run against Wikimedia earned HTTP 429 on half the gallery even
+    // though downloads were already sequential — "not parallel" is not the same as "polite".
+    if (i > 0) await page.waitForTimeout(400);
     const res = await context.request.get(candidate.url, { timeout: 20_000 }).catch(() => null);
     if (!res || !res.ok()) {
-      skipped.push([candidate.url, res ? `HTTP ${res.status()}` : "request failed"]);
+      skipped.push([
+        candidate.url,
+        res
+          ? `HTTP ${res.status()}${res.status() === 429 ? " (rate-limited)" : ""}`
+          : "request failed",
+      ]);
       continue;
     }
     // NOTE the `src-` prefix: without it a .png source and its converted output collide on one
@@ -124,21 +133,44 @@ try {
       continue;
     }
     const image = PNG.sync.read(readFileSync(png));
+    // Below this it is a UI icon, not a product photo. The live run pulled in 60×60 button
+    // glyphs that classified as "unknown" and cluttered the report.
+    if (image.width < MIN_SIDE || image.height < MIN_SIDE) {
+      skipped.push([candidate.url, `too small (${image.width}×${image.height})`]);
+      continue;
+    }
     // A gallery shot is the product on a clean backdrop; the silhouette metrics assume that.
     const features = silhouetteFeatures(image);
-    const view = classifyView(features);
-    classified.push({
+    if (!features) {
+      skipped.push([candidate.url, "no subject against the backdrop"]);
+      continue;
+    }
+    measured.push({
       ...candidate,
       file: png,
-      view: view.view,
-      confidence: view.confidence,
+      features,
       area: image.width * image.height,
       size: `${image.width}×${image.height}`,
-      symmetry: features?.symmetryH ?? 0,
+      symmetry: features.symmetryH,
     });
   }
 
-  console.log(`  downloaded ${classified.length}, classifying…\n`);
+  // The most symmetric shot is the head-on one, and its width is the yardstick everything else
+  // is judged against: symmetry says "turned", only width says "turned how far". Without that
+  // reference a three-quarter photo and a dead-side render are indistinguishable — measured, a
+  // ¾ product shot scored LOWER symmetry (0.610) than a true profile (0.694).
+  const frontRef = measured.reduce((a, b) => (b.symmetry > a.symmetry ? b : a), measured[0]);
+  const frontAspect = frontRef?.features.aspect ?? null;
+  const classified = measured.map((m) => {
+    const view = classifyView(m.features, { frontAspect });
+    return { ...m, view: view.view, confidence: view.confidence };
+  });
+
+  console.log(
+    `  downloaded ${classified.length}, classifying` +
+      (frontAspect ? ` (front width reference: ${frontAspect.toFixed(3)})` : "") +
+      `…\n`,
+  );
   for (const c of classified) {
     console.log(
       `    ${String(c.view).padEnd(13)} sym=${c.symmetry.toFixed(3)} ${c.size.padEnd(11)} ${c.url.slice(0, 72)}`,

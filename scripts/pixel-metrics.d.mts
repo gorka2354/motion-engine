@@ -47,5 +47,9 @@ export function silhouetteFeatures(
 ): SilhouetteFeatures | null;
 export function classifyView(
   features: SilhouetteFeatures | null,
-  options?: { frontSymmetry?: number; turnedSymmetry?: number },
-): { view: "front" | "side" | "three-quarter" | "unknown"; confidence: number; reason: string };
+  options?: { frontSymmetry?: number; frontAspect?: number | null; sideNarrowing?: number },
+): {
+  view: "front" | "side" | "three-quarter" | "turned" | "unknown";
+  confidence: number;
+  reason: string;
+};

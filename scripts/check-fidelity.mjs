@@ -178,10 +178,12 @@ for (const view of rendered) {
     continue;
   }
 
-  // Is the reference actually the view it was handed in as?
+  // Is the reference actually the view it was handed in as? The front render's own silhouette
+  // width is the yardstick — without it `side` and `three-quarter` are indistinguishable, since
+  // symmetry only reports "turned", never "turned how far".
   const expected = EXPECTED_VIEW_CLASS[view.name];
   if (expected) {
-    const seen = classifyView(silhouetteFeatures(refPng));
+    const seen = classifyView(silhouetteFeatures(refPng), { frontAspect: rendered[0]?.box?.aspect });
     record(
       `view:${view.name}`,
       seen.view === expected,

@@ -216,15 +216,20 @@ export function silhouetteFeatures(png, tolerance = 18) {
 /**
  * Name the viewpoint from those descriptors.
  *
- * Deliberately conservative — it answers "is this facing us or not", which is what the fidelity
- * gate actually needs (it must not compare a front render against a side photo). Telling `side`
- * from `top` needs a known reference width, so pass `frontWidth` when you have it; without it,
- * anything clearly turned is reported as `three-quarter` rather than guessed.
+ * Symmetry alone answers "facing us or turned" and nothing more. It CANNOT rank how far an
+ * object is turned — measured on real data, a three-quarter product photo scored 0.610 while a
+ * dead-side render of the same kind of object scored 0.694, i.e. the ¾ shot was *less*
+ * symmetric than the profile. Tilt breaks mirror symmetry as hard as yaw does.
+ *
+ * What does separate them is width: at 90° an object collapses to a narrow silhouette. That is
+ * only meaningful against its own front width, though — an open laptop seen from the side is not
+ * narrow at all. So `side` is reported only when `frontAspect` is supplied; without it the honest
+ * answer is `turned`, not a guess.
  */
 export function classifyView(features, options = {}) {
   if (!features) return { view: "unknown", confidence: 0, reason: "no subject found" };
-  const { frontSymmetry = 0.9, turnedSymmetry = 0.78 } = options;
-  const { symmetryH } = features;
+  const { frontSymmetry = 0.9, frontAspect = null, sideNarrowing = 0.55 } = options;
+  const { symmetryH, aspect } = features;
   if (symmetryH >= frontSymmetry) {
     return {
       view: "front",
@@ -232,16 +237,26 @@ export function classifyView(features, options = {}) {
       reason: `mirror-IoU ${symmetryH.toFixed(3)} ≥ ${frontSymmetry}`,
     };
   }
-  if (symmetryH <= turnedSymmetry) {
+  if (!frontAspect) {
+    return {
+      view: "turned",
+      confidence: 0.5,
+      reason:
+        `mirror-IoU ${symmetryH.toFixed(3)} < ${frontSymmetry}; ` +
+        `pass frontAspect to tell side from three-quarter`,
+    };
+  }
+  const narrowing = aspect / frontAspect;
+  if (narrowing <= sideNarrowing) {
     return {
       view: "side",
-      confidence: Math.min(1, (turnedSymmetry - symmetryH) / turnedSymmetry + 0.5),
-      reason: `mirror-IoU ${symmetryH.toFixed(3)} ≤ ${turnedSymmetry}`,
+      confidence: Math.min(1, (sideNarrowing - narrowing) / sideNarrowing + 0.5),
+      reason: `silhouette is ${(narrowing * 100).toFixed(0)}% of its front width (≤ ${sideNarrowing * 100}%)`,
     };
   }
   return {
     view: "three-quarter",
     confidence: 0.5,
-    reason: `mirror-IoU ${symmetryH.toFixed(3)} between ${turnedSymmetry} and ${frontSymmetry}`,
+    reason: `turned (mirror-IoU ${symmetryH.toFixed(3)}) but still ${(narrowing * 100).toFixed(0)}% of front width`,
   };
 }

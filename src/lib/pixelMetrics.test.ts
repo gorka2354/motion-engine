@@ -134,6 +134,21 @@ function wedgeOnBackdrop(w: number, h: number) {
   return { width: w, height: h, data };
 }
 
+/** The same wedge collapsed horizontally — asymmetric AND narrow, i.e. a profile. */
+function narrowWedgeOnBackdrop(w: number, h: number) {
+  const data = new Uint8Array(w * h * 4);
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const t = y / h;
+      const inside = x > w * 0.45 && x < w * (0.48 + 0.08 * t) && y > h * 0.2 && y < h * 0.85;
+      const v = inside ? 40 : 200;
+      const i = (y * w + x) * 4;
+      data[i] = data[i + 1] = data[i + 2] = v;
+      data[i + 3] = 255;
+    }
+  return { width: w, height: h, data };
+}
+
 describe("classifyView (which way is the object facing)", () => {
   // Thresholds calibrated on real frames: gamepad photo 0.967 and renders at 0°/45°/90° gave
   // 0.995 / 0.890 / 0.694; a Blender laptop turned 60° gave 0.427. Note the photo is 0.967, not
@@ -147,6 +162,26 @@ describe("classifyView (which way is the object facing)", () => {
     const f = silhouetteFeatures(wedgeOnBackdrop(200, 200))!;
     expect(f.symmetryH).toBeLessThan(0.9);
     expect(classifyView(f).view).not.toBe("front");
+  });
+  it("says only 'turned' without a front-width reference, rather than guessing how far", () => {
+    // Symmetry cannot rank rotation: measured on real data a ¾ product photo scored 0.610 while
+    // a true profile scored 0.694 — the ¾ shot was LESS symmetric. Refusing to guess is correct.
+    const f = silhouetteFeatures(wedgeOnBackdrop(200, 200))!;
+    expect(classifyView(f).view).toBe("turned");
+  });
+  it("calls it side only when the silhouette has narrowed against its front width", () => {
+    // Note the shape has to be asymmetric AND narrow: symmetry is tested first, so a plain
+    // narrow rectangle is (correctly) still "front" — a rectangle looks the same mirrored.
+    const front = silhouetteFeatures(wedgeOnBackdrop(200, 200))!;
+    const narrow = silhouetteFeatures(narrowWedgeOnBackdrop(200, 200))!;
+    expect(narrow.aspect / front.aspect).toBeLessThan(0.55);
+    expect(classifyView(narrow, { frontAspect: front.aspect }).view).toBe("side");
+  });
+  it("keeps a turned-but-still-wide shape as three-quarter", () => {
+    const front = silhouetteFeatures(wedgeOnBackdrop(200, 200))!;
+    // same width as the reference ⇒ turned, but nowhere near a profile
+    const out = classifyView(front, { frontAspect: front.aspect });
+    expect(out.view).toBe("three-quarter");
   });
   it("reports unknown rather than guessing on an empty frame", () => {
     expect(classifyView(silhouetteFeatures(solid(64, 64, 200))).view).toBe("unknown");
