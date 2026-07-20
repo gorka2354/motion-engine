@@ -85,9 +85,15 @@ jobs:
       # 0.90 still catches a real look change while tolerating cross-platform noise. Tight 3D
       # comparison stays a local job, where baseline and candidate share a machine.
       - name: Golden frames — 3D promos (cross-platform tolerance)
-        run: |
-          npm run check-render ShotikPromo -- --frames 5 --trim 60 --min-ssim 0.90
-          npm run check-render BybitCardGif -- --frames 5 --trim 60 --min-ssim 0.90
+        run: npm run check-render ShotikPromo -- --frames 5 --trim 60 --min-ssim 0.90
+
+      # BybitGif is the one comp driven by POST-PROCESSING (bloom, depth-of-field, chromatic
+      # aberration), and that spread does not survive a platform change: 0.8005 SSIM with 18.46%
+      # of pixels differing against an unchanged scene. No threshold is both meaningful and
+      # passable there, so CI checks that it renders and moves; the strict golden comparison runs
+      # locally, where baseline and candidate share a machine.
+      - name: Render sanity — post-processed 3D
+        run: npm run check-render BybitCardGif -- --frames 5 --trim 60 --no-golden
 
       # Procedural models: silhouette, flatness, depth and regression against accepted baselines.
       # The phone declares a looser depth floor because a handset really is that thin — a gate

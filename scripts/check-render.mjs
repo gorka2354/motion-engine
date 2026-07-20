@@ -82,6 +82,13 @@ const GL = flag("gl", "swangle");
 const chromiumOptions = { gl: GL };
 const acceptBaseline = has("accept-baseline");
 const minSsimGate = parseFloat(flag("min-ssim", String(GOLDEN_MIN_SSIM)));
+// Skip golden comparison entirely. For scenes whose look depends on POST-PROCESSING (bloom, DoF,
+// chromatic aberration) the cross-platform spread is large enough that no useful threshold exists:
+// BybitCardGif re-rendered on a Linux runner against a Windows baseline scored 0.8005 with 18.46%
+// of pixels differing, while nothing about it had changed. Lowering the gate to fit that would
+// stop it detecting anything. Such comps keep content/motion checks in CI and a strict golden
+// comparison locally, where baseline and candidate share a machine.
+const skipGolden = has("no-golden");
 const propsFile = flag("props", null);
 const inputProps = propsFile ? JSON.parse(readFileSync(propsFile, "utf8")) : undefined;
 
@@ -161,6 +168,8 @@ if (acceptBaseline) {
   for (const f of samples)
     copyFileSync(path.join(tmp, `still-${f}.png`), path.join(GOLDEN_DIR, `${f}.png`));
   console.log(`  BASE  golden accepted → test/golden/${compId}/ (${samples.length} frames)`);
+} else if (skipGolden) {
+  console.log("  SKIP  golden-check    (--no-golden: comparison is not portable for this comp)");
 } else {
   const cmp = [];
   for (let i = 0; i < samples.length; i++) {
