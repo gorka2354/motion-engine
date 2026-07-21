@@ -1,5 +1,6 @@
 import { Box3, DoubleSide, Mesh, Object3D, Quaternion, Raycaster, Vector3 } from "three";
 import { inspectMesh } from "./meshHealth";
+import { FACE_NORMAL, OBJECT_CLASSES } from "./knowledge/objectClasses";
 import type { Group } from "three";
 
 /**
@@ -369,8 +370,25 @@ export const checkShellOutward = (root: Group): string[] => {
  * in a diamond and two sticks" becomes an assertion instead of a hope.
  */
 export interface PartsContract {
+  /**
+   * Object class this model claims to be. When set, the class's `requiredParts` are asserted too —
+   * counts AND which face each sits on. That is knowledge the model being checked does not supply,
+   * which is the point: `required` below lists what the author remembered, and the author is
+   * exactly who forgot the triggers.
+   */
+  classId?: string;
   /** Keys that must exist in the factory's `parts`. */
   required: string[];
+  /**
+   * Parts the class requires that this model deliberately does not build, each with a reason.
+   *
+   * A written waiver is weaker than it looks and is not treated as proof of anything: the same
+   * author writes the geometry and the excuse, and the excuse that produced this whole mess —
+   * "not visible in the reference" — was fluent, plausible, and false (the reference views were on
+   * disk the whole time). The reason is recorded so review has something to argue with, not so CI
+   * can be satisfied. Waivers surface as warnings; they never silently vanish.
+   */
+  omittedParts?: { name: string; reason: string }[];
   /** Relative-position rules over those parts. */
   layout?: LayoutRule[];
   /** Size relationships that define the class. */
@@ -394,6 +412,9 @@ export interface PartsContract {
 export interface ContractViolation {
   kind:
     | "missing"
+    | "under-count"
+    | "wrong-face"
+    | "waived"
     | "buried"
     | "floating"
     | "overlap"
@@ -404,7 +425,93 @@ export interface ContractViolation {
     | "orientation"
     | "inside-out";
   detail: string;
+  /**
+   * Whether this must block. Class entries at `status: "drafted"` warn instead of failing — the
+   * gamepad's 28 mm housing depth is recalled, not published, and blocking CI on a half-remembered
+   * number teaches people to delete the classId rather than fix the model.
+   */
+  severity: "error" | "warning";
 }
+
+/**
+ * Assert the class's required parts: how many, and on which face.
+ *
+ * The face test is geometric, not decorative. Asserting only a count is satisfied by two cubes
+ * named triggerLeft/triggerRight sitting anywhere at all — including inside the shell — so the
+ * anchor must actually lie toward the named face, measured against the model's own bounds.
+ */
+export const checkRequiredParts = (
+  root: Group,
+  parts: Record<string, Object3D>,
+  classId: string,
+  omitted: { name: string; reason: string }[] = [],
+): ContractViolation[] => {
+  const cls = OBJECT_CLASSES[classId];
+  if (!cls) {
+    return [
+      {
+        kind: "missing",
+        severity: "warning",
+        detail: `no class entry for "${classId}" — add one to src/models/knowledge/objectClasses.ts`,
+      },
+    ];
+  }
+  const severity: "error" | "warning" = cls.status === "sourced" ? "error" : "warning";
+  const violations: ContractViolation[] = [];
+  const bounds = new Box3().setFromObject(root);
+  const centre = bounds.getCenter(new Vector3());
+  const half = bounds.getSize(new Vector3()).multiplyScalar(0.5);
+
+  for (const rp of cls.requiredParts ?? []) {
+    const waiver = omitted.find((o) => o.name === rp.name);
+    if (waiver) {
+      violations.push({
+        kind: "waived",
+        severity: "warning",
+        detail:
+          `class "${classId}" requires ${rp.count} × ${rp.name} on the ${rp.face} face; this ` +
+          `model omits it — "${waiver.reason}". Source: ${rp.prov.source}`,
+      });
+      continue;
+    }
+    const matched = Object.entries(parts)
+      .filter(([k, v]) => v instanceof Object3D && new RegExp(rp.partsKey).test(k))
+      .map(([, v]) => v);
+
+    if (matched.length !== rp.count) {
+      violations.push({
+        kind: "under-count",
+        severity,
+        detail:
+          `class "${classId}" requires ${rp.count} × ${rp.name} on the ${rp.face} face ` +
+          `(${rp.prov.confidence}, ${rp.prov.source}${rp.prov.quote ? `: "${rp.prov.quote}"` : ""}); ` +
+          `model exposes ${matched.length} matching /${rp.partsKey}/ and declares no omission`,
+      });
+      continue;
+    }
+
+    // Face membership: the anchor's offset from the model centre, along the face's outward normal,
+    // normalised by the half-extent on that axis. A part genuinely mounted on a face sits well
+    // past the middle; 0.45 leaves room for a recessed part without admitting one on the far side.
+    const normal = new Vector3(...FACE_NORMAL[rp.face]);
+    for (const obj of matched) {
+      const anchor = obj.getWorldPosition(new Vector3()).sub(centre);
+      const reach = Math.abs(normal.x) * half.x + Math.abs(normal.y) * half.y + Math.abs(normal.z) * half.z;
+      const along = reach < 1e-6 ? 0 : anchor.dot(normal) / reach;
+      if (along < 0.45) {
+        violations.push({
+          kind: "wrong-face",
+          severity,
+          detail:
+            `"${obj.name || rp.name}" should sit on the ${rp.face} face, but its anchor reaches ` +
+            `only ${along.toFixed(2)} of the way there (need 0.45) — a count assertion alone is ` +
+            `satisfied by a part bolted on anywhere`,
+        });
+      }
+    }
+  }
+  return violations;
+};
 
 /** Run a contract against a built model. Empty array = the model keeps its promises. */
 export const checkPartsContract = (
@@ -415,42 +522,98 @@ export const checkPartsContract = (
   const violations: ContractViolation[] = [];
 
   for (const name of contract.required) {
-    if (!parts[name]) violations.push({ kind: "missing", detail: `part "${name}" is absent` });
+    if (!parts[name])
+      violations.push({ kind: "missing", severity: "error", detail: `part "${name}" is absent` });
   }
   const present = Object.fromEntries(
     Object.entries(parts).filter(([, p]) => p instanceof Object3D),
   );
 
+  if (contract.classId) {
+    violations.push(
+      ...checkRequiredParts(root, present, contract.classId, contract.omittedParts),
+    );
+  }
+
   if (contract.surfaceAxis !== null) {
-    const axis = new Vector3(...(contract.surfaceAxis ?? [0, 0, 1]));
-    for (const r of checkPartsOnSurface(root, present, axis)) {
-      if (r.buried)
-        violations.push({ kind: "buried", detail: `"${r.part}" is inside the shell, not on it` });
-      if (r.floating)
-        violations.push({ kind: "floating", detail: `"${r.part}" has no body behind it` });
+    // Each part is raycast along the face IT is mounted on, not along one axis for the whole
+    // model. A single axis is wrong the moment an object has parts on more than one face: adding
+    // top-face triggers to a model checked along +Z reports them "floating" — no body behind them
+    // — and the only escape would be surfaceAxis: null, disabling the buried/floating check
+    // entirely. Fixing one gate by switching another off is not a fix.
+    const fallback = (contract.surfaceAxis ?? [0, 0, 1]) as [number, number, number];
+    const axisFor: Record<string, [number, number, number]> = {};
+    const recessed = new Set<string>();
+    for (const rp of OBJECT_CLASSES[contract.classId ?? ""]?.requiredParts ?? []) {
+      for (const key of Object.keys(present)) {
+        if (!new RegExp(rp.partsKey).test(key)) continue;
+        axisFor[key] = FACE_NORMAL[rp.face];
+        if (rp.seat === "recessed") recessed.add(key);
+      }
+    }
+    const groups = new Map<string, Record<string, Object3D>>();
+    for (const [key, obj] of Object.entries(present)) {
+      const axis = axisFor[key] ?? fallback;
+      const id = axis.join(",");
+      groups.set(id, { ...(groups.get(id) ?? {}), [key]: obj });
+    }
+    for (const [id, group] of groups) {
+      const axis = new Vector3(...(id.split(",").map(Number) as [number, number, number]));
+      for (const r of checkPartsOnSurface(root, group, axis)) {
+        // The two seats invert each other, and BOTH of the raw signals had to be reinterpreted.
+        // A proud part must have nothing outward of it and body close behind. A recessed part is
+        // the mirror image: shell above it is the proof it sits in a pocket, and "body close
+        // behind" is meaningless, because a ray fired inward from inside the shell next meets the
+        // far wall a whole object away. Applying the proud rules to a correctly-recessed bumper
+        // reported it both buried AND floating at once — a contradiction that is really the check
+        // saying it has no vocabulary for this part.
+        if (recessed.has(r.part)) {
+          if (!r.buried)
+            violations.push({
+              kind: "floating",
+              severity: "error",
+              detail:
+                `"${r.part}" is declared recessed but has no shell over it — it sits on top of ` +
+                `the body rather than set into it (checked along ${id})`,
+            });
+          continue;
+        }
+        if (r.buried)
+          violations.push({
+            kind: "buried",
+            severity: "error",
+            detail: `"${r.part}" is inside the shell, not on it`,
+          });
+        if (r.floating)
+          violations.push({
+            kind: "floating",
+            severity: "error",
+            detail: `"${r.part}" has no body behind it (checked along ${id})`,
+          });
+      }
     }
   }
   for (const [a, b] of findOverlappingParts(root, present, contract.minSeparation ?? 0.05)) {
-    violations.push({ kind: "overlap", detail: `"${a}" and "${b}" sit on the same spot` });
+    violations.push({ kind: "overlap", severity: "error", detail: `"${a}" and "${b}" sit on the same spot` });
   }
   for (const name of findStrayParts(root, present)) {
-    violations.push({ kind: "stray", detail: `"${name}" is outside the model's bounds` });
+    violations.push({ kind: "stray", severity: "error", detail: `"${name}" is outside the model's bounds` });
   }
   for (const failure of checkLayout(root, present, contract.layout ?? [])) {
-    violations.push({ kind: "layout", detail: failure });
+    violations.push({ kind: "layout", severity: "error", detail: failure });
   }
   for (const failure of checkProportions(root, present, contract.proportions ?? [])) {
-    violations.push({ kind: "proportion", detail: failure });
+    violations.push({ kind: "proportion", severity: "error", detail: failure });
   }
   for (const failure of checkSameSize(root, present, contract.sameSize ?? [])) {
-    violations.push({ kind: "asymmetry", detail: failure });
+    violations.push({ kind: "asymmetry", severity: "error", detail: failure });
   }
   for (const failure of checkOrientation(root, present, contract.orientation ?? [])) {
-    violations.push({ kind: "orientation", detail: failure });
+    violations.push({ kind: "orientation", severity: "error", detail: failure });
   }
   if (contract.checkShell !== false) {
     for (const failure of checkShellOutward(root)) {
-      violations.push({ kind: "inside-out", detail: failure });
+      violations.push({ kind: "inside-out", severity: "error", detail: failure });
     }
   }
   return violations;
