@@ -70,10 +70,50 @@ describe("createGamepadModel", () => {
     expect(violations.some((v) => v.kind === "asymmetry")).toBe(true);
   });
 
-  it("mounts every part on the face, none buried", () => {
+  it("mounts every FACE part on the face, none buried", () => {
+    // Scoped to the front-face parts on purpose. This test used to sweep every part along +Z, and
+    // that hardcoded axis was the very assumption that broke when the controller gained shoulders:
+    // a trigger sits on the TOP face, so a +Z ray from it hits the face plate and reports it
+    // buried. checkPartsContract now takes each part's mounting axis from its class entry; a test
+    // that pins one axis for the whole model would keep asserting the old, wrong model of reality.
     const { group, parts } = createGamepadModel();
-    const report = checkPartsOnSurface(group, object3dParts(parts), new Vector3(0, 0, 1));
+    const face = Object.fromEntries(
+      Object.entries(object3dParts(parts)).filter(([k]) => !/^(trigger|bumper)/.test(k)),
+    );
+    const report = checkPartsOnSurface(group, face, new Vector3(0, 0, 1));
     expect(report.filter((r) => r.buried).map((r) => r.part)).toEqual([]);
+  });
+
+  it("has the parts its CLASS requires, not merely the ones the author remembered", () => {
+    // The failure this exists for: the controller shipped with no triggers and no bumpers, while
+    // its own header explained they were "not visible in the reference" — untrue, all five views
+    // were on disk. `required` below could not catch it, because the author writes that list too.
+    const { group, parts } = createGamepadModel();
+    expect(checkPartsContract(group, object3dParts(parts), GAMEPAD_CONTRACT)).toEqual([]);
+  });
+
+  it("fails when a class-required part is dropped", () => {
+    // A gate nobody has watched fire is a gate nobody knows works.
+    const { group, parts } = createGamepadModel();
+    const stripped = Object.fromEntries(
+      Object.entries(object3dParts(parts)).filter(([k]) => k !== "triggerRight"),
+    );
+    const violations = checkPartsContract(group, stripped, GAMEPAD_CONTRACT);
+    const undercount = violations.find((v) => v.kind === "under-count");
+    expect(undercount).toBeDefined();
+    // The message must carry the source, so the fix does not depend on remembering where 2 came from.
+    expect(undercount!.detail).toContain("2 × trigger");
+    expect(undercount!.detail).toContain("wikipedia");
+  });
+
+  it("fails when a required part is moved off its declared face", () => {
+    // A count assertion alone is satisfied by two meshes named triggerLeft/triggerRight sitting
+    // anywhere at all — including inside the shell. The face has to be geometric to mean anything.
+    const { group, parts } = createGamepadModel();
+    const p = object3dParts(parts);
+    p.triggerRight.position.set(0, -0.2, 0); // into the middle of the body
+    const violations = checkPartsContract(group, p, GAMEPAD_CONTRACT);
+    expect(violations.some((v) => v.kind === "wrong-face")).toBe(true);
   });
 
   it("takes a brand accent through options rather than hardcoding one", () => {

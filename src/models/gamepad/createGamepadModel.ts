@@ -10,7 +10,8 @@ import {
 } from "three";
 import type { ModelHandles } from "../types";
 import { loftGeometry } from "../loft";
-import { BODY_SECTIONS, FACE_Z, frontOutline, gripSweep } from "./gamepadForm";
+import { BODY_SECTIONS, FACE_Z, U, frontOutline, gripSweep } from "./gamepadForm";
+import { mountPoints, partSize } from "../knowledge/objectClasses";
 import { glyphGeometry } from "../glyphs";
 import type { GlyphName } from "../glyphs";
 import type { PartsContract } from "../contract";
@@ -35,7 +36,10 @@ import type { PartsContract } from "../contract";
  * Known simplifications, deliberate:
  * - Grip texture (the fine dot pattern) is below the reference's resolution — omitted rather
  *   than invented.
- * - The back (triggers, battery hump) is absent: not visible in the reference.
+ * - The battery hump on the back is absent: it does not read at the sizes these promos use.
+ *   (An earlier version claimed the TRIGGERS were "not visible in the reference" and omitted them.
+ *   That was false — out/ref/gamepad2/ carries top-back.png and back.png. Triggers and bumpers are
+ *   now built from the class table, which is the only reason the excuse cannot recur.)
  */
 
 /** Palette. Sampled colours were lit pixels — body albedo is darkened back (see Gotchas). */
@@ -66,6 +70,13 @@ export interface GamepadModelParts
   buttonB: Group;
   buttonX: Group;
   buttonY: Group;
+  /** Declared so gates can see them — the d-pad existed but was invisible to every check. */
+  dpad: Group;
+  /** Push along -Y for a shoulder press. */
+  triggerLeft: Group;
+  triggerRight: Group;
+  bumperLeft: Group;
+  bumperRight: Group;
   /** Glows when the controller "wakes". */
   logoMaterial: MeshStandardMaterial;
   bodyMaterial: MeshStandardMaterial;
@@ -80,6 +91,7 @@ export interface GamepadModelParts
  * for why (short version: a loft-profile change once buried every part and nothing caught it).
  */
 export const GAMEPAD_CONTRACT: PartsContract = {
+  classId: "gamepad",
   required: ["leftStick", "rightStick", "buttonA", "buttonB", "buttonX", "buttonY"],
   layout: [
     // ABXY diamond
@@ -158,6 +170,11 @@ export const createGamepadModel = (
     roughness: 0.4,
     metalness: 0.1,
   });
+  const bumperMaterial = new MeshStandardMaterial({
+    color: new Color(COL.bumper),
+    roughness: 0.5,
+    metalness: 0.08,
+  });
   const logoMaterial = new MeshStandardMaterial({
     color: new Color(COL.logo),
     roughness: 0.35,
@@ -232,6 +249,76 @@ export const createGamepadModel = (
   dpad.add(armV);
   mount(dpad, -0.59, -0.01, 0.02);
 
+  // ── shoulders: triggers and bumpers, built FROM the class table ───────────
+  // This loop runs over the class's declared mount points, not over what the author remembered —
+  // which is the entire reason the section exists. The previous model had neither part, and its
+  // own header explained that the triggers were "not visible in the reference" while all five
+  // reference views, top-back among them, sat in out/ref/gamepad2/ the whole time. A colour was
+  // even allocated for a bumper nobody built. A class entry cannot be talked out of a part it
+  // declares: leaving one out now means deleting a mount point, which is a visible edit.
+  //
+  // Both are rounded bars rather than boxes. A count assertion is satisfied by a cube, and a cube
+  // is exactly what a controller's shoulder is not.
+  const bar = (
+    name: string,
+    size: { width?: number; height?: number; depth?: number },
+    material: MeshStandardMaterial,
+    taper: number,
+    tiltX = 0,
+    roll = 0,
+  ): Group => {
+    const w = size.width ?? 0.5;
+    const h = size.height ?? 0.3;
+    const d = size.depth ?? 0.3;
+    const r = d / 2;
+    const mesh = new Mesh(new CylinderGeometry(r, r * taper, w, 24), material);
+    // A cylinder's axis is its LOCAL +Y. Rotating 90° about Z lays that axis along world X, so the
+    // bar's length runs left-right. After that rotation local X maps to world Y — which is why the
+    // squash below is on `.x` and not the obvious `.y`: scaling local Y would shorten the bar
+    // instead of flattening it.
+    // The extra `roll` follows the shoulder's slope. The body's top edge drops about 17° between
+    // x = 0.95 and x = 1.63, so a level bar hugs the shell at its inner end and lifts clear of it
+    // at the outer one — which is exactly how the first attempt read: shoulders as rabbit ears.
+    // The surface check never fired, because it measures the ANCHOR and the anchor was seated.
+    mesh.rotation.z = Math.PI / 2 + roll;
+    mesh.scale.x = h / d;
+    mesh.name = name;
+    // The tilt goes on a WRAPPER, not on the mesh. Two Euler angles on one object compose in a
+    // fixed order and quietly reorient the axis — measured: the trigger stood on end and reported
+    // 30 mm of height where it should have had 12, which the class proportions rule then caught.
+    const g = new Group();
+    g.rotation.x = tiltX;
+    g.add(mesh);
+    return g;
+  };
+
+  /** Downward slope of the body's top edge, radians — shoulders are laid along it, not level. */
+  const SHOULDER_SLOPE = 0.2;
+  const side = (i: number): string => (i === 0 ? "Left" : "Right");
+  const triggerSize = partSize("gamepad", "trigger", U);
+  const triggers = mountPoints("gamepad", "trigger", U).map((p, i) => {
+    const g = new Group();
+    // Laid back over the shoulder rather than standing up on it. On a head-on view of a real
+    // controller the triggers are barely visible — they hide behind the top edge — so a trigger
+    // that adds height is a trigger in the wrong place. The class proportions rule caught the
+    // first attempt at 1.264 w/h against a range of 1.3–1.6.
+    g.add(bar(`Trigger${side(i)}`, triggerSize, trimMaterial, 0.82, -0.3, SHOULDER_SLOPE * Math.sign(p[0])));
+    g.position.set(...p);
+    g.name = `Trigger${side(i)}`;
+    root.add(g);
+    return g;
+  });
+
+  const bumperSize = partSize("gamepad", "bumper", U);
+  const bumpers = mountPoints("gamepad", "bumper", U).map((p, i) => {
+    const g = new Group();
+    g.add(bar(`Bumper${side(i)}`, bumperSize, bumperMaterial, 1, 0, SHOULDER_SLOPE * Math.sign(p[0])));
+    g.position.set(...p);
+    g.name = `Bumper${side(i)}`;
+    root.add(g);
+    return g;
+  });
+
   // ── ABXY: black button + coloured insert (glyphs need a texture — see header) ──
   const faceButton = (tint: number, letter: GlyphName): Group => {
     const g = new Group();
@@ -290,6 +377,11 @@ export const createGamepadModel = (
   const parts: GamepadModelParts = {
     leftStick,
     rightStick,
+    dpad,
+    triggerLeft: triggers[0],
+    triggerRight: triggers[1],
+    bumperLeft: bumpers[0],
+    bumperRight: bumpers[1],
     buttonA,
     buttonB,
     buttonX,
