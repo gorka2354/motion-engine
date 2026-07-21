@@ -6,32 +6,28 @@ import {
   Group,
   Mesh,
   MeshStandardMaterial,
-  Shape,
   TorusGeometry,
-  Vector2,
 } from "three";
 import type { ModelHandles } from "../types";
 import { loftGeometry } from "../loft";
+import { BODY_SECTIONS, FACE_Z, frontOutline, gripSweep } from "./gamepadForm";
 import { glyphGeometry } from "../glyphs";
 import type { GlyphName } from "../glyphs";
 import type { PartsContract } from "../contract";
 
 /**
- * Procedural game controller, reconstructed from a single front-on product photo
- * (out/bench/ref/gamepad.png, 442×394 — the probe flagged it `conditional`: fine for form,
- * too low-res for fine surface texture).
+ * Procedural game controller, rebuilt from FIVE reference views (front, back, top-back,
+ * bottom-front, three-quarter) plus published class dimensions — see ./gamepadForm.ts.
  *
- * WHY THE SHAPE IS BUILT THE WAY IT IS. A controller is organic — nothing about it is a box —
- * so the usual primitive kit doesn't apply. What a single front photo DOES give exactly is the
- * outline, so the outline is traced by hand and then LOFTED through depth (`../loft.ts`).
+ * Two earlier attempts failed on the same premise, in different ways. Extruding the traced
+ * outline at constant thickness gave a right silhouette with no volume (side view filled 92% of
+ * its bbox). Lofting that outline through one depth stack gave volume in the wrong place: the
+ * face inflated into a cushion, because a single scaled contour cannot contain a flat region,
+ * and one depth number cannot describe an object whose centre is 28 mm and whose grips are 60.
  *
- * The first version extruded that outline at constant thickness instead. It scored 1.4%
- * silhouette drift against the reference and still looked wrong from every other angle — right
- * outline, no volume. That failure is what the L5-fidelity flatness-check now exists to catch
- * (it read 92% side-bbox fill; lofted, the same model reads 78.5%).
- *
- * Depth, the palm swell and the backward sweep of the grips are INFERRED — one head-on photo
- * cannot show them. A side reference would replace that guesswork with measurement.
+ * Neither failure was visible to any gate — the head-on silhouette stayed correct throughout.
+ * What fixed it was not a better profile but better INPUT: more views, and class dimensions for
+ * the depths a photo cannot show.
  *
  * ABXY legends and the round badge are real extruded geometry (`../glyphs.ts`) — drawn as Shape
  * outlines rather than a texture or a loaded typeface, so the factory stays synchronous.
@@ -59,85 +55,6 @@ const COL = {
   b: 0xa81813,
   a: 0x237a14,
 } as const;
-
-/**
- * Silhouette traced off the reference, right half only, from the top-centre saddle clockwise
- * down to the crotch between the grips; the left half is mirrored. Units: body width = 4.
- */
-const OUTLINE_RIGHT: [number, number][] = [
-  // The top edge is nearly FLAT in the reference — the saddle sits only ~2% of the object
-  // height below the shoulders. Sparse points let splineThru bow into humps, so it's sampled
-  // densely here to hold the line down.
-  [0.0, 1.28],
-  [0.2, 1.31],
-  [0.43, 1.34],
-  [0.7, 1.36],
-  [0.95, 1.375],
-  [1.1, 1.37], // shoulder shelf — the bumper sits on this edge
-  [1.36, 1.31],
-  [1.63, 1.16],
-  [1.86, 0.87],
-  [1.97, 0.52],
-  [2.0, 0.2], // widest point
-  [1.95, -0.08],
-  [1.84, -0.37],
-  [1.7, -0.65],
-  [1.54, -0.91],
-  [1.35, -1.15],
-  [1.13, -1.33],
-  [0.87, -1.41], // grip tip
-  [0.68, -1.32],
-  [0.52, -1.12],
-  [0.4, -0.9],
-  [0.27, -0.74],
-  // Crotch depth is measured, not guessed: in the reference it spans 27% of the object height.
-  // Raising it to "widen the gap" (pass 2) just made the grips read as trouser legs.
-  [0.0, -0.64],
-];
-
-/** The traced outline, mirrored and resampled into a smooth closed contour. */
-const bodyOutline = (samples = 120): Vector2[] => {
-  const s = new Shape();
-  const right = OUTLINE_RIGHT.map(([x, y]) => new Vector2(x, y));
-  // mirrored left half, walked back up to the start (skip the shared crotch/saddle points)
-  const left = OUTLINE_RIGHT.slice(1, -1)
-    .reverse()
-    .map(([x, y]) => new Vector2(-x, y));
-  s.moveTo(right[0].x, right[0].y);
-  s.splineThru(right.slice(1));
-  s.splineThru(left);
-  s.closePath();
-  // Evenly spaced points keep the loft's quads uniform; getPoints() would crowd the curves.
-  return s.getSpacedPoints(samples);
-};
-
-/**
- * Depth profile of the shell, back → front.
- *
- * Deliberately NOT a symmetric lens: a controller's face is close to flat (it has to carry
- * buttons), while the back is a deep rounded swell that fills the palm. A symmetric profile
- * makes a cushion — correct volume, wrong object.
- *
- * The long plateau at scale ≈ 1 between z 0.1 and 0.38 IS the face plate; FACE_Z sits on it.
- */
-const BODY_SECTIONS = [
-  { z: -0.8, scale: 0.26 }, // rounded back of the palm swell
-  { z: -0.68, scale: 0.52 },
-  { z: -0.52, scale: 0.72 },
-  { z: -0.32, scale: 0.87 },
-  { z: -0.12, scale: 0.95 },
-  { z: 0.08, scale: 0.99 },
-  { z: 0.26, scale: 1.0 }, // widest
-  { z: 0.38, scale: 0.99 },
-  // The front must stay near full width and STOP — tapering it to a small cap turns the shell
-  // into a smooth hill with nowhere to seat the buttons (they sank inside on the first loft).
-  // The end cap at 0.9 IS the face plate.
-  { z: 0.44, scale: 0.96 },
-  { z: 0.47, scale: 0.9 },
-];
-
-/** Front face plate, in local Z — the loft's end cap. Everything mounts relative to this. */
-const FACE_Z = 0.47;
 
 export interface GamepadModelParts
   extends Record<string, Mesh | Group | MeshStandardMaterial> {
@@ -251,20 +168,13 @@ export const createGamepadModel = (
   const root = new Group();
   root.name = "Gamepad";
 
-  // ── body: the traced outline LOFTED through depth ─────────────────────
-  // Not an extrusion. A constant-thickness sweep of this outline scored 1.4% silhouette drift
-  // and still looked like a biscuit (side view filled 92% of its bbox). Sections scaled along a
-  // lens curve give the shell an actual bulge, and `warp` sweeps the grips backwards — the one
-  // thing section scaling can't express, and the thing that makes a controller read as held.
+  // ── body: ONE shell whose section changes shape with depth ────────────
+  // A controller is a moulded part with no seams, so it is one mesh. What varies is the section:
+  // full silhouette at the face plate, receding to just the grip lobes 60 mm behind it. Composing
+  // it from a housing plus two grip meshes was tried and looked worse — intersecting meshes read
+  // as two objects without a boolean union and a fillet.
   const body = new Mesh(
-    loftGeometry(bodyOutline(), BODY_SECTIONS, {
-      warp: (x, y, z) => {
-        // grips curl back and inward below the waist; 0 above it, growing toward the tips
-        const g = Math.min(1, Math.max(0, -(y + 0.15) / 1.25));
-        const curl = g * g;
-        return [x * (1 - curl * 0.06), y, z - curl * 0.62];
-      },
-    }),
+    loftGeometry(frontOutline(), BODY_SECTIONS, { warp: gripSweep }),
     bodyMaterial,
   );
   body.name = "Body";
