@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Box3, Mesh, Vector2, Vector3 } from "three";
 import { lensSections, loftGeometry } from "./loft";
+import { inspectMesh } from "./meshHealth";
 
 /**
  * L1 for the loft.
@@ -124,6 +125,42 @@ describe("loftGeometry", () => {
   it("rejects degenerate input rather than producing a broken mesh", () => {
     expect(() => loftGeometry([new Vector2(0, 0)], [{ z: 0, scale: 1 }])).toThrow();
     expect(() => loftGeometry(ellipseRing(1, 1), [{ z: 0, scale: 1 }])).toThrow();
+  });
+
+  /**
+   * The winding tests above all use stacks where sections SCALE one base contour, and that hid a
+   * real bug for as long as it existed: normalisation was applied to the base outline only. On a
+   * morphing stack every section supplies its own ring, so the base contributes no vertices at
+   * all — normalising it normalised nothing, and the gamepad shell came out wholly inside-out
+   * (signedVolume −11.9, 256 inconsistent edges). On screen that is not a visibly wrong shape, it
+   * is a hole you can see the backdrop through, which got misread twice as a geometry fault.
+   *
+   * Topology is asserted rather than normals: with a morphing stack, vertex normals are averaged
+   * across cap and side faces and cannot answer whether the shell is consistently wound.
+   */
+  it("stays right-side out when every section supplies its OWN outline", () => {
+    // Clockwise on purpose — the direction a caller has no reason to think about.
+    const cw = (rx: number, ry: number): Vector2[] => ellipseRing(rx, ry).slice().reverse();
+    const geo = loftGeometry(cw(1, 2), [
+      { z: -1, scale: 1, outline: cw(0.5, 1.2) },
+      { z: 0, scale: 1, outline: cw(1, 2) },
+      { z: 1, scale: 1, outline: cw(0.8, 1.6) },
+    ]);
+    const health = inspectMesh(geo);
+    expect(health.boundaryEdges).toBe(0); // closed
+    expect(health.inconsistentEdges).toBe(0); // caps agree with sides
+    expect(health.signedVolume).toBeGreaterThan(0); // and the whole thing faces outward
+  });
+
+  it("refuses a stack whose outlines wind opposite ways", () => {
+    // Sections skin index-to-index, so one reversed ring twists the skin into a knot. Better to
+    // fail loudly than to hand back a mesh that only looks wrong from certain angles.
+    expect(() =>
+      loftGeometry(ellipseRing(1, 1), [
+        { z: -1, scale: 1, outline: ellipseRing(1, 1) },
+        { z: 1, scale: 1, outline: ellipseRing(1, 1).slice().reverse() },
+      ]),
+    ).toThrow(/wind opposite/);
   });
 
   it("lensSections bulges in the middle and rounds off at the ends", () => {

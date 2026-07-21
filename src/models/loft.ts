@@ -24,6 +24,18 @@ export interface LoftSection {
   scale: number | [number, number];
   /** Shift the section in Y — lets a form lean rather than only taper. */
   offsetY?: number;
+  /**
+   * Outline for THIS section, when the cross-section changes shape with depth.
+   *
+   * Scaling one contour can only make a form bigger or smaller, never a different shape — which
+   * is why a single-outline loft cannot be flat at the front and lobed at the back. A controller
+   * needs exactly that: near the face plate the section is the full silhouette, but deep behind
+   * it the section survives only where the grips are. Sections without an outline interpolate
+   * between the nearest neighbours that have one, so a form can morph smoothly.
+   *
+   * Must have the same point count as every other outline in the stack.
+   */
+  outline?: Vector2[];
 }
 
 export interface LoftOptions {
@@ -63,13 +75,77 @@ export const loftGeometry = (
   // other way round builds the shell inside-out: with FrontSide materials the sides vanish and
   // the backdrop shows through the object. Callers shouldn't have to know which way to trace —
   // the phone body was drawn clockwise, the gamepad counter-clockwise, and both must work.
-  const signedArea = outline.reduce((sum, p, i) => {
-    const q = outline[(i + 1) % outline.length];
-    return sum + (p.x * q.y - q.x * p.y);
-  }, 0);
-  if (signedArea < 0) outline = outline.slice().reverse();
+  const signedArea = (ring: Vector2[]): number =>
+    ring.reduce((sum, p, i) => {
+      const q = ring[(i + 1) % ring.length];
+      return sum + (p.x * q.y - q.x * p.y);
+    }, 0);
+
+  // Section outlines get the same closing-point treatment as the base one. They usually come from
+  // the same `getSpacedPoints()` call, which returns a ring whose last point repeats its first —
+  // so without this every section is one point longer than the base and the check below fires.
+  const trimRing = (ring: Vector2[]): Vector2[] => {
+    if (ring.length < 2) return ring;
+    const a = ring[0];
+    const b = ring[ring.length - 1];
+    return Math.abs(a.x - b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9 ? ring.slice(0, -1) : ring;
+  };
+  sections = sections.map((s) => (s.outline ? { ...s, outline: trimRing(s.outline) } : s));
+
+  // Winding normalisation, applied to EVERY ring rather than only the base one. Missing that was
+  // a real bug and an instructive one: on a stack where every section declares its own outline the
+  // base contour contributes no vertices at all, so normalising it alone normalised nothing and
+  // the whole shell came out inside-out — with FrontSide materials, a controller you could see
+  // straight through. inspectMesh caught it (signedVolume −11.9, 256 inconsistent edges) after the
+  // render had already been misread twice as a geometry hole.
+  //
+  // Rings are reversed individually but must AGREE beforehand: sections skin index-to-index, and
+  // reversing one ring and not another maps point k to point n−1−k, twisting the skin. Mixed
+  // winding in the input is a modelling error, so it throws rather than silently building a knot.
+  const baseCW = signedArea(outline) < 0;
+  for (const s of sections) {
+    if (s.outline && signedArea(s.outline) < 0 !== baseCW) {
+      throw new Error(
+        "loftGeometry: section outlines wind opposite ways — sections skin point-by-point, so " +
+          "mixed winding twists the skin. Trace every outline in the same direction.",
+      );
+    }
+  }
+  if (baseCW) {
+    outline = outline.slice().reverse();
+    sections = sections.map((s) => (s.outline ? { ...s, outline: s.outline.slice().reverse() } : s));
+  }
 
   const n = outline.length;
+  for (const s of sections) {
+    if (s.outline && s.outline.length !== n) {
+      throw new Error(
+        `loftGeometry: section outline has ${s.outline.length} points, base has ${n} — ` +
+          `every outline in the stack must share a point count so sections can interpolate`,
+      );
+    }
+  }
+
+  /**
+   * Outline in force at section `i`: its own, or a blend of the nearest neighbours that declare
+   * one. This is what lets the cross-section CHANGE SHAPE with depth rather than only scale.
+   */
+  const outlineAt = (i: number): Vector2[] => {
+    if (sections[i].outline) return sections[i].outline!;
+    let before = -1;
+    let after = -1;
+    for (let k = i; k >= 0; k--) if (sections[k].outline) { before = k; break; }
+    for (let k = i; k < sections.length; k++) if (sections[k].outline) { after = k; break; }
+    if (before === -1 && after === -1) return outline;
+    if (before === -1) return sections[after].outline!;
+    if (after === -1) return sections[before].outline!;
+    if (before === after) return sections[before].outline!;
+    const a = sections[before].outline!;
+    const b = sections[after].outline!;
+    const t = (i - before) / (after - before);
+    return a.map((p, k) => new Vector2(p.x + (b[k].x - p.x) * t, p.y + (b[k].y - p.y) * t));
+  };
+
   const positions: number[] = [];
   const indices: number[] = [];
 
@@ -80,7 +156,8 @@ export const loftGeometry = (
       ? section.scale
       : [section.scale, section.scale];
     const dy = section.offsetY ?? 0;
-    for (const p of outline) {
+    const ring = outlineAt(s);
+    for (const p of ring) {
       let x = p.x * sx;
       let y = p.y * sy + dy;
       let z = section.z;
@@ -105,15 +182,21 @@ export const loftGeometry = (
 
   // ── caps: triangulate the outline itself (it is concave, so no fan) ──
   if (caps) {
-    const faces = ShapeUtils.triangulateShape(outline, []);
+    // EACH end is triangulated with ITS OWN outline. Sharing one triangulation between both caps
+    // is only correct while every section is a copy of the same contour; once sections morph, the
+    // index triples that tessellate the front ring describe nothing on a differently-shaped back
+    // ring, and the back cap comes out malformed — the shell renders open and you see straight
+    // through the object. (Cost me a render that looked like a bowl with a hole in it.)
     const back = 0;
     const front = (sections.length - 1) * n;
-    for (const [a, b, c] of faces) {
+    for (const [a, b, c] of ShapeUtils.triangulateShape(outlineAt(sections.length - 1), [])) {
       // Caps and sides do NOT share a winding rule — flipping both together (a plausible-looking
       // fix) leaves the sides right and punches a hole through the front. With the outline
       // normalised counter-clockwise, triangulateShape's order already faces +Z, so the FRONT cap
       // is used as-is and only the BACK one is reversed.
       indices.push(front + a, front + b, front + c);
+    }
+    for (const [a, b, c] of ShapeUtils.triangulateShape(outlineAt(0), [])) {
       indices.push(back + c, back + b, back + a);
     }
   }
