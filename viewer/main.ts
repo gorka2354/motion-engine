@@ -30,6 +30,7 @@ import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment
 import { createGamepadModel } from "../src/models/gamepad/createGamepadModel";
 import { createLaptopModel } from "../src/models/laptop/createLaptopModel";
 import { createPhoneModel } from "../src/models/phone/createPhoneModel";
+import { createRemoteModel } from "../src/models/remote/createRemoteModel";
 
 type Entry = {
   id: string;
@@ -60,6 +61,12 @@ const CATALOG: Entry[] = [
       m.parts.lid.rotation.x = -1.78;
       return m;
     },
+  },
+  {
+    id: "remote",
+    name: "TV remote",
+    note: "dossier-driven — keys from the class",
+    build: () => createRemoteModel(),
   },
 ];
 
