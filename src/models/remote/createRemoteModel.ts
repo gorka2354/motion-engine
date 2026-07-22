@@ -3,7 +3,6 @@ import {
   Color,
   CylinderGeometry,
   Group,
-  LatheGeometry,
   Mesh,
   MeshStandardMaterial,
   TorusGeometry,
@@ -17,6 +16,7 @@ import { loftGeometry } from "../loft";
 import { OBJECT_CLASSES, mountPoints, partSize } from "../knowledge/objectClasses";
 import { glyphGeometry } from "../glyphs";
 import { textGeometry } from "../detail/text";
+import { button } from "../detail/button";
 
 /**
  * Procedural TV/DVD remote — a new object built to test the one-pass pipeline end to end.
@@ -161,38 +161,9 @@ export const createRemoteModel = (options: RemoteModelOptions = {}): ModelHandle
   irWindow.name = "IrWindow";
   root.add(irWindow);
 
-  /**
-   * A button cap as ONE lathed surface: a straight skirt turning through a chamfer into a slightly
-   * dished top. The chamfer is real geometry, not a normal map — it has to catch an actual rim
-   * highlight, the exact thing the old disc-on-disc `roundKey` couldn't (grimoire's #1 "fake" tell
-   * is a perfectly sharp edge; laptop's slab() makes the same argument for its bevel). ~28 radial
-   * segments; caps cache nothing individually but the legend geometry does.
-   */
-  const CAP_TOP = 0.96;
-  const buttonCap = (r: number, h: number, mat: MeshStandardMaterial): Mesh => {
-    const pt = (rad: number, y: number): Vector2 => new Vector2(r * rad, h * y);
-    const profile = [pt(1, 0), pt(1, 0.5), pt(0.94, 0.72), pt(0.78, 0.9), pt(0.48, 0.99), pt(0, CAP_TOP)];
-    const geo = new LatheGeometry(profile, 28);
-    geo.rotateX(Math.PI / 2); // lathe revolves around Y; turn the cap to face +Z like everything else
-    return new Mesh(geo, mat);
-  };
-
-  /**
-   * A button: a lathed cap plus a printed legend flush on its dished top. Returns a named Group so
-   * the part-count and on-surface gates still see one proud control per mount point.
-   */
-  const button = (name: string, r: number, mat: MeshStandardMaterial, legend?: BufferGeometry): Group => {
-    const g = new Group();
-    g.name = name;
-    const h = r * 0.5;
-    g.add(buttonCap(r, h, mat));
-    if (legend) {
-      const l = new Mesh(legend, legendMaterial);
-      l.position.z = h * CAP_TOP; // sits in the dish; the legend's own depth leaves it half-proud
-      g.add(l);
-    }
-    return g;
-  };
+  /** A labelled button from the shared detail library — lathed cap + printed legend. */
+  const key = (name: string, r: number, mat: MeshStandardMaterial, legend?: BufferGeometry): Group =>
+    button(name, { radius: r, capMaterial: mat, legend, legendMaterial });
 
   const place = (obj: Group | Mesh, x: number, y: number, lift = 0.006): void => {
     obj.position.set(x, y, FACE_Z + lift);
@@ -204,7 +175,7 @@ export const createRemoteModel = (options: RemoteModelOptions = {}): ModelHandle
   const powerR = partSize("remote", "power", U).width! / 2;
   const powerGlyph = glyphGeometry("power", { size: powerR * 0.95, depth: 0.012, bevel: 0.003 });
   mountPoints("remote", "power", U).forEach((p, i) => {
-    place(button(i === 0 ? "powerL" : "powerR", powerR, powerMaterial, powerGlyph), p[0], p[1]);
+    place(key(i === 0 ? "powerL" : "powerR", powerR, powerMaterial, powerGlyph), p[0], p[1]);
   });
 
   // ── numeric pad — real numerals, one geometry per digit (cached, so repeats are free) ──
@@ -212,7 +183,7 @@ export const createRemoteModel = (options: RemoteModelOptions = {}): ModelHandle
   const NUM_LABELS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "-", "0", "#"];
   mountPoints("remote", "number", U).forEach((p, i) => {
     const legend = textGeometry(NUM_LABELS[i], { size: numR * 0.82, depth: 0.012 });
-    place(button(`num${String(i).padStart(2, "0")}`, numR, keyMaterial, legend), p[0], p[1]);
+    place(key(`num${String(i).padStart(2, "0")}`, numR, keyMaterial, legend), p[0], p[1]);
   });
 
   // ── volume / channel rockers, with + / − at the ends ────────────────────
@@ -270,7 +241,7 @@ export const createRemoteModel = (options: RemoteModelOptions = {}): ModelHandle
   const FN_LABELS = ["M", "R", "E", "i"];
   mountPoints("remote", "functionButton", U).forEach((p, i) => {
     const legend = textGeometry(FN_LABELS[i], { size: fnR * 0.8, depth: 0.012 });
-    place(button(fnNames[i], fnR, keyMaterial, legend), p[0], p[1]);
+    place(key(fnNames[i], fnR, keyMaterial, legend), p[0], p[1]);
   });
 
   root.userData.sculptRuntime = {
