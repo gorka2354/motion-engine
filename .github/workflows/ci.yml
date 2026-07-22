@@ -103,3 +103,4 @@ jobs:
           npm run check-fidelity LaptopFactoryBench -- --views front=0,quarter=15,side=30 --regression-min-ssim 0.90
           npm run check-fidelity GamepadBench -- --views front=0,quarter=15,side=30 --regression-min-ssim 0.90
           npm run check-fidelity PhoneBench -- --views front=0,quarter=15,side=30 --min-depth-ratio 0.1 --regression-min-ssim 0.90
+          npm run check-fidelity RemoteBench -- --views front=0,quarter=15,side=30 --regression-min-ssim 0.90

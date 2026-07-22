@@ -362,6 +362,108 @@ export const OBJECT_CLASSES: Record<string, ObjectClass> = {
     ],
     flatSurfaces: ["deck top", "lid outer", "display"],
   },
+
+  remote: {
+    id: "remote",
+    // A classic TV/DVD handset — long, waisted, a domed slab. Figures recalled from the reference
+    // (a Samsung DVD remote) and typical hardware, not a spec sheet, so the entry is "drafted".
+    boundingMm: { width: 48, height: 200, depth: 24 },
+    source: "Wikimedia Nuon-N2000 / Samsung DVD remote reference + typical handset dimensions",
+    status: "drafted",
+    // The button face is a uniform slab through the middle: measured 1.04× across the mid region,
+    // gate 1.20×. severity "warning" like the gamepad — createRemoteModel derives DEPTH from this
+    // table's boundingMm, so the magnitude is partly its own input; what the check still catches
+    // independently is the hand-authored section stack bulging the button face (a section scaled to
+    // dome the middle breaks the uniformity regardless of the depth number). The ends taper to 0.81×
+    // the middle, which is real and visible but not gated — a squared-end remote is unusual, not wrong.
+    depthProfile: {
+      mesh: "Body",
+      axis: [0, 0, 1],
+      severity: "warning",
+      probes: [
+        { name: "centre", at: [0, 0] },
+        { name: "upper", at: [0, 0.55] },
+        { name: "lower", at: [0, -0.55] },
+        { name: "left", at: [-0.6, 0] },
+        { name: "right", at: [0.6, 0] },
+      ],
+      uniformWithin: 1.2,
+    },
+    // Every control is on the front face (+Z). Mounts are in mm from the centre; z is 0 because the
+    // face plane is where the factory seats them — the count is the fact, the grid is the layout the
+    // build loops over. A photo cannot supply the COUNT reliably (glare, crop); the class can.
+    requiredParts: [
+      {
+        name: "power",
+        count: 2,
+        face: "front",
+        partsKey: "^power[LR]$",
+        mm: { width: 9 },
+        mountsMm: [
+          [-13, 82, 0],
+          [13, 82, 0],
+        ],
+        prov: { source: "reference: two red power keys at the top", confidence: "recalled" },
+      },
+      {
+        name: "number",
+        count: 12,
+        face: "front",
+        partsKey: "^num\\d\\d$",
+        mm: { width: 11 },
+        // 4 rows × 3, the 0-9 pad plus two extra keys — the defining feature of a classic remote.
+        mountsMm: [
+          [-14, 66, 0], [0, 66, 0], [14, 66, 0],
+          [-14, 52, 0], [0, 52, 0], [14, 52, 0],
+          [-14, 38, 0], [0, 38, 0], [14, 38, 0],
+          [-14, 24, 0], [0, 24, 0], [14, 24, 0],
+        ],
+        prov: { source: "reference: 3-wide numeric keypad", confidence: "recalled" },
+      },
+      {
+        name: "rocker",
+        count: 2,
+        face: "front",
+        partsKey: "^rocker[LR]$",
+        mm: { width: 12, height: 26 },
+        // Volume and channel — tall pills either side, below the pad.
+        mountsMm: [
+          [-15, 4, 0],
+          [15, 4, 0],
+        ],
+        prov: { source: "reference: volume/channel rockers", confidence: "recalled" },
+      },
+      {
+        name: "navpad",
+        count: 1,
+        face: "front",
+        partsKey: "^navpad$",
+        mm: { width: 36 },
+        // The directional ring with an OK centre — one concentric part, like the gamepad d-pad, so
+        // the ring and its centre don't read as two overlapping controls.
+        mountsMm: [[0, -40, 0]],
+        prov: { source: "reference: central navigation ring", confidence: "recalled" },
+      },
+      {
+        name: "functionButton",
+        count: 4,
+        face: "front",
+        partsKey: "^fn[A-Z]",
+        mm: { width: 10 },
+        mountsMm: [
+          [-15, -16, 0],
+          [15, -16, 0],
+          [-15, -64, 0],
+          [15, -64, 0],
+        ],
+        prov: { source: "reference: menu/return/exit/info keys around the ring", confidence: "recalled" },
+      },
+    ],
+    flatSurfaces: ["front face — flat plateau the keys sit on; the back is domed for the palm"],
+    notes: [
+      "One-pass build: the dossier (this entry) came first, the factory read its mounts, and the gates caught what was wrong on the first render — unexposed keys, the shell mis-listed as a part, a floating ring — not a single missing control. Reference: out/ref/remote/.",
+    ],
+  },
 };
 
 /** Look up a required part by name. */
