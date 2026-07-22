@@ -1,5 +1,6 @@
 import React from "react";
 import { theme } from "../theme";
+import { FilmGrade } from "../lib/FilmGrade";
 import {
   FloatingPhonePromo,
   FLOATING_PHONE_DURATION,
@@ -66,4 +67,15 @@ export const LumoPromo: React.FC<PromoProps> = (props) => (
       awardedTo: "Awarded to Alex · lumo.app",
     }}
   />
+);
+
+/**
+ * The same promo through the cinematic finishing pass — grain, vignette, grade, a slow light leak.
+ * A SEPARATE composition on purpose: the shipped LumoPromo keeps its golden baseline (Δ=0), and
+ * this is the premium variant to compare against and to render for portfolio.
+ */
+export const LumoPromoPremium: React.FC<PromoProps> = (props) => (
+  <FilmGrade leakColor="150, 190, 255">
+    <LumoPromo {...props} />
+  </FilmGrade>
 );

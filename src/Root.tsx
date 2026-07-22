@@ -22,7 +22,7 @@ import { RemoteBench, REMOTE_BENCH_DURATION } from "./models/remote/RemoteBench"
 import { PhoneHero, PHONE_HERO_DURATION } from "./models/phone/PhoneHero";
 import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
-import { LumoPromo, LUMO_DURATION } from "./lumo/LumoPromo";
+import { LumoPromo, LumoPromoPremium, LUMO_DURATION } from "./lumo/LumoPromo";
 import { LUMO_DEFAULTS } from "./lumo/lumo.map";
 import { LevelUpCreative, LEVELUP_DURATION } from "./creative/LevelUpCreative";
 import { LevelUpCreativeV2, LEVELUP2_DURATION } from "./creative/LevelUpCreativeV2";
@@ -49,6 +49,17 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="LumoPromo"
         component={LumoPromo}
+        durationInFrames={LUMO_DURATION}
+        fps={FPS}
+        width={W}
+        height={H}
+        schema={promoSchema}
+        defaultProps={LUMO_DEFAULTS}
+      />
+      {/* Same promo through the cinematic finishing pass (FilmGrade) — premium variant for portfolio. */}
+      <Composition
+        id="LumoPromoPremium"
+        component={LumoPromoPremium}
         durationInFrames={LUMO_DURATION}
         fps={FPS}
         width={W}
