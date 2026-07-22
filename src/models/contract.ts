@@ -2,6 +2,7 @@ import { Box3, DoubleSide, Mesh, Object3D, Quaternion, Raycaster, Vector3 } from
 import { inspectMesh } from "./meshHealth";
 import { FACE_NORMAL, OBJECT_CLASSES } from "./knowledge/objectClasses";
 import { checkDepthProfile } from "./depthProfile";
+import { checkWaist } from "./formLandmarks";
 import type { Group } from "three";
 
 /**
@@ -416,6 +417,7 @@ export interface ContractViolation {
     | "under-count"
     | "wrong-face"
     | "depth"
+    | "form"
     | "waived"
     | "buried"
     | "floating"
@@ -535,8 +537,12 @@ export const checkPartsContract = (
     violations.push(
       ...checkRequiredParts(root, present, contract.classId, contract.omittedParts),
     );
-    const profile = OBJECT_CLASSES[contract.classId]?.depthProfile;
-    if (profile) violations.push(...checkDepthProfile(root, profile));
+    const cls = OBJECT_CLASSES[contract.classId];
+    if (cls?.depthProfile) violations.push(...checkDepthProfile(root, cls.depthProfile));
+    if (cls?.waist) {
+      const severity = cls.status === "sourced" ? "error" : "warning";
+      violations.push(...checkWaist(root, cls.waist, severity));
+    }
   }
 
   if (contract.surfaceAxis !== null) {

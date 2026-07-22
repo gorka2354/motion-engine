@@ -125,11 +125,25 @@ export interface DepthProfile {
   severity?: "error" | "warning";
 }
 
+/**
+ * A silhouette waist: the outline narrows between the shoulder and the grip. Declaring it makes
+ * "the grips are defined, not one mass" a checkable fact instead of an eyeball call — see
+ * formLandmarks.ts. atY are fractions of the mesh half-height: [shoulder, waist, grip].
+ */
+export interface WaistLandmark {
+  mesh: string;
+  atY: [number, number, number];
+  /** Waist half-width must be ≤ min(shoulder, grip) × ratio. Below 1 requires a real neck. */
+  ratio: number;
+}
+
 export interface ObjectClass {
   id: string;
   /** Overall bounding box of a representative specimen. */
   boundingMm: { width: number; height: number; depth: number };
   source: string;
+  /** A form landmark: the silhouette necks in below the shoulder (a defined grip). */
+  waist?: WaistLandmark;
   /**
    * How much this entry can be trusted to gate on. "sourced" = every fact carries published or
    * measured provenance, so a violation FAILS. "drafted" = some fact is recalled or derived, so a
@@ -164,6 +178,11 @@ export const OBJECT_CLASSES: Record<string, ObjectClass> = {
     // per-sub-part depths — not Wikipedia infoboxes, not Wikidata, not PartNet. That figure stays
     // hand-authored, so the entry warns rather than blocks.
     status: "drafted",
+    // The grips neck in below the shoulder. Measured on the good model: half-width shoulder 2.00,
+    // waist 1.72, grip 1.76 → waist is a local minimum (0.977 of the grip). The old monotonic
+    // outline had no such minimum (grip < waist), which is exactly why the grips read as one mass.
+    // Gate 0.99 requires the neck to be real, not marginal.
+    waist: { mesh: "Body", atY: [0.19, -0.375, -0.56], ratio: 0.99 },
     // Housing shallower than grips. The check compares the DEEPEST housing probe to the MEDIAN grip
     // (see depthProfile.ts): measured max-housing/median-grip = 0.72, so the 0.85 gate clears it by
     // ~15% and fails the puffy bug (which drives the ratio to ~1.0). The blind band is 0.72–0.85: a

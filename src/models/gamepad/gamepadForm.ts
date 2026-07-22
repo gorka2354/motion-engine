@@ -35,8 +35,13 @@ export const FACE_DEPTH = 28 * U;
 export const FACE_Z = FACE_DEPTH * 0.5;
 
 /**
- * Front silhouette, traced from the reference. It measured 4.4% aspect drift against the photo,
- * so it is kept unchanged — the outline was never the problem.
+ * Front silhouette, traced from the reference. The bbox aspect drifts only 4.4% from the photo, so
+ * the OVERALL size is right — but the outline used to descend from the shoulders to the grip tip
+ * monotonically, and that is exactly why the grips read as one mass with the body. A real
+ * controller necks IN below the shoulder (a concave waist where the thumb wraps) and then flares
+ * back out into the grip lobe. Those three points on the outer edge — waist-in, grip-out — are the
+ * grip definition; the bbox is unchanged (widest is still the shoulder, lowest still the tip), so
+ * the silhouette-aspect gate stays satisfied while the SHAPE gains a defined grip.
  */
 const FRONT_RIGHT: [number, number][] = [
   [0.0, 1.28],
@@ -50,12 +55,13 @@ const FRONT_RIGHT: [number, number][] = [
   [1.86, 0.87],
   [1.97, 0.52],
   [2.0, 0.2],
-  [1.95, -0.08],
-  [1.84, -0.37],
-  [1.7, -0.65],
-  [1.54, -0.91],
-  [1.35, -1.15],
-  [1.13, -1.33],
+  [1.94, -0.06],
+  [1.79, -0.3], // waist begins — the outer edge draws in below the shoulder
+  [1.70, -0.53], // narrowest of the neck
+  [1.76, -0.74], // grip flares back out into its lobe (rounded, not winged)
+  [1.62, -0.96],
+  [1.4, -1.16],
+  [1.15, -1.33],
   [0.87, -1.41],
   [0.68, -1.32],
   [0.52, -1.12],
