@@ -43,6 +43,7 @@ const COL = {
   ring: 0x303338,
   ok: 0x3f434a,
   legend: 0xb7bcc4,
+  ir: 0x0a0a0c,
 } as const;
 
 const CLASS = OBJECT_CLASSES.remote;
@@ -149,6 +150,16 @@ export const createRemoteModel = (options: RemoteModelOptions = {}): ModelHandle
   const body = new Mesh(loftGeometry(roundedRect(BODY_W, BODY_H, 22 * U), bodySections()), bodyMaterial);
   body.name = "Body";
   root.add(body);
+
+  // ── IR emitter window at the top tip — the one feature that instantly says "remote" ──
+  // A near-black glossy disc, not a control (no legend, no class entry): it is a surface feature of
+  // the shell, so it goes straight on the body rather than through the part-count gate.
+  const irMaterial = new MeshStandardMaterial({ color: new Color(COL.ir), roughness: 0.16, metalness: 0.1 });
+  const irWindow = new Mesh(new CylinderGeometry(0.09, 0.09, 0.03, 28), irMaterial);
+  irWindow.rotation.x = Math.PI / 2;
+  irWindow.position.set(0, BODY_H * 0.44, FACE_Z + 0.002);
+  irWindow.name = "IrWindow";
+  root.add(irWindow);
 
   /**
    * A button cap as ONE lathed surface: a straight skirt turning through a chamfer into a slightly
