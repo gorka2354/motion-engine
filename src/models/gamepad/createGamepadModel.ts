@@ -12,6 +12,7 @@ import type { ModelHandles } from "../types";
 import { loftGeometry } from "../loft";
 import { BODY_SECTIONS, FACE_Z, U, frontOutline, gripSweep } from "./gamepadForm";
 import { mountPoints, partSize } from "../knowledge/objectClasses";
+import { button } from "../detail/button";
 import { glyphGeometry } from "../glyphs";
 import type { GlyphName } from "../glyphs";
 import type { PartsContract } from "../contract";
@@ -319,27 +320,22 @@ export const createGamepadModel = (
     return g;
   });
 
-  // ── ABXY: black button + coloured insert (glyphs need a texture — see header) ──
-  const faceButton = (tint: number, letter: GlyphName): Group => {
-    const g = new Group();
-    const base = new Mesh(new CylinderGeometry(0.125, 0.125, 0.07, 28), buttonMaterial);
-    base.rotation.x = Math.PI / 2;
-    g.add(base);
-    // A real extruded letter, not a coloured dot: the legend is the whole point of ABXY, and
-    // geometry gets it without a canvas texture or a loaded font (hard rule #6).
-    // No emissive — an earlier pass lit these and they washed out to pastel against black.
-    const glyph = new Mesh(
-      glyphGeometry(letter, { size: 0.125, depth: 0.02, bevel: 0.004 }),
-      new MeshStandardMaterial({ color: new Color(tint), roughness: 0.42, metalness: 0 }),
-    );
-    glyph.position.z = 0.045;
-    g.add(glyph);
-    return g;
-  };
-  const buttonY = faceButton(COL.y, "Y");
-  const buttonX = faceButton(COL.x, "X");
-  const buttonB = faceButton(COL.b, "B");
-  const buttonA = faceButton(COL.a, "A");
+  // ── ABXY: a moulded lathed cap with a coloured extruded letter ──
+  // Now built from the shared detail library — the second consumer that earned it. The cap used to
+  // be a flat cylinder; a real controller button is a domed, chamfered cap that catches a rim
+  // highlight, which the lathe gives. The letter is still real extruded geometry (glyphs.ts), tinted
+  // and LIT — no emissive, an earlier pass lit these and they washed out to pastel against black.
+  const faceButton = (name: string, tint: number, letter: GlyphName): Group =>
+    button(name, {
+      radius: 0.125,
+      capMaterial: buttonMaterial,
+      legend: glyphGeometry(letter, { size: 0.125, depth: 0.02, bevel: 0.004 }),
+      legendMaterial: new MeshStandardMaterial({ color: new Color(tint), roughness: 0.42, metalness: 0 }),
+    });
+  const buttonY = faceButton("buttonY", COL.y, "Y");
+  const buttonX = faceButton("buttonX", COL.x, "X");
+  const buttonB = faceButton("buttonB", COL.b, "B");
+  const buttonA = faceButton("buttonA", COL.a, "A");
   mount(buttonY, 1.02, 0.9, 0.02);
   mount(buttonX, 0.74, 0.63, 0.02);
   mount(buttonB, 1.3, 0.63, 0.02);
