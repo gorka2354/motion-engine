@@ -94,6 +94,37 @@ export interface RequiredPart {
   prov: Provenance;
 }
 
+/** One thickness sample on a face, positioned as a fraction of the mesh's half-extent. */
+export interface DepthProbe {
+  name: string;
+  /** [along-first-perp-axis, along-second-perp-axis], each −1..1. [0,0] is the centre. */
+  at: [number, number];
+  /** Groups probes so a relation can compare whole regions (e.g. "housing" vs "grip"). */
+  role?: string;
+}
+
+/**
+ * How a class distributes its DEPTH — the fact a photo cannot supply and a silhouette cannot show.
+ *
+ * A single view fixes the outline and leaves depth free (the bas-relief ambiguity): every depth
+ * profile with the same head-on shape is consistent with the image. So "the centre is shallower
+ * than the grips" has to be asserted, not measured off a picture. Checked by raycasting the named
+ * shell mesh — see depthProfile.ts.
+ */
+export interface DepthProfile {
+  /** Name of the shell mesh to measure — "Body", "Deck". Parts are ignored. */
+  mesh: string;
+  /** Ray direction: the outward face normal to measure thickness along. */
+  axis: [number, number, number];
+  probes: DepthProbe[];
+  /** median(region) ≤ median(thanRegion) × ratio. Catches one region carrying too much depth. */
+  thinner?: { region: string; thanRegion: string; ratio: number }[];
+  /** All probes within this factor of each other — a genuinely uniform slab (phone, deck). */
+  uniformWithin?: number;
+  /** Reported as errors by default; a profile you are unsure of can warn instead. */
+  severity?: "error" | "warning";
+}
+
 export interface ObjectClass {
   id: string;
   /** Overall bounding box of a representative specimen. */
@@ -106,6 +137,8 @@ export interface ObjectClass {
    * which costs more than the gate was worth.
    */
   status: "sourced" | "drafted";
+  /** How the class distributes depth across its shell — the check that catches a puffy form. */
+  depthProfile?: DepthProfile;
   /** Parts the class must have, with counts and faces. */
   requiredParts?: RequiredPart[];
   /** Parts that carry their own depth — the whole point of the file. */
@@ -131,6 +164,33 @@ export const OBJECT_CLASSES: Record<string, ObjectClass> = {
     // per-sub-part depths — not Wikipedia infoboxes, not Wikidata, not PartNet. That figure stays
     // hand-authored, so the entry warns rather than blocks.
     status: "drafted",
+    // Housing shallower than grips. The check compares the DEEPEST housing probe to the MEDIAN grip
+    // (see depthProfile.ts): measured max-housing/median-grip = 0.72, so the 0.85 gate clears it by
+    // ~15% and fails the puffy bug (which drives the ratio to ~1.0). The blind band is 0.72–0.85: a
+    // partial collapse that only reaches 0.84 passes — tightening needs a watched mid-collapse
+    // fixture, not a guessed number, so it stays at 0.85 with the band documented rather than moved.
+    //
+    // Two extra grip probes give the median an outlier margin. severity is "warning", not "error":
+    // gamepadForm derives its depths from THIS table, so the check catches the loft collapsing its
+    // own relief, never a wrong figure in the table — weak, derived signal, consistent with the rest
+    // of this "drafted" entry warning rather than blocking. Phone and laptop, which derive nothing
+    // from the class, keep the default "error".
+    depthProfile: {
+      mesh: "Body",
+      axis: [0, 0, 1],
+      severity: "warning",
+      probes: [
+        { name: "housing-top", at: [0, 0.55], role: "housing" },
+        { name: "housing-mid", at: [0, 0.3], role: "housing" },
+        { name: "housing-l", at: [-0.15, 0.4], role: "housing" },
+        { name: "housing-r", at: [0.15, 0.4], role: "housing" },
+        { name: "grip-l", at: [-0.72, -0.45], role: "grip" },
+        { name: "grip-r", at: [0.72, -0.45], role: "grip" },
+        { name: "grip-outer-l", at: [-0.78, -0.2], role: "grip" },
+        { name: "grip-outer-r", at: [0.78, -0.2], role: "grip" },
+      ],
+      thinner: [{ region: "housing", thanRegion: "grip", ratio: 0.85 }],
+    },
     requiredParts: [
       {
         name: "trigger",
@@ -240,6 +300,27 @@ export const OBJECT_CLASSES: Record<string, ObjectClass> = {
     boundingMm: { width: 71, height: 147, depth: 8 },
     source: "typical ~6-inch handset",
     status: "drafted",
+    // A handset back is a uniform slab: measured 1.00× across the whole face, gate 1.25×. Full
+    // signal — createPhoneModel derives nothing from this table.
+    //
+    // What this actually catches, honestly: NOT a domed centre. The body is a flat-capped loft, and
+    // a loft cannot dome its own middle — every section's vertices share a z, so scaling a ring
+    // changes its width, never the depth under the centre. What trips it is EDGE de-covering (an
+    // over-taper that pulls a probe off the flat cap) or, in future, a body rebuilt as an extruded
+    // shell with a camera bump merged in. The doming guard is forward scaffolding for that; probes
+    // are held at 0.6 half-extent so a legitimate edge roll-off can't false-fire it.
+    depthProfile: {
+      mesh: "Body",
+      axis: [0, 0, 1],
+      probes: [
+        { name: "centre", at: [0, 0] },
+        { name: "top", at: [0, 0.6] },
+        { name: "bottom", at: [0, -0.6] },
+        { name: "side", at: [0.6, 0] },
+        { name: "corner", at: [0.55, 0.55] },
+      ],
+      uniformWithin: 1.25,
+    },
     subParts: [
       { name: "camera-island", mm: { width: 30, depth: 2 }, note: "raised above the back panel" },
       { name: "screen-bezel", mm: { width: 2 }, note: "modern handsets are near-bezel-less" },
@@ -253,6 +334,26 @@ export const OBJECT_CLASSES: Record<string, ObjectClass> = {
     boundingMm: { width: 300, height: 210, depth: 16 },
     source: "13-inch class, lid closed",
     status: "drafted",
+    // The deck is a flat slab, measured along Y (the machine lies in the XZ plane): 1.00× across,
+    // gate 1.25×. Full signal — createLaptopModel derives nothing from this table.
+    //
+    // Reachable failure: an over-large edge chamfer, or a deck rebuilt with a wedge taper — NOT a
+    // centre bulge, which the extruded slab cannot form. Probes are held at 0.6 half-extent so
+    // today's 0.03 bevel is clear; a future premium chamfer near ~0.3 would reach a 0.8 probe and
+    // false-fire, so if the deck's bevel grows, pull these further in. A genuinely wedge-profiled
+    // deck (a MacBook-Air taper) would legitimately trip this and needs its own sub-class then.
+    depthProfile: {
+      mesh: "Deck",
+      axis: [0, 1, 0],
+      probes: [
+        { name: "centre", at: [0, 0] },
+        { name: "front", at: [0, 0.6] },
+        { name: "back", at: [0, -0.6] },
+        { name: "left", at: [-0.6, 0] },
+        { name: "right", at: [0.6, 0] },
+      ],
+      uniformWithin: 1.25,
+    },
     subParts: [
       { name: "deck", mm: { depth: 9 } },
       { name: "lid", mm: { depth: 6 } },

@@ -85,6 +85,7 @@ export interface LaptopModelParts extends Record<string, Mesh | Group | MeshStan
  * top, the screen rides a lid that swings through 100°. Position and proportion still apply.
  */
 export const LAPTOP_CONTRACT: PartsContract = {
+  classId: "laptop",
   required: ["lid", "deck", "keycaps", "trackpad"],
   layout: [
     { of: "keycaps", is: "above", than: "deck" }, // keys sit ON the deck, not through it

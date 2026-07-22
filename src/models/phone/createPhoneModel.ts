@@ -111,6 +111,7 @@ export interface PhoneModelOptions {
  * the same lesson the laptop taught (a hinged lid has no fixed side either).
  */
 export const PHONE_CONTRACT: PartsContract = {
+  classId: "phone",
   required: ["screen", "body", "cameraIsland"],
   layout: [
     { of: "screen", is: "inFrontOf", than: "body" },
