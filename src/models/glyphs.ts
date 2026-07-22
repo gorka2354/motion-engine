@@ -10,8 +10,10 @@ import type { BufferGeometry } from "three";
  * actually need as `Shape` outlines keeps factories synchronous and unit-testable, and the
  * letters get real extruded depth so they catch the key light like moulded plastic does.
  *
- * Scope on purpose: only the marks a controller face needs. This is not a font — for arbitrary
- * text, render it in the 2D layer over the 3D, the way BybitGif composites its card faces.
+ * Scope on purpose: only the bespoke marks no font carries — a power symbol, a nexus badge, the
+ * ABXY letterforms tuned to read at cap scale. For arbitrary ALPHANUMERICS (digits, VOL/CH) use
+ * detail/text.ts, which extrudes a statically-imported typeface — the sanctioned exception, still
+ * DOM-free and synchronous because the font is bundled JSON, never a runtime load.
  *
  * All glyphs are drawn in a 1×1 box centred on the origin, so a caller scales by cap height.
  */
@@ -134,12 +136,38 @@ const shapeNexus = (): Shape => {
   return s;
 };
 
+/**
+ * IEC power mark: a broken ring with a vertical bar rising through the gap at the top. Two disjoint
+ * filled regions, returned as an array — ExtrudeGeometry takes Shape[] and extrudes both, so the
+ * bar and ring stay separate contours instead of being forced into one self-intersecting outline.
+ */
+const shapePower = (): Shape[] => {
+  const outer = 0.5;
+  const inner = 0.32;
+  const half = 0.32; // half the top gap, radians
+  const top = Math.PI / 2;
+  const ring = new Shape();
+  // Outer arc the long way round (CCW), leaving the gap at the top, then the inner arc back.
+  ring.absarc(0, 0, outer, top + half, top - half + Math.PI * 2, false);
+  ring.absarc(0, 0, inner, top - half + Math.PI * 2, top + half, true);
+  ring.closePath();
+
+  const bar = new Shape();
+  bar.moveTo(-0.09, 0.05);
+  bar.lineTo(0.09, 0.05);
+  bar.lineTo(0.09, 0.62);
+  bar.lineTo(-0.09, 0.62);
+  bar.closePath();
+  return [ring, bar];
+};
+
 const GLYPHS = {
   A: shapeA,
   B: shapeB,
   X: shapeX,
   Y: shapeY,
   nexus: shapeNexus,
+  power: shapePower,
 } as const;
 
 export type GlyphName = keyof typeof GLYPHS;
