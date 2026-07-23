@@ -339,6 +339,123 @@ const cityAmbient = () => {
   return [L, R];
 };
 
+// ── extended set (Zarya promo experiment) — moment-specific cues ──
+
+// power-down — a hard CRT/power-loss cut: pitch collapses fast with an early crackle,
+// then dies. For the shutdown "the machine loses power" beat.
+const powerDown = () => {
+  const N = secs(0.55), y = new Float32Array(N);
+  const rng = mulberry32(31);
+  let ph = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, prog = t / (N / SR);
+    const f = 520 * Math.pow(0.12, prog); // 520 → ~62 Hz collapse
+    ph += (TAU * f) / SR;
+    const crackle = (rng() * 2 - 1) * Math.max(0, 0.45 - prog) * 0.35; // early electric crackle
+    y[i] = (Math.sin(ph) * 0.85 + crackle) * env(t, 0.001, 0.15) * (1 - prog * 0.35);
+  }
+  lowpass(y, 2400, 2);
+  return normalize(y, 0.72);
+};
+
+// power-up — a warm rising swell that lands on a soft bell: the app powers back.
+const powerUp = () => {
+  const N = secs(0.62), y = new Float32Array(N);
+  let ph = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, prog = t / (N / SR);
+    const f = 80 * Math.pow(6, prog); // 80 → ~480 Hz rise
+    ph += (TAU * f) / SR;
+    y[i] = Math.sin(ph) * Math.sin(Math.PI * prog * 0.9) * 0.6;
+  }
+  const bAt = secs(0.44); // soft bell landing (E5)
+  for (let i = bAt; i < N; i++) {
+    const tt = (i - bAt) / SR;
+    y[i] += (Math.sin(TAU * 659.25 * tt) + 0.3 * Math.sin(TAU * 1318.5 * tt)) * env(tt, 0.004, 0.16) * 0.38;
+  }
+  lowpass(y, 3000, 2);
+  return normalize(y, 0.62);
+};
+
+// dawn chime — Заря rising: a soft major bell bloom (C–E–G–C) with airy shimmer.
+const dawnChime = () => {
+  const N = secs(1.3), y = new Float32Array(N);
+  const notes = [[0, 523.25], [0.12, 659.25], [0.24, 783.99], [0.4, 1046.5]];
+  const rng = mulberry32(41);
+  for (const [start, f] of notes)
+    for (let i = 0; i < N; i++) {
+      const t = i / SR - start;
+      if (t < 0) continue;
+      y[i] += (Math.sin(TAU * f * t) + 0.25 * Math.sin(TAU * f * 2 * t) + 0.1 * Math.sin(TAU * f * 3 * t)) * env(t, 0.02, 0.55) * 0.4;
+    }
+  let sh = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, nz = rng() * 2 - 1;
+    sh += onepole(7000) * (nz - sh);
+    y[i] += (nz - sh) * env(t, 0.05, 0.6) * 0.06;
+  }
+  const dry = Float32Array.from(y);
+  for (const [d, g] of [[secs(0.08), 0.3], [secs(0.17), 0.18]])
+    for (let i = d; i < N; i++) y[i] += dry[i - d] * g;
+  lowpass(y, 5000, 1);
+  return normalize(y, 0.66);
+};
+
+// morph — the unified bar transforming into the choice selector: a quick filtered
+// up-sweep + a soft tone, digital but not harsh.
+const morph = () => {
+  const N = secs(0.35), y = new Float32Array(N);
+  const rng = mulberry32(53);
+  let lp = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, prog = t / (N / SR);
+    const nz = rng() * 2 - 1;
+    lp += onepole(600 + 2400 * prog) * (nz - lp);
+    const tone = Math.sin(TAU * (400 + 500 * prog) * t) * 0.4;
+    y[i] = (lp * 0.5 + tone) * Math.pow(Math.sin(Math.PI * prog), 1.2);
+  }
+  lowpass(y, 3200, 2);
+  return normalize(y, 0.52);
+};
+
+// type tick — a very short, soft keystroke click (for typing in the bar).
+const typeTick = () => {
+  const N = secs(0.03), y = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / SR;
+    y[i] = Math.sin(TAU * 1800 * t) * env(t, 0.0008, 0.006) * 0.5;
+  }
+  lowpass(y, 4000, 1);
+  return normalize(y, 0.42);
+};
+
+// rumble — deep sub-bass thrust swell under the rocket liftoff (~1.2s).
+const rumble = () => {
+  const N = secs(1.2), y = new Float32Array(N);
+  const rng = mulberry32(61);
+  let b = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, prog = t / (N / SR);
+    b = (b + (rng() * 2 - 1) * 0.02) * 0.995; // brown-noise texture
+    const sub = Math.sin(TAU * 46 * t) * 0.6 + Math.sin(TAU * 68 * t) * 0.3;
+    const swell = Math.pow(Math.sin(Math.PI * Math.min(1, prog * 1.3)), 1.4);
+    y[i] = (sub + b * 2) * swell;
+  }
+  lowpass(y, 240, 3); // keep it deep, no highs
+  return normalize(y, 0.74);
+};
+
+// count tick — a firm single tick for the 3·2·1 countdown steps.
+const countTick = () => {
+  const N = secs(0.07), y = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / SR;
+    y[i] = (Math.sin(TAU * 900 * t) + 0.3 * Math.sin(TAU * 1800 * t)) * env(t, 0.001, 0.02);
+  }
+  lowpass(y, 3000, 2);
+  return normalize(y, 0.62);
+};
+
 // ── run ──
 fs.mkdirSync(OUT, { recursive: true });
 const report = [];
@@ -351,6 +468,13 @@ report.push(writeWav("sheet.wav", [sheet()]));
 report.push(writeWav("success.wav", [success()]));
 report.push(writeWav("count.wav", [count()]));
 report.push(writeWav("levelup.wav", [levelUp()]));
+report.push(writeWav("powerDown.wav", [powerDown()]));
+report.push(writeWav("powerUp.wav", [powerUp()]));
+report.push(writeWav("dawnChime.wav", [dawnChime()]));
+report.push(writeWav("morph.wav", [morph()]));
+report.push(writeWav("typeTick.wav", [typeTick()]));
+report.push(writeWav("rumble.wav", [rumble()]));
+report.push(writeWav("countTick.wav", [countTick()]));
 report.push(writeWav("cityAmbient.wav", cityAmbient()));
 report.push(writeWav("bed.wav", bed()));
 console.log("generated → public/audio/");

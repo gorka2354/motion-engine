@@ -10,39 +10,10 @@
 import React from "react";
 import { Sequence, staticFile } from "remotion";
 import { Audio } from "@remotion/media";
+import { CLIPS, DEFAULT_VOL, type SfxClip } from "./clips";
 
-export const CLIPS = {
-  tap: "audio/tap.wav",
-  select: "audio/select.wav",
-  confirm: "audio/confirm.wav",
-  pop: "audio/pop.wav",
-  whoosh: "audio/whoosh.wav",
-  sheet: "audio/sheet.wav", // soft tonal panel-rise (use for sheet/drawer opens, not whoosh)
-  success: "audio/success.wav",
-  count: "audio/count.wav", // ~2.3s accelerating ticks + resolve ding — for count-up beats
-  levelup: "audio/levelup.wav", // soft rising "ta-da" — for level-up beats
-  hmm1: "audio/hmm1.wav", // recorded vocal reaction (surprise/approval) for smiles
-  hmm2: "audio/hmm2.wav",
-  hmm3: "audio/hmm3.wav",
-} as const;
-
-export type SfxClip = keyof typeof CLIPS;
-
-// suggested default mix level per clip (relative; hero louder than ticks)
-const DEFAULT_VOL: Record<SfxClip, number> = {
-  tap: 0.5,
-  select: 0.45,
-  confirm: 0.7,
-  pop: 0.6,
-  whoosh: 0.8,
-  sheet: 0.55,
-  success: 0.95,
-  count: 0.6,
-  levelup: 0.6,
-  hmm1: 0.7,
-  hmm2: 0.7,
-  hmm3: 0.7,
-};
+export { CLIPS };
+export type { SfxClip };
 
 export const Sfx: React.FC<{
   clip: SfxClip;
