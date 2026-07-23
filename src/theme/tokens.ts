@@ -116,6 +116,41 @@ export const theme = {
     tint: "#FFF0F3", // light coral card / ring-track tint
     tintDeep: "#FFE4E9",
   },
+  /** Zarya brand stage (project preset) — Soviet space-age AI terminal.
+   *  Deep-space navy chrome, ONE Soviet-red accent over brass-gold hairlines.
+   *  Exact values from zarya-terminal themes.ts (Заря · Космос, the default). */
+  zarya: {
+    bg: "#0a0e1a", // deep-space navy — app + terminal background
+    bgElev1: "#10162a", // panels / launch-pad body
+    bgElev2: "#192244", // hover / selected rows
+    panel: "#080b16", // darkest chrome (activity bar, sidebars, titlebar)
+    consoleBg: "#05070f", // launch-pad rocket console
+    border: "rgba(224,177,90,0.16)", // brass hairline
+    borderStrong: "rgba(224,177,90,0.34)",
+    fg: "#e9e4d6", // warm off-white
+    fgDim: "#a8a18b",
+    fgFaint: "#5c6180",
+    accent: "#e2231a", // Soviet red — the single accent
+    accent2: "#e0b15a", // brass gold — tech labels, clock, wordmark slash
+    accentGrad: "linear-gradient(120deg, #e2231a 0%, #f0662e 52%, #e0b15a 100%)",
+    danger: "#f0453a",
+    success: "#5fb88a",
+    // terminal ANSI subset that appears on screen
+    termFg: "#e4dfd0",
+    termGreen: "#6fbf8e",
+    termYellow: "#e0b15a",
+    termBlue: "#5b8cf0",
+    termCyan: "#4fd6d6",
+    termCursor: "#e0b15a",
+    // stage extras for the space promo
+    star: "240,236,216", // rgb — starfield base
+    starGold: "224,177,90", // rgb — golden stars
+    redGlow: "radial-gradient(closest-side, rgba(226,35,26,0.30), transparent 72%)",
+    goldGlow: "radial-gradient(closest-side, rgba(224,177,90,0.26), transparent 72%)",
+    windowShadow:
+      "0 60px 140px -40px rgba(0,0,0,0.78), 0 24px 60px -30px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(224,177,90,0.14)",
+    ctaGlow: "0 24px 48px -14px rgba(226,35,26,0.55)",
+  },
   shadow: {
     phone:
       "0 80px 140px -40px rgba(9,46,92,0.45), 0 30px 60px -30px rgba(9,46,92,0.38), inset 0 0 0 2px rgba(255,255,255,0.06)",

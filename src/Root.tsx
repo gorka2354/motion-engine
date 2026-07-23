@@ -27,6 +27,7 @@ import { LUMO_DEFAULTS } from "./lumo/lumo.map";
 import { LevelUpCreative, LEVELUP_DURATION } from "./creative/LevelUpCreative";
 import { LevelUpCreativeV2, LEVELUP2_DURATION } from "./creative/LevelUpCreativeV2";
 import { LevelUpMorph, LEVELUP_MORPH_DURATION } from "./creative/LevelUpMorph";
+import { ZaryaPromo, ZaryaPromoPremium, ZARYA_PROMO_DURATION } from "./zarya/ZaryaPromo";
 
 const FPS = 30;
 const W = 1080;
@@ -71,6 +72,12 @@ export const RemotionRoot: React.FC = () => {
       <Composition id="JumperPromo" component={JumperPromo} durationInFrames={JUMPER_PROMO_DURATION} fps={FPS} width={W} height={H} />
       {/* Shotik — 16:9 brand preset, LaptopFrame, MagicMove chain as the transition language. */}
       <Composition id="ShotikPromo" component={ShotikPromo} durationInFrames={SHOTIK_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
+      {/* Zarya — AI terminal, Soviet space-age. Persistent window on a starfield, TransitionSeries acts. */}
+      <Composition id="ZaryaPromo" component={ZaryaPromo} durationInFrames={ZARYA_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
+      <Composition id="ZaryaPromoPremium" component={ZaryaPromoPremium} durationInFrames={ZARYA_PROMO_DURATION} fps={FPS} width={1920} height={1080} />
+      {/* 9:16 social cut — the SAME aspect-responsive component re-laid-out for portrait (own scale/camera, captions lifted into the lower band). */}
+      <Composition id="ZaryaPromoV" component={ZaryaPromo} durationInFrames={ZARYA_PROMO_DURATION} fps={FPS} width={1080} height={1920} />
+      <Composition id="ZaryaPromoVPremium" component={ZaryaPromoPremium} durationInFrames={ZARYA_PROMO_DURATION} fps={FPS} width={1080} height={1920} />
       {/* Level-Up — crypto RPG creative, AI-generated footage (ai-gen layer) under a Remotion UI. */}
       <Composition id="LevelUpCreative" component={LevelUpCreative} durationInFrames={LEVELUP_DURATION} fps={FPS} width={1080} height={1920} />
       <Composition id="LevelUpCreativeV2" component={LevelUpCreativeV2} durationInFrames={LEVELUP2_DURATION} fps={FPS} width={1080} height={1920} />
