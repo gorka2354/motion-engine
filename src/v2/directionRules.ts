@@ -20,6 +20,8 @@ export type Role = "hook" | "demo" | "benefit" | "cta";
 /** Canonical act order — a promo should progress forward through these. */
 export const ROLE_ORDER: readonly Role[] = ["hook", "demo", "benefit", "cta"];
 
+const KNOWN_ROLES = new Set<string>(ROLE_ORDER);
+
 export type Severity = "error" | "warn";
 /** gstack `review` disposition: mechanical fix vs. author judgement. */
 export type FixKind = "AUTO-FIX" | "ASK";
@@ -70,6 +72,13 @@ const isValidWindow = (b: Beat): boolean =>
 
 const validBeats = (beats: Beat[]): Beat[] => beats.filter(isValidWindow);
 
+/** A beat tagged with a role the config knows about. Unknown role strings (an
+ *  author typo, or a zod-enum value added without updating actBudget) are
+ *  reported once by lintDirection and skipped by the role rules — never thrown
+ *  on. Only lintDirection sees raw maps; direct callers get the same safety. */
+const hasKnownRole = (b: Beat): b is Beat & { role: Role } =>
+  b.role != null && KNOWN_ROLES.has(b.role);
+
 /** Rule A — every text beat stays on screen long enough to read. */
 export function ruleReadTime(beats: Beat[], cfg: LintConfig): Finding[] {
   return validBeats(beats)
@@ -104,7 +113,7 @@ export function ruleRhythm(beats: Beat[], cfg: LintConfig): Finding[] {
 
 /** Rule C — each role's share of tagged beat-frames sits in a sane band. */
 export function ruleActBudget(beats: Beat[], cfg: LintConfig): Finding[] {
-  const tagged = validBeats(beats).filter((b): b is Beat & { role: Role } => b.role != null);
+  const tagged = validBeats(beats).filter(hasKnownRole);
   if (tagged.length === 0) return [];
   const total = tagged.reduce((s, b) => s + dur(b), 0);
   if (total <= 0) return [];
@@ -113,7 +122,9 @@ export function ruleActBudget(beats: Beat[], cfg: LintConfig): Finding[] {
   const out: Finding[] = [];
   for (const [role, frames] of byRole) {
     const pct = (frames / total) * 100;
-    const [lo, hi] = cfg.actBudget[role];
+    const band = cfg.actBudget[role];
+    if (!band) continue; // defensive: unknown role (lintDirection already flags it)
+    const [lo, hi] = band;
     if (pct < lo || pct > hi) {
       out.push({
         rule: "act-budget",
@@ -128,7 +139,7 @@ export function ruleActBudget(beats: Beat[], cfg: LintConfig): Finding[] {
 
 /** Rule D — tagged roles progress forward (hook→demo→benefit→cta), never back. */
 export function ruleRoleOrder(beats: Beat[]): Finding[] {
-  const tagged = validBeats(beats).filter((b): b is Beat & { role: Role } => b.role != null);
+  const tagged = validBeats(beats).filter(hasKnownRole);
   const out: Finding[] = [];
   let maxSeen = -1;
   for (const b of tagged) {
@@ -167,8 +178,17 @@ export function lintDirection(
       message: `beat "${b?.title ?? "?"}" has an invalid [from,to) window`,
       fix: "ASK" as const,
     }));
+  const unknownRoles: Finding[] = beats
+    .filter((b) => b?.role != null && !KNOWN_ROLES.has(b.role))
+    .map((b) => ({
+      rule: "schema",
+      severity: "error" as const,
+      message: `beat "${b?.title ?? "?"}" has unknown role "${b.role}" (expected ${ROLE_ORDER.join("|")})`,
+      fix: "ASK" as const,
+    }));
   return [
     ...malformed,
+    ...unknownRoles,
     ...ruleReadTime(beats, cfg),
     ...ruleRhythm(beats, cfg),
     ...ruleActBudget(beats, cfg),
