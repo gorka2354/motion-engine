@@ -21,7 +21,8 @@
     "fetch-views": "node scripts/fetch-views.mjs",
     "check-audio": "node scripts/check-audio.mjs",
     "gen-sfx": "node scripts/gen-sfx.mjs",
-    "ai-gen": "node scripts/ai-gen.mjs"
+    "ai-gen": "node scripts/ai-gen.mjs",
+    "direct": "tsx scripts/direct.ts"
   },
   "dependencies": {
     "@react-three/drei": "10.7.7",
@@ -61,6 +62,7 @@
     "pngjs": "^7.0.0",
     "prettier": "3.8.1",
     "ssim.js": "^3.5.0",
+    "tsx": "^4.23.1",
     "typescript": "5.9.3",
     "vitest": "^4.1.10"
   },
