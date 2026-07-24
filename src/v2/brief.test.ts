@@ -42,4 +42,16 @@ describe("briefSchema", () => {
     const bad = { ...ZARYA_BRIEF, palette: { ...ZARYA_BRIEF.palette, glowAlpha: 1.5 } };
     expect(() => briefSchema.parse(bad)).toThrow();
   });
+
+  it("glowAlpha's 0–1 range is inclusive and lower-bounded", () => {
+    const withGlow = (v: number) => ({
+      ...LUMO_BRIEF,
+      palette: { ...LUMO_BRIEF.palette, glowAlpha: v },
+    });
+    // negative side (previously untested): just below 0 is rejected
+    expect(() => briefSchema.parse(withGlow(-0.0001))).toThrow();
+    // inclusive edges: exactly 0 and 1 are accepted, not rejected
+    expect(briefSchema.parse(withGlow(0)).palette.glowAlpha).toBe(0);
+    expect(briefSchema.parse(withGlow(1)).palette.glowAlpha).toBe(1);
+  });
 });
