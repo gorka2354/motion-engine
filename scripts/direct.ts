@@ -55,15 +55,21 @@ if (!doRender) {
   process.exit(0);
 }
 
-console.log(`\nRendering stills for gate-passing variants @ frames ${frames.join(",")} …`);
+console.log(`\nRendering stills for gate-passing variants @ story frames ${frames.join(",")} …`);
 for (const v of variants.filter((x) => x.pass)) {
   const props = `${outDir}/${brand}-${v.preset}.props.json`;
+  const pace = v.styled.style.pace;
   for (const fr of frames) {
+    // Pace-aware sampling: hit the same STORY MOMENT across variants, not the same
+    // absolute frame. A paced timeline moves every beat, so a fixed frame lands on
+    // different content per variant (sometimes mid-transition → reads as broken).
+    // The filename keeps the story-frame label so `-f300` is comparable across presets.
+    const renderFrame = Math.round(Number(fr) * pace);
     const out = `${outDir}/${brand}-${v.preset}-f${fr}.png`;
-    console.log(`  ${v.preset} @ ${fr} → ${out}`);
+    console.log(`  ${v.preset} @ story ${fr} → frame ${renderFrame} → ${out}`);
     execFileSync(
       "npx",
-      ["remotion", "still", base.comp, out, `--frame=${fr}`, `--props=${props}`],
+      ["remotion", "still", base.comp, out, `--frame=${renderFrame}`, `--props=${props}`],
       { stdio: "inherit", shell: true },
     );
   }
