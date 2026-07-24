@@ -35,6 +35,27 @@ describe("planVariants", () => {
     expect(errs.length).toBeGreaterThan(0);
     expect(errs.some((f) => f.rule === "read-time-floor")).toBe(true);
   });
+
+  it("pace-rounding makes the read-floor gate position-dependent (Kinetic, real gate)", () => {
+    // paceProps rounds `from`/`to` independently, so post-pace duration depends on
+    // absolute frame position — not just nominal duration. Same 36f nominal span,
+    // different start frame, opposite gate verdict under the shipped Kinetic (0.82).
+    const fails = planVariants(
+      { ...LUMO_DEFAULTS, beats: [{ title: "x", from: 1, to: 37, y: 0, size: "beat" as const }] },
+      ["Kinetic"],
+    );
+    // from'=round(1*0.82)=1, to'=round(37*0.82)=30 → dur'=29 < 30 floor → FAIL
+    expect(fails[0].pass).toBe(false);
+    expect(fails[0].errors.some((e) => e.rule === "read-time-floor")).toBe(true);
+
+    const passes = planVariants(
+      { ...LUMO_DEFAULTS, beats: [{ title: "x", from: 0, to: 36, y: 0, size: "beat" as const }] },
+      ["Kinetic"],
+    );
+    // from'=0, to'=round(36*0.82)=30 → dur'=30, not < 30 → clears the gate
+    expect(passes[0].pass).toBe(true);
+    expect(passes[0].errors.some((e) => e.rule === "read-time-floor")).toBe(false);
+  });
 });
 
 describe("gateTable", () => {
@@ -45,5 +66,16 @@ describe("gateTable", () => {
   });
   it("shows PASS for the clean Lumo variants", () => {
     expect(gateTable(planVariants(LUMO_DEFAULTS))).toContain("PASS");
+  });
+  it("renders FAIL and a non-zero error count for a variant that misses the read floor", () => {
+    // exercises gateTable's FAIL branch + the "(N err, M warn)" formatting, which
+    // every all-PASS fixture leaves untouched (a 0/0 err/warn swap would ship silently).
+    const bad = {
+      ...LUMO_DEFAULTS,
+      beats: [{ title: "x", from: 0, to: 10, y: 0, size: "beat" as const }],
+    };
+    const table = gateTable(planVariants(bad, ["PremiumCalm"]));
+    expect(table).toContain("FAIL");
+    expect(table).toMatch(/PremiumCalm\s+FAIL\s+\(1 err, 0 warn\)/);
   });
 });
