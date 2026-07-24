@@ -23,6 +23,7 @@ import { PhoneHero, PHONE_HERO_DURATION } from "./models/phone/PhoneHero";
 import { HeroManifest, HERO_MANIFEST_DURATION } from "./HeroManifest";
 import { JumperPromo, JUMPER_PROMO_DURATION } from "./jumper/JumperPromo";
 import { LumoPromo, LumoPromoPremium, LUMO_DURATION } from "./lumo/LumoPromo";
+import { LumoStyled, lumoStyledSchema, PREMIUM_CALM } from "./lumo/LumoStyled";
 import { LUMO_DEFAULTS } from "./lumo/lumo.map";
 import { LevelUpCreative, LEVELUP_DURATION } from "./creative/LevelUpCreative";
 import { LevelUpCreativeV2, LEVELUP2_DURATION } from "./creative/LevelUpCreativeV2";
@@ -67,6 +68,18 @@ export const RemotionRoot: React.FC = () => {
         height={H}
         schema={promoSchema}
         defaultProps={LUMO_DEFAULTS}
+      />
+      {/* Same Lumo timeline through a StylePreset's finish/palette — the "N styles from one
+          timeline" flagship. Render variants with --props='{"style": <preset>}'. */}
+      <Composition
+        id="LumoStyled"
+        component={LumoStyled}
+        durationInFrames={LUMO_DURATION}
+        fps={FPS}
+        width={W}
+        height={H}
+        schema={lumoStyledSchema}
+        defaultProps={{ style: PREMIUM_CALM }}
       />
       {/* Jumper — cross-chain bridge promo, authored from a URL (TransitionSeries). */}
       <Composition id="JumperPromo" component={JumperPromo} durationInFrames={JUMPER_PROMO_DURATION} fps={FPS} width={W} height={H} />

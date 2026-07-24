@@ -28,7 +28,7 @@ describe("planVariants", () => {
       type: { scaleMult: 1, tracking: 0 },
       finish: { grain: 0, filmGrade: 0, letterbox: false },
       sound: { sfxDensity: 1, heroVol: 1, tickVol: 0.5 },
-      palette: { hueRotate: 0 },
+      palette: { hueRotate: 0, saturate: 1 },
     };
     const styled = applyStyle(LUMO_DEFAULTS, tooFast);
     const errs = lintErrors(styled.props);
