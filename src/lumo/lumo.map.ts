@@ -13,7 +13,7 @@ export const LUMO_DEFAULTS: PromoProps = {
     endTitleLines: ["Get good at AI.", "For real."],
   },
   beats: [
-    { title: "Anyone can use AI.", from: 8, to: 54, y: 290, size: "hero" },
+    { title: "Anyone can use AI.", from: 8, to: 54, y: 290, size: "hero", role: "hook" },
     {
       title: "Few get good.",
       accentWord: "good",
@@ -21,6 +21,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 104,
       y: 290,
       size: "hero",
+      role: "hook",
     },
     {
       title: "A plan built for you.",
@@ -29,6 +30,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 250,
       y: 168,
       size: "beat",
+      role: "demo",
     },
     {
       title: "Skills, challenges, careers.",
@@ -37,6 +39,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 405,
       y: 168,
       size: "beatWide",
+      role: "demo",
     },
     {
       title: "One path to follow.",
@@ -45,6 +48,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 495,
       y: 168,
       size: "beat",
+      role: "demo",
     },
     {
       title: "Earn your certificate.",
@@ -53,6 +57,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 905,
       y: 168,
       size: "beat",
+      role: "benefit",
     },
     {
       title: "All your AI in one place.",
@@ -61,6 +66,7 @@ export const LUMO_DEFAULTS: PromoProps = {
       to: 1130,
       y: 168,
       size: "beat",
+      role: "benefit",
     },
   ],
   zoomBeat: {
