@@ -17,6 +17,12 @@ export const typoBeatSchema = z.object({
   y: z.number(),
   /** Typography scale slot from theme.type. */
   size: z.enum(["hero", "beat", "beatWide", "beatZoom"]),
+  /**
+   * Semantic act tag for the direction linter (see src/v2/directionRules.ts).
+   * Optional + unread by any renderer → additive & Δ=0-safe: tagging a beat
+   * changes lint coverage, never pixels. Absent beats are skipped by role rules.
+   */
+  role: z.enum(["hook", "demo", "benefit", "cta"]).optional(),
 });
 
 export const screenName = z.enum([
