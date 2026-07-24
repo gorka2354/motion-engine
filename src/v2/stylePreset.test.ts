@@ -59,4 +59,20 @@ describe("stylePresetSchema", () => {
     const bad = { ...PREMIUM_CALM, finish: { ...PREMIUM_CALM.finish, grain: 2 } };
     expect(() => stylePresetSchema.parse(bad)).toThrow();
   });
+  it("rejects a negative saturate", () => {
+    const bad = { ...PREMIUM_CALM, palette: { ...PREMIUM_CALM.palette, saturate: -0.1 } };
+    expect(() => stylePresetSchema.parse(bad)).toThrow();
+  });
+});
+
+describe("preset looks are distinguishable (the flagship contract)", () => {
+  it("Premium-Calm is the neutral identity; the others diverge in finish/palette", () => {
+    // Premium-Calm must stay the identity look (LumoStyled renders it == LumoPromoPremium).
+    expect(PREMIUM_CALM.palette).toEqual({ hueRotate: 0, saturate: 1 });
+    expect(PREMIUM_CALM.finish.letterbox).toBe(false);
+    // Kinetic is punchier, Editorial is muted + letterboxed — so the three read apart.
+    expect(KINETIC_ENERGETIC.palette.saturate).toBeGreaterThan(1);
+    expect(EDITORIAL_MINIMAL.palette.saturate).toBeLessThan(1);
+    expect(EDITORIAL_MINIMAL.finish.letterbox).toBe(true);
+  });
 });

@@ -37,8 +37,12 @@ export const stylePresetSchema = z.object({
     heroVol: z.number().min(0).max(1),
     tickVol: z.number().min(0).max(1),
   }),
-  /** Accent hue-rotate in degrees over the brand palette (0 = brand default). */
-  palette: z.object({ hueRotate: z.number() }),
+  palette: z.object({
+    /** Hue-rotate in degrees over the brand palette (0 = brand default). */
+    hueRotate: z.number(),
+    /** Saturation multiplier (1 = brand default; <1 muted, >1 punchy). */
+    saturate: z.number().min(0),
+  }),
 });
 
 export type StylePreset = z.infer<typeof stylePresetSchema>;
@@ -50,16 +54,16 @@ export const PREMIUM_CALM: StylePreset = {
   type: { scaleMult: 1, tracking: 0 },
   finish: { grain: 0.08, filmGrade: 0.5, letterbox: false },
   sound: { sfxDensity: 1, heroVol: 0.9, tickVol: 0.5 },
-  palette: { hueRotate: 0 },
+  palette: { hueRotate: 0, saturate: 1 },
 };
 
 export const KINETIC_ENERGETIC: StylePreset = {
   name: "Kinetic-Energetic",
   pace: 0.82, // ~18% faster
   type: { scaleMult: 1.06, tracking: -0.5 },
-  finish: { grain: 0.14, filmGrade: 0.6, letterbox: false },
+  finish: { grain: 0.14, filmGrade: 0.65, letterbox: false },
   sound: { sfxDensity: 1.5, heroVol: 1, tickVol: 0.7 },
-  palette: { hueRotate: 0 },
+  palette: { hueRotate: 12, saturate: 1.3 }, // warm, punchy grade
 };
 
 export const EDITORIAL_MINIMAL: StylePreset = {
@@ -68,7 +72,7 @@ export const EDITORIAL_MINIMAL: StylePreset = {
   type: { scaleMult: 0.96, tracking: 1 },
   finish: { grain: 0, filmGrade: 0.35, letterbox: true },
   sound: { sfxDensity: 0.6, heroVol: 0.8, tickVol: 0.35 },
-  palette: { hueRotate: 0 },
+  palette: { hueRotate: 0, saturate: 0.55 }, // muted, editorial
 };
 
 export const PRESETS = {
