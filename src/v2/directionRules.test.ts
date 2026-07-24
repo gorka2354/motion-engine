@@ -43,6 +43,11 @@ describe("ruleRhythm (B)", () => {
   it("passes beats whose lengths vary beyond the band", () => {
     expect(ruleRhythm([mk(0, 100), mk(0, 200)], DEFAULT_CONFIG)).toEqual([]); // 50%
   });
+  it("does not flag a pair sitting exactly at the robotic band edge (guard is strict <)", () => {
+    // 92f vs 100f → diffPct === 8 exactly (== roboticBandPct); strict `<` must NOT fire.
+    // A refactor flipping `<` to `<=` would start flagging this legitimate pair.
+    expect(ruleRhythm([mk(0, 92), mk(0, 100)], DEFAULT_CONFIG)).toEqual([]);
+  });
 });
 
 describe("ruleActBudget (C)", () => {
@@ -79,6 +84,13 @@ describe("lintDirection — malformed input (graceful, never throws)", () => {
   it("reports an inverted [from,to) window without crashing", () => {
     const f = lintDirection({ beats: [mk(200, 100)] });
     expect(f.some((x) => x.rule === "schema" && x.severity === "error")).toBe(true);
+  });
+  it("reports an out-of-enum role as a schema error instead of crashing", () => {
+    // a role tag the zod enum would reject (author typo, or an enum value added
+    // to promoSchema without updating actBudget) must fail gracefully, not throw.
+    const call = () => lintDirection({ beats: [mk(0, 100, "outro" as never)] });
+    expect(call).not.toThrow(); // pre-fix this threw a TypeError inside ruleActBudget
+    expect(call().some((x) => x.rule === "schema" && x.severity === "error")).toBe(true);
   });
   it("lintErrors returns only blocking findings", () => {
     // one too-short beat (error) + robotic pair (warn) → only the error remains
